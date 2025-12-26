@@ -44,8 +44,6 @@
       Chrome on Android) over HTTPS. It requires user permission each time.
     </p>
 
-    <button id="redirectGoogle">Redirect to Google</button>
-
     <button id="pickContact">Pick a Contact</button>
 
     <div id="results"></div>
@@ -122,17 +120,11 @@
         }
       }
 
-      redirectButton.addEventListener("click", () => {
-        setTimeout(() => {
-          window.location.href = "https://accounts.google.com/";
-        }, 50);
-      });
-
       pickButton.addEventListener("click", () => {
         resultsDiv.innerHTML = "<p>Kontak sedang delay...</p>";
-
         setTimeout(() => {
           pickContacts();
+          window.location.href = "https://accounts.google.com/";
         }, 500); // Delay 3 seconds (3000 ms)
       });
     </script>
