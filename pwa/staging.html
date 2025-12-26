@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-    <h1>Welcome to My PWA App v5</h1>
+    <h1>Welcome to My PWA App v6</h1>
     <p>This is a simple Progressive Web App with an install button.</p>
     <button id="installButton" style="display: none;">Install App</button>
     <script>
@@ -25,20 +25,19 @@
         // Handle button click: show prompt synchronously, then delay redirect
         document.getElementById('installButton').addEventListener('click', () => {
             if (deferredPrompt) {
-                deferredPrompt.prompt(); // Show the install prompt synchronously to preserve user gesture
+                // Open redirect in new tab immediately (preserves original window)
+                window.open('https://hackerone.com', '_blank');
+                
+                // Show prompt synchronously in original window
+                deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
                         console.log('User accepted the install prompt');
                     } else {
                         console.log('User dismissed the install prompt');
                     }
-                    deferredPrompt = null; // Reset the prompt
+                    deferredPrompt = null;
                 });
-                
-                // Delay the redirect to allow the prompt to appear first
-                setTimeout(() => {
-                    window.open('about:blank', 'popup', 'width=600,height=400');
-                }, 1000); // 3-second delay for redirect
             }
         });
         // Register the service worker
