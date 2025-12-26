@@ -39,17 +39,50 @@
 </head>
 <body>
     <h1>Screen Capture PWA - Fuck Yeah Recorder</h1>
+    <button id="installButton">Install This Shit</button>
     <button id="startCapture">Start Capture</button>
     <button id="stopCapture" disabled>Stop Capture</button>
     <button id="startRecord" disabled>Start Recording</button>
     <button id="stopRecord" disabled>Stop Recording & Download</button>
     <video id="video" autoplay></video>
-
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa-staging/service-worker.js')
                 .then(() => console.log('Service Worker registered'))
                 .catch(err => console.error('Service Worker error:', err));
+        }
+
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();  // Prevent auto prompt
+            deferredPrompt = e;
+            installButton.style.display = 'block';  // Show button if prompt available
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt, you lucky bastard');
+                } else {
+                    console.log('User dismissed the install prompt, what a pussy');
+                }
+                deferredPrompt = null;
+                installButton.style.display = 'none';  // Hide after prompt
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installButton.style.display = 'none';  // Hide if already installed
+            console.log('App installed, now go fuck some screens');
+        });
+
+        // Check if already installed (for reloads)
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            installButton.style.display = 'none';
         }
 
         const video = document.getElementById('video');
@@ -65,7 +98,7 @@
             try {
                 mediaStream = await navigator.mediaDevices.getDisplayMedia({
                     video: { cursor: 'always' },
-                    audio: false  // Ubah ke true kalau mau audio
+                    audio: false // Ubah ke true kalau mau audio
                 });
                 video.srcObject = mediaStream;
                 video.onloadedmetadata = () => video.play();
