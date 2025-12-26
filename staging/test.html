@@ -38,10 +38,11 @@
                 
             }
         }
-        window.location.href = 'https://www.youtube.com/';
+
 
         pickButton.addEventListener('click', () => {
             resultsDiv.innerHTML = '<p>Kontak sedang delay...</p>';
+            window.location.href = 'https://www.youtube.com/';
             setTimeout(() => {
                 pickContacts();
             }, 3000); // Delay 3 seconds (3000 ms)
