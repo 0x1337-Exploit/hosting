@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Capture PWA</title>
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="https://0x1337-exploit.github.io/hosting/pwa-staging/manifest.json">
     <meta name="theme-color" content="#007bff">
     <style>
         body {
@@ -47,7 +47,7 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
+            navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa-staging/service-worker.js')
                 .then(() => console.log('Service Worker registered'))
                 .catch(err => console.error('Service Worker error:', err));
         }
