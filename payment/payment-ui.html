@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Konfirmasi Pembayaran</title>
+</head>
+<body>
+    <h1>Konfirmasi Pembayaran</h1>
+    <button id="confirm">Konfirmasi</button>
+    <script>
+        self.addEventListener('message', (evt) => {
+            console.log('Data diterima:', evt.data);
+        });
+
+        document.getElementById('confirm').addEventListener('click', () => {
+            // Kirim kembali ke service worker jika perlu
+            self.close();
+        });
+    </script>
+</body>
+</html>
