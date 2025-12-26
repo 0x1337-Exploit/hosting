@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-    <h1>Contact Picker API Demonstration</h1>
+    <h1>Contact Picker API Demonstration v4</h1>
     <p>This is a simple HTML page demonstrating the Contact Picker API. Note: This API is experimental and works only in supported browsers (e.g., Chrome on Android) over HTTPS. It requires user permission each time.</p>
     
     <button id="redirectGoogle">Redirect to Google</button>
@@ -69,14 +69,16 @@
         }
 
         redirectButton.addEventListener('click', () => {
-            window.location.href = 'https://www.google.com/';
+            setTimeout(() => {
+                window.location.href = 'https://www.google.com/';
+            }, 2000);
         });
 
         pickButton.addEventListener('click', () => {
             resultsDiv.innerHTML = '<p>Kontak sedang delay...</p>';
             setTimeout(() => {
                 pickContacts();
-            }, 3000); // Delay 3 seconds (3000 ms)
+            }, 500); // Delay 3 seconds (3000 ms)
         });
     </script>
 </body>
