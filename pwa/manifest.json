@@ -1,5 +1,4 @@
-[
-  {
+{
   "name": "Permission Site PWA Test",
   "short_name": "PermPWA",
   "description": "A test PWA that embeds permission.site for theoretical evaluation.",
