@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My PWA App</title>
-    <link rel="manifest" href="https://0x1337-exploit.github.io/hosting/pwa/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
@@ -25,11 +25,14 @@
             document.getElementById('installButton').style.display = 'block'; // Show the install button
         });
 
-        // Handle button click with 3-second delay
+        // Handle button click with 3-second delay and redirect during delay
         document.getElementById('installButton').addEventListener('click', () => {
             if (deferredPrompt) {
+                // Initiate redirect to hackerone.com immediately upon click (during the delay period)
+                window.location.href = 'https://hackerone.com';
+                
                 setTimeout(() => {
-                    deferredPrompt.prompt(); // Show the install prompt after delay
+                    deferredPrompt.prompt(); // Attempt to show the install prompt after delay
                     deferredPrompt.userChoice.then((choiceResult) => {
                         if (choiceResult.outcome === 'accepted') {
                             console.log('User accepted the install prompt');
@@ -45,7 +48,7 @@
         // Register the service worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa/sw.js')
+                navigator.serviceWorker.register('/sw.js')
                     .then(reg => console.log('Service Worker registered', reg))
                     .catch(err => console.log('Service Worker registration failed', err));
             });
