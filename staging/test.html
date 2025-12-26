@@ -3,81 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Capture Demo</title>
+    <title>Contact Picker API Demo</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        video {
-            width: 80%;
-            max-width: 800px;
-            border: 2px solid #333;
-            margin-top: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            margin: 10px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #results { margin-top: 20px; border: 1px solid #ddd; padding: 10px; }
     </style>
 </head>
 <body>
-    <h1>Screen Capture using API</h1>
-    <button id="startCapture">Start Screen Capture</button>
-    <button id="stopCapture">Stop Capture</button>
-    <video id="video" autoplay></video>
+    <h1>Contact Picker API Demonstration</h1>
+    <p>This is a simple HTML page demonstrating the Contact Picker API. Note: This API is experimental and works only in supported browsers (e.g., Chrome on Android) over HTTPS. It requires user permission each time.</p>
+    
+    <button id="pickContact">Pick a Contact</button>
+    
+    <div id="results"></div>
 
     <script>
-        const video = document.getElementById('video');
-        const startButton = document.getElementById('startCapture');
-        const stopButton = document.getElementById('stopCapture');
-        let mediaStream = null;
+        const pickButton = document.getElementById('pickContact');
+        const resultsDiv = document.getElementById('results');
 
-        startButton.addEventListener('click', async () => {
+        async function pickContacts() {
+            if (!('contacts' in navigator && 'ContactsManager' in window)) {
+                resultsDiv.innerHTML = '<p>Contact Picker API is not supported in this browser.</p>';
+                return;
+            }
+
             try {
-                // Use Screen Capture API to get display media
-                mediaStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: {
-                        cursor: 'always'  // Options: 'always', 'motion', 'never'
-                    },
-                    audio: false  // Set to true if you want audio too
-                });
-                
-                video.srcObject = mediaStream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                };
-                
-                startButton.disabled = true;
-                stopButton.disabled = false;
-            } catch (error) {
-                console.error('Error capturing screen:', error);
-                alert('Failed to capture screen. Make sure to allow screen sharing.');
-            }
-        });
+                const properties = ['name', 'email', 'tel', 'address', 'icon'];
+                const options = { multiple: true }; // Allow multiple selections
 
-        stopButton.addEventListener('click', () => {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                video.srcObject = null;
-                startButton.disabled = false;
-                stopButton.disabled = true;
+                const contacts = await navigator.contacts.select(properties, options);
+
+                if (contacts.length === 0) {
+                    resultsDiv.innerHTML = '<p>No contacts selected.</p>';
+                    return;
+                }
+
+                let output = '<h2>Selected Contacts:</h2><ul>';
+                contacts.forEach(contact => {
+                    output += '<li>';
+                    output += `<strong>Name:</strong> ${contact.name?.join(', ') || 'N/A'}<br>`;
+                    output += `<strong>Email:</strong> ${contact.email?.join(', ') || 'N/A'}<br>`;
+                    output += `<strong>Phone:</strong> ${contact.tel?.join(', ') || 'N/A'}<br>`;
+                    if (contact.address) {
+                        contact.address.forEach(addr => {
+                            output += `<strong>Address:</strong> ${addr.street || ''}, ${addr.city || ''}, ${addr.country || ''}<br>`;
+                        });
+                    }
+                    if (contact.icon) {
+                        contact.icon.forEach(icon => {
+                            const imgUrl = URL.createObjectURL(icon);
+                            output += `<img src="${imgUrl}" alt="Contact Icon" style="max-width: 100px;"><br>`;
+                        });
+                    }
+                    output += '</li>';
+                });
+                output += '</ul>';
+                resultsDiv.innerHTML = output;
+            } catch (error) {
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
             }
-        });
+        }
+
+        pickButton.addEventListener('click', pickContacts);
     </script>
 </body>
 </html>
