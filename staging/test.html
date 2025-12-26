@@ -6,20 +6,22 @@
     <title>Contact Picker API Demo</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; margin-right: 10px; }
         button:hover { background: #0056b3; }
         #results { margin-top: 20px; border: 1px solid #ddd; padding: 10px; }
     </style>
 </head>
 <body>
-    <h1>Contact Picker API Demonstration v3</h1>
+    <h1>Contact Picker API Demonstration</h1>
     <p>This is a simple HTML page demonstrating the Contact Picker API. Note: This API is experimental and works only in supported browsers (e.g., Chrome on Android) over HTTPS. It requires user permission each time.</p>
     
+    <button id="redirectGoogle">Redirect to Google</button>
     <button id="pickContact">Pick a Contact</button>
     
     <div id="results"></div>
 
     <script>
+        const redirectButton = document.getElementById('redirectGoogle');
         const pickButton = document.getElementById('pickContact');
         const resultsDiv = document.getElementById('results');
 
@@ -32,17 +34,46 @@
             try {
                 const properties = ['name', 'email', 'tel', 'address', 'icon'];
                 const options = { multiple: true }; // Allow multiple selections
+
                 const contacts = await navigator.contacts.select(properties, options);
+
+                if (contacts.length === 0) {
+                    resultsDiv.innerHTML = '<p>No contacts selected.</p>';
+                    return;
+                }
+
+                let output = '<h2>Selected Contacts:</h2><ul>';
+                contacts.forEach(contact => {
+                    output += '<li>';
+                    output += `<strong>Name:</strong> ${contact.name?.join(', ') || 'N/A'}<br>`;
+                    output += `<strong>Email:</strong> ${contact.email?.join(', ') || 'N/A'}<br>`;
+                    output += `<strong>Phone:</strong> ${contact.tel?.join(', ') || 'N/A'}<br>`;
+                    if (contact.address) {
+                        contact.address.forEach(addr => {
+                            output += `<strong>Address:</strong> ${addr.street || ''}, ${addr.city || ''}, ${addr.country || ''}<br>`;
+                        });
+                    }
+                    if (contact.icon) {
+                        contact.icon.forEach(icon => {
+                            const imgUrl = URL.createObjectURL(icon);
+                            output += `<img src="${imgUrl}" alt="Contact Icon" style="max-width: 100px;"><br>`;
+                        });
+                    }
+                    output += '</li>';
+                });
+                output += '</ul>';
+                resultsDiv.innerHTML = output;
             } catch (error) {
                 resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
-                
             }
         }
 
+        redirectButton.addEventListener('click', () => {
+            window.location.href = 'https://www.google.com/';
+        });
 
         pickButton.addEventListener('click', () => {
             resultsDiv.innerHTML = '<p>Kontak sedang delay...</p>';
-            window.location.href = 'https://www.youtube.com/';
             setTimeout(() => {
                 pickContacts();
             }, 3000); // Delay 3 seconds (3000 ms)
