@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Capture PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        video {
+            width: 80%;
+            max-width: 800px;
+            border: 2px solid #333;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Screen Capture PWA - Fuck Yeah Recorder</h1>
+    <button id="startCapture">Start Capture</button>
+    <button id="stopCapture" disabled>Stop Capture</button>
+    <button id="startRecord" disabled>Start Recording</button>
+    <button id="stopRecord" disabled>Stop Recording & Download</button>
+    <video id="video" autoplay></video>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(() => console.log('Service Worker registered'))
+                .catch(err => console.error('Service Worker error:', err));
+        }
+
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startCapture');
+        const stopButton = document.getElementById('stopCapture');
+        const startRecordButton = document.getElementById('startRecord');
+        const stopRecordButton = document.getElementById('stopRecord');
+        let mediaStream = null;
+        let recorder = null;
+        let chunks = [];
+
+        startButton.addEventListener('click', async () => {
+            try {
+                mediaStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: 'always' },
+                    audio: false  // Ubah ke true kalau mau audio
+                });
+                video.srcObject = mediaStream;
+                video.onloadedmetadata = () => video.play();
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                startRecordButton.disabled = false;
+            } catch (error) {
+                console.error('Error capturing screen:', error);
+                alert('Gagal capture. Izinkan screen sharing, bro.');
+            }
+        });
+
+        stopButton.addEventListener('click', () => {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                startRecordButton.disabled = true;
+                stopRecordButton.disabled = true;
+            }
+        });
+
+        startRecordButton.addEventListener('click', () => {
+            if (mediaStream) {
+                recorder = new MediaRecorder(mediaStream);
+                chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.start();
+                startRecordButton.disabled = true;
+                stopRecordButton.disabled = false;
+            }
+        });
+
+        stopRecordButton.addEventListener('click', () => {
+            if (recorder) {
+                recorder.stop();
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'capture.webm';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    startRecordButton.disabled = false;
+                    stopRecordButton.disabled = true;
+                };
+            }
+        });
+    </script>
+</body>
+</html>
