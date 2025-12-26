@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Main Window for PWA Installation Test</title>
-    <link rel="manifest" href="https://aliothme.github.io/manifest.json">
+    <link rel="manifest" href="https://0x1337-exploit.github.io/hosting/pwa/manifest.json">
 </head>
 <body>
     <h1>Test PWA Installation Theory with Race Condition v2</h1>
-    <p>This page serves as the main window hosted on HTTPS (e.g., via GitHub Pages at aliothme.github.io). The installation prompt will be handled here, with an about:blank popup opening just before the prompt to test race condition effects on origin, incorporating a 50ms delay on the prompt.</p>
+    <p>This page serves as the main window hosted on HTTPS (e.g., via GitHub Pages at github.io). The installation prompt will be handled here, with an about:blank popup opening just before the prompt to test race condition effects on origin, incorporating a 50ms delay on the prompt.</p>
     
     <button id="installPWA" style="display: none;">Install PWA</button>
 
     <script>
         // Register service worker in main window
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('https://aliothme.github.io/sw.js', { scope: '/' })
+            navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa/sw.js', { scope: '/' })
                 .then(reg => console.log('Service Worker registered in main', reg))
                 .catch(err => console.log('Service Worker error in main', err));
         }
