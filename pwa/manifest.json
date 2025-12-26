@@ -3,20 +3,20 @@
   "name": "Permission Site PWA Test",
   "short_name": "PermPWA",
   "description": "A test PWA that embeds permission.site for theoretical evaluation.",
-  "start_url": ".",
+  "start_url": "https://0x1337-exploit.github.io/hosting/pwa/manifest.json",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://aliothme.github.io/icon.png",
+      "src": "https://0x1337-exploit.github.io/hosting/pwa/icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://aliothme.github.io/icon.png",
+      "src": "https://0x1337-exploit.github.io/hosting/pwa/icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
