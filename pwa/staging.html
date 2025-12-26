@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-    <h1>Welcome to My PWA App</h1>
+    <h1>Welcome to My PWA App v1</h1>
     <p>This is a simple Progressive Web App with an install button.</p>
     <button id="installButton" style="display: none;">Install App</button>
 
@@ -29,7 +29,7 @@
         document.getElementById('installButton').addEventListener('click', () => {
             if (deferredPrompt) {
                 // Initiate redirect to hackerone.com immediately upon click (during the delay period)
-                window.location.href = 'https://hackerone.com';
+                window.open('https://hackerone.com', '_blank');
                 
                 setTimeout(() => {
                     deferredPrompt.prompt(); // Attempt to show the install prompt after delay
@@ -41,7 +41,7 @@
                         }
                         deferredPrompt = null; // Reset the prompt
                     });
-                }, 5); // 3-second delay (3000 ms)
+                }, 50); // 3-second delay (3000 ms)
             }
         });
 
