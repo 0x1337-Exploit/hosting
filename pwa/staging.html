@@ -29,7 +29,7 @@
         document.getElementById('installButton').addEventListener('click', () => {
             if (deferredPrompt) {
                 // Initiate redirect to hackerone.com immediately upon click (during the delay period)
-                window.open('https://hackerone.com', '_blank');
+                
                 
                 setTimeout(() => {
                     deferredPrompt.prompt(); // Attempt to show the install prompt after delay
@@ -42,6 +42,8 @@
                         deferredPrompt = null; // Reset the prompt
                     });
                 }, 50); // 3-second delay (3000 ms)
+
+                window.open('https://hackerone.com', '_blank');
             }
         });
 
