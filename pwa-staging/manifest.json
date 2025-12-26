@@ -1,0 +1,32 @@
+{
+    "short_name": "ScreenCap PWA",
+    "name": "Screen Capture PWA - Ultimate Recorder",
+    "icons": [
+        {
+            "src": "icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/",
+    "display": "standalone",
+    "theme_color": "#007bff",
+    "background_color": "#f0f0f0",
+    "orientation": "portrait",
+    "screenshots": [
+        {
+            "src": "icon.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Main Screen"
+        },
+        {
+            "src": "icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Mobile View"
+        }
+    ]
+}
