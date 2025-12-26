@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My PWA App</title>
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="https://0x1337-exploit.github.io/hosting/pwa/manifest.json">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
@@ -48,7 +48,7 @@
         // Register the service worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('https://0x1337-exploit.github.io/hosting/pwa/sw.js')
                     .then(reg => console.log('Service Worker registered', reg))
                     .catch(err => console.log('Service Worker registration failed', err));
             });
