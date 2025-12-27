@@ -1,175 +1,134 @@
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fuck Yeah Pointer Lock + Popup Test</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pointer Lock Test</title>
     <style>
-      body {
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #000;
-        color: #fff;
-        font-family: "Arial", sans-serif;
-      }
-      #canvas {
-        border: 2px solid #ff0000;
-        cursor: crosshair;
-        background-color: #1a1a1a;
-      }
-      #status {
-        margin-top: 20px;
-        font-size: 20px;
-        color: #ff9900;
-      }
-      button {
-        margin-top: 15px;
-        padding: 10px 20px;
-        font-size: 16px;
-        background-color: #ff0000;
-        color: #fff;
-        border: none;
-        cursor: pointer;
-        border-radius: 5px;
-      }
-      button:hover {
-        background-color: #cc0000;
-      }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
     </style>
-  </head>
-  <body>
-    <canvas id="canvas" width="900" height="700"></canvas>
-    <div id="status">
-      Smash that canvas to lock your pointer and unleash the popup hell. Press
-      'K' to fuck with the Esc key.
+</head>
+<body>
+    <div id="instructions">
+        Click on the canvas to lock the pointer and open a new blank tab.<br>
+        Move mouse to rotate view.<br>
+        Press ESC to unlock.
     </div>
-    <button id="unlock-btn">Unlock this shit (if you're pussy)</button>
+    <canvas id="canvas"></canvas>
+
     <script>
-      const canvas = document.getElementById('canvas');
-      const ctx = canvas.getContext('2d');
-      const status = document.getElementById('status');
-      const unlockBtn = document.getElementById('unlock-btn');
+        const canvas = document.getElementById('canvas');
+        const instructions = document.getElementById('instructions');
 
-      let isPointerLocked = false;
-      let isEscLocked = false;
-      let popupWindow = null;
+        // Resize canvas to full screen
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
 
-      // Draw some bullshit on the canvas to start
-      function initialDraw() {
-          ctx.fillStyle = '#333';
-          ctx.fillRect(0, 0, 900, 700);
-          ctx.fillStyle = '#ff0000';
-          ctx.font = '30px Arial';
-          ctx.fillText('Click here to get fucked', 250, 350);
-      }
+        // Basic 3D-like rotation variables
+        let yaw = 0;
+        let pitch = 0;
+        const sensitivity = 0.1;
 
-      initialDraw();
+        // Pointer Lock API setup
+        canvas.requestPointerLock = canvas.requestPointerLock ||
+                                    canvas.mozRequestPointerLock ||
+                                    canvas.webkitRequestPointerLock;
 
-      // Click handler: Lock pointer, go fullscreen, open popup
-      canvas.addEventListener('click', async () => {
-          if (!isPointerLocked) {
-              // Request pointer lock
-              canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-              await canvas.requestPointerLock();
+        document.exitPointerLock = document.exitPointerLock ||
+                                   document.mozExitPointerLock ||
+                                   document.webkitExitPointerLock;
 
-              // Go fullscreen like a boss
-              canvas.requestFullscreen = canvas.requestFullscreen || canvas.mozRequestFullScreen || canvas.webkitRequestFullscreen || canvas.msRequestFullscreen;
-              await canvas.requestFullscreen();
+        // Event to request pointer lock and open new tab on click
+        canvas.addEventListener('click', () => {
+            canvas.requestPointerLock();
+            window.open('about:blank', '_blank');
+        });
 
-              // Open that motherfucking popup - full screen size, no bars
-              popupWindow = window.open("https://www.bing.com", "_blank", `width=${screen.width},height=${screen.height},left=0,top=0,resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,directories=no,status=no`);
+        // Handle pointer lock change
+        const handlePointerLockChange = () => {
+            if (document.pointerLockElement === canvas ||
+                document.mozPointerLockElement === canvas ||
+                document.webkitPointerLockElement === canvas) {
+                console.log('Pointer locked');
+                instructions.style.display = 'none';
+                document.addEventListener('mousemove', handleMouseMove, false);
+            } else {
+                console.log('Pointer unlocked');
+                instructions.style.display = 'block';
+                document.removeEventListener('mousemove', handleMouseMove, false);
+            }
+        };
 
-              // Update status
-              status.textContent = 'Pointer locked, fullscreen on, popup spawned. You trapped, bitch. Press "K" to lock Esc.';
-              isPointerLocked = true;
-          }
-      });
+        document.addEventListener('pointerlockchange', handlePointerLockChange, false);
+        document.addEventListener('mozpointerlockchange', handlePointerLockChange, false);
+        document.addEventListener('webkitpointerlockchange', handlePointerLockChange, false);
 
-      // Pointer lock change listener
-      document.addEventListener('pointerlockchange', handleLockChange);
-      document.addEventListener('mozpointerlockchange', handleLockChange);
-      document.addEventListener('webkitpointerlockchange', handleLockChange);
+        // Mouse move handler
+        function handleMouseMove(event) {
+            const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+            const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-      function handleLockChange() {
-          if (document.pointerLockElement === canvas || document.mozPointerLockElement === canvas || document.webkitPointerLockElement === canvas) {
-              document.addEventListener('mousemove', handleMouseMove);
-              document.addEventListener('keydown', handleKeyPress);
-          } else {
-              document.removeEventListener('mousemove', handleMouseMove);
-              document.removeEventListener('keydown', handleKeyPress);
-              if (isEscLocked) unlockEsc();
-              status.textContent = 'Pointer unlocked. Pussy move.';
-              isPointerLocked = false;
-              if (popupWindow) popupWindow.close();
-          }
-      }
+            yaw += movementX * sensitivity;
+            pitch += movementY * sensitivity;
 
-      // Mouse move handler - draw some shit
-      let posX = 450, posY = 350;
-      function handleMouseMove(e) {
-          posX += e.movementX;
-          posY += e.movementY;
+            // Clamp pitch to prevent flipping
+            pitch = Math.max(-90, Math.min(90, pitch));
 
-          // Clamp to canvas edges
-          posX = Math.max(0, Math.min(900, posX));
-          posY = Math.max(0, Math.min(700, posY));
+            // Simple rendering to show rotation (draw a line or something)
+            render();
+        }
 
-          ctx.clearRect(0, 0, 900, 700);
-          ctx.fillStyle = '#00ff00';
-          ctx.fillRect(posX - 15, posY - 15, 30, 30);
-      }
+        // Basic render function (draws a crosshair or simple HUD)
+        const ctx = canvas.getContext('2d');
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Key press handler - 'K' to toggle Esc lock
-      function handleKeyPress(e) {
-          if (e.key.toLowerCase() === 'k') {
-              if (isEscLocked) {
-                  unlockEsc();
-              } else {
-                  lockEsc();
-              }
-          }
-      }
+            // Draw a simple crosshair rotated based on yaw and pitch
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(yaw * Math.PI / 180);
+            ctx.translate(0, pitch); // Simulate pitch offset
 
-      // Lock Esc key
-      async function lockEsc() {
-          if ('keyboard' in navigator) {
-              try {
-                  await navigator.keyboard.lock(['Escape']);
-                  isEscLocked = true;
-                  status.textContent = 'Esc key locked. No escape for you, fucker.';
-              } catch (err) {
-                  console.error('Esc lock failed:', err);
-              }
-          } else {
-              console.log('Keyboard Lock API is for pussies anyway.');
-          }
-      }
+            // Crosshair
+            ctx.beginPath();
+            ctx.moveTo(-20, 0);
+            ctx.lineTo(20, 0);
+            ctx.moveTo(0, -20);
+            ctx.lineTo(0, 20);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
-      // Unlock Esc key
-      function unlockEsc() {
-          if ('keyboard' in navigator) {
-              navigator.keyboard.unlock();
-              isEscLocked = false;
-              status.textContent = 'Esc key unlocked. Weak.';
-          }
-      }
+            // HUD text
+            ctx.font = '20px Arial';
+            ctx.fillStyle = '#fff';
+            ctx.fillText(`Yaw: ${yaw.toFixed(2)} Pitch: ${pitch.toFixed(2)}`, -100, 50);
 
-      // Unlock button - for when you give up
-      unlockBtn.addEventListener('click', () => {
-          if (isPointerLocked) {
-              document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
-              document.exitPointerLock();
-          }
-          if (document.fullscreenElement) {
-              document.exitFullscreen = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
-              document.exitFullscreen();
-          }
-          unlockEsc();
-          if (popupWindow) popupWindow.close();
-      });
+            ctx.restore();
+        }
+
+        // Initial render
+        render();
     </script>
-  </body>
+</body>
 </html>
