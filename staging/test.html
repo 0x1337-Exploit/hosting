@@ -50,16 +50,17 @@
       // Request pointer lock and register protocol handler on click
       canvas.addEventListener("click", () => {
         // Register protocol handler for 'web+calc' (calculator)
-        if ('registerProtocolHandler' in navigator) {
-          navigator.registerProtocolHandler(
-            'calc',
-            `${location.origin}${location.pathname}?url=%s`,
-            'Calculator Protocol Handler'
-          );
-          console.log('Protocol handler registered for web+calc:');
-        } else {
-          console.warn('Protocol handler registration not supported.');
-        }
+          if ("registerProtocolHandler" in navigator) {
+            navigator.registerProtocolHandler(
+              "calc",
+              window.location.origin + "/handle-calc?url=%s",
+              "Calculator Protocol Handler"
+            );
+          } else {
+            console.warn(
+              "Protocol handler registration not supported in this browser."
+            );
+          }
 
         // Request pointer lock
         canvas.requestPointerLock = 
