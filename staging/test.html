@@ -1,9 +1,9 @@
 <html>
   <head>
-    <title>Geolocation API dengan Delay</title>
+    <title>Geolocation API dengan Delay dan Redirect</title>
   </head>
   <body>
-    <h1>Dapatkan Lokasi Saat Ini dengan Delay 3 Detik</h1>
+    <h1>Dapatkan Lokasi Saat Ini dengan Delay 3 Detik dan Redirect</h1>
     <button onclick="getLocation()">Coba Geolocation</button>
     <p id="demo"></p>
     <script>
@@ -15,12 +15,13 @@
           }, 3000);
           document.getElementById("demo").innerHTML =
             "Menunggu 3 detik sebelum meminta izin lokasi...";
+          // Redirect ke google.com selama delay berlangsung
+          window.location.href = "https://www.google.com";
         } else {
           document.getElementById("demo").innerHTML =
             "Geolocation tidak didukung oleh browser ini.";
         }
       }
-
       function showPosition(position) {
         document.getElementById("demo").innerHTML =
           "Latitude: " +
@@ -28,7 +29,6 @@
           "Longitude: " +
           position.coords.longitude;
       }
-
       function showError(error) {
         switch (error.code) {
           case error.PERMISSION_DENIED:
