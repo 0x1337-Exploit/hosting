@@ -1,15 +1,20 @@
 <html>
   <head>
-    <title>Geolocation API Sederhana</title>
+    <title>Geolocation API dengan Delay</title>
   </head>
   <body>
-    <h1>Dapatkan Lokasi Saat Ini</h1>
+    <h1>Dapatkan Lokasi Saat Ini dengan Delay 3 Detik</h1>
     <button onclick="getLocation()">Coba Geolocation</button>
     <p id="demo"></p>
     <script>
       function getLocation() {
         if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(showPosition, showError);
+          // Tambahkan delay 3 detik sebelum meminta lokasi
+          setTimeout(function () {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+          }, 3000);
+          document.getElementById("demo").innerHTML =
+            "Menunggu 3 detik sebelum meminta izin lokasi...";
         } else {
           document.getElementById("demo").innerHTML =
             "Geolocation tidak didukung oleh browser ini.";
