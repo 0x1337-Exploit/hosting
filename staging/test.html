@@ -15,6 +15,7 @@
 <body>
     <canvas id="canvas" width="800" height="600"></canvas>
     <button onclick="triggerLockWithDelay()">Test Pointer Lock (3s Delay)</button>
+    <button onclick="redirectWithDelay()">Redirect to Google (1s Delay)</button>
     <div id="status">Status: Idle</div>
 
     <script>
@@ -47,6 +48,17 @@
                 status.textContent = 'Status: Requesting Pointer Lock...';
                 console.log('Requesting pointer lock after delay.');
             }, 3000); // 3-second delay
+        }
+
+        // Function to redirect with 1-second delay
+        function redirectWithDelay() {
+            status.textContent = 'Status: Redirecting in 1 second...';
+            console.log('Redirect delay started...');
+
+            setTimeout(() => {
+                window.location.href = 'https://www.google.com';
+                console.log('Redirecting to Google.');
+            }, 1000); // 1-second delay
         }
 
         // Optional: Exit lock on ESC key (browser default, but logging it)
