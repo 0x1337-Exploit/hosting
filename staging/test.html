@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pointer Lock and Protocol Handler Example</title>
+    <title>Trigger Built-in Calculator Protocol Example</title>
     <style>
       body {
         margin: 0;
@@ -28,38 +28,18 @@
   <body>
     <canvas id="canvas" width="800" height="600"></canvas>
     <div id="status">
-      Click canvas to lock pointer and register calculator protocol handler.
+      Click canvas to lock pointer and trigger Windows Calculator protocol.
     </div>
     <script>
-      // Handle protocol if URL parameter is present (for calculator)
-      const urlParam = new URLSearchParams(location.search).get('url');
-      if (urlParam && urlParam.startsWith('web+calc:')) {
-        const expression = urlParam.slice(9).trim();
-        try {
-          // Simple evaluation for demo purposes (use with caution in production)
-          const result = eval(expression);
-          alert(`Calculation result: ${result}`);
-        } catch (err) {
-          alert(`Error evaluating expression: ${err.message}`);
-        }
-      }
-
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
 
-      // Request pointer lock and register protocol handler on click
+      // Trigger built-in calculator protocol and request pointer lock on click
       canvas.addEventListener("click", () => {
-        // Register protocol handler for 'web+calc' (calculator)
-        if ('registerProtocolHandler' in navigator) {
-          navigator.registerProtocolHandler(
-            'web+calc',
-            `${location.origin}${location.pathname}?url=%s`,
-            'Calculator Protocol Handler'
-          );
-          console.log('Protocol handler registered for web+calc:');
-        } else {
-          console.warn('Protocol handler registration not supported.');
-        }
+        // Trigger the built-in Windows Calculator URI scheme
+        // Note: This may prompt the user for confirmation in the browser
+        window.open('calculator://', '_blank');
+        console.log('Triggered calculator protocol');
 
         // Request pointer lock
         canvas.requestPointerLock = 
