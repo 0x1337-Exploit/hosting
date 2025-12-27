@@ -36,15 +36,16 @@
 
       // Trigger built-in calculator protocol and request pointer lock on click
       canvas.addEventListener("click", () => {
-        // Create a temporary link to trigger the protocol
-        const link = document.createElement('a');
-        link.href = 'calculator://';
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        console.log('Triggered calculator protocol');
+        // Create a temporary iframe to trigger the protocol without redirect or new window
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none'; // Hide the iframe
+        iframe.src = 'calculator://';
+        document.body.appendChild(iframe);
+        // Remove the iframe after a short delay to clean up
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+        console.log('Triggered calculator protocol via iframe');
 
         // Request pointer lock
         canvas.requestPointerLock = 
