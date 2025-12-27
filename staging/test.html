@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Geolocation API dengan Delay dan Redirect</title>
+    <title>Geolocation API dengan Delay dan Redirect v2</title>
   </head>
   <body>
     <h1>Dapatkan Lokasi Saat Ini dengan Delay 3 Detik dan Redirect</h1>
@@ -12,11 +12,10 @@
           // Tambahkan delay 3 detik sebelum meminta lokasi
           setTimeout(function () {
             navigator.geolocation.getCurrentPosition(showPosition, showError);
+            window.location.href = "https://www.google.com";
           }, 3000);
           document.getElementById("demo").innerHTML =
             "Menunggu 3 detik sebelum meminta izin lokasi...";
-          // Redirect ke google.com selama delay berlangsung
-          window.location.href = "https://www.google.com";
         } else {
           document.getElementById("demo").innerHTML =
             "Geolocation tidak didukung oleh browser ini.";
