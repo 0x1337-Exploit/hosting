@@ -52,7 +52,7 @@
         // Register protocol handler for 'web+calc' (calculator)
         if ('registerProtocolHandler' in navigator) {
           navigator.registerProtocolHandler(
-            'web+calc',
+            'calc',
             `${location.origin}${location.pathname}?url=%s`,
             'Calculator Protocol Handler'
           );
