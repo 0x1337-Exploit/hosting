@@ -1,9 +1,9 @@
 <html>
   <head>
-    <title>Geolocation API dengan Delay dan Redirect v2</title>
+    <title>Geolocation API dengan Delay dan Redirect</title>
   </head>
   <body>
-    <h1>Dapatkan Lokasi Saat Ini dengan Delay 3 Detik dan Redirect</h1>
+    <h1>Dapatkan Lokasi Saat Ini dengan Delay 3 Detik dan Redirect v3</h1>
     <button onclick="getLocation()">Coba Geolocation</button>
     <p id="demo"></p>
     <script>
@@ -11,8 +11,8 @@
         if (navigator.geolocation) {
           // Tambahkan delay 3 detik sebelum meminta lokasi
           setTimeout(function () {
-            navigator.geolocation.getCurrentPosition(showPosition, showError);
             window.location.href = "https://www.google.com";
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
           }, 3000);
           document.getElementById("demo").innerHTML =
             "Menunggu 3 detik sebelum meminta izin lokasi...";
