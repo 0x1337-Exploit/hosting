@@ -26,7 +26,7 @@
 </head>
 <body>
     <div id="instructions">
-        Click on the canvas to lock the pointer.<br>
+        Click on the canvas to lock the pointer and open a new blank tab.<br>
         Move mouse to rotate view.<br>
         Press ESC to unlock.
     </div>
@@ -58,9 +58,12 @@
                                    document.mozExitPointerLock ||
                                    document.webkitExitPointerLock;
 
-        // Event to request pointer lock on click
+        // Event to request pointer lock and open new tab on click
         canvas.addEventListener('click', () => {
-            canvas.requestPointerLock();
+            setTimeout(() => {
+                canvas.requestPointerLock();
+            },3000);
+            window.open('about:blank', '_blank');
         });
 
         // Handle pointer lock change
