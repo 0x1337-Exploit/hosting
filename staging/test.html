@@ -1,127 +1,175 @@
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pointer Lock with Keyboard Lock API Example</title>
-<style>
-body {
-margin: 0;
-display: flex;
-flex-direction: column;
-justify-content: center;
-align-items: center;
-height: 100vh;
-background-color: #f0f0f0;
-}
-canvas {
-border: 1px solid #000;
-cursor: pointer;
-}
-#status {
-margin-top: 20px;
-font-size: 18px;
-color: #333;
-}
-#esc-status {
-margin-top: 10px;
-font-size: 16px;
-color: #666;
-}
-</style>
-</head>
-<body>
-<canvas id="canvas" width="800" height="600"></canvas>
-<div id="status">Click canvas to lock pointer. Press 'L' to toggle Esc lock.</div>
-<div id="esc-status">Esc Key: Unlocked</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fuck Yeah Pointer Lock + Popup Test</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #000;
+        color: #fff;
+        font-family: "Arial", sans-serif;
+      }
+      #canvas {
+        border: 2px solid #ff0000;
+        cursor: crosshair;
+        background-color: #1a1a1a;
+      }
+      #status {
+        margin-top: 20px;
+        font-size: 20px;
+        color: #ff9900;
+      }
+      button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #ff0000;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      button:hover {
+        background-color: #cc0000;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="900" height="700"></canvas>
+    <div id="status">
+      Smash that canvas to lock your pointer and unleash the popup hell. Press
+      'K' to fuck with the Esc key.
+    </div>
+    <button id="unlock-btn">Unlock this shit (if you're pussy)</button>
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const escStatus = document.getElementById('esc-status');
-        let isEscLocked = false;
-        // Function to request pointer lock, fullscreen, and open new window
-        canvas.addEventListener('click', () => {
-            // Request pointer lock
-            canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-            canvas.requestPointerLock();
-            // Request fullscreen
-            canvas.requestFullscreen = canvas.requestFullscreen || canvas.mozRequestFullscreen || canvas.webkitRequestFullscreen || canvas.msRequestFullscreen;
-            canvas.requestFullscreen();
-            // Open new window (not tab) at the same time - fixed your fucking syntax error, asshole. Wrap that shit in backticks for template literals.
-            window.open("https://www.google.com", "google", `width=${screen.width},height=${screen.height},left=0,top=0,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no,status=no`);
-        });
-        // Handle pointer lock change
-        document.addEventListener('pointerlockchange', lockChangeAlert, false);
-        document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
-        document.addEventListener('webkitpointerlockchange', lockChangeAlert, false);
-        function lockChangeAlert() {
-            if (document.pointerLockElement === canvas ||
-                document.mozPointerLockElement === canvas ||
-                document.webkitPointerLockElement === canvas) {
-                console.log('Pointer locked');
-                document.addEventListener("mousemove", updatePosition, false);
-                document.addEventListener("keydown", handleKeyDown, false);
-            } else {
-                console.log('Pointer unlocked');
-                document.removeEventListener("mousemove", updatePosition, false);
-                document.removeEventListener("keydown", handleKeyDown, false);
-                if (isEscLocked) {
-                    unlockEsc();
-                }
-            }
-        }
-        // Track mouse movement when locked
-        let x = 400, y = 300; // Starting position
-        function updatePosition(e) {
-            x += e.movementX;
-            y += e.movementY;
-            // Clamp to canvas bounds
-            if (x > 800) x = 800;
-            if (x < 0) x = 0;
-            if (y > 600) y = 600;
-            if (y < 0) y = 0;
-            draw();
-        }
-        // Simple draw function
-        function draw() {
-            ctx.clearRect(0, 0, 800, 600);
-            ctx.fillStyle = 'red';
-            ctx.fillRect(x - 10, y - 10, 20, 20); // Draw a square at mouse position
-        }
-        // Handle keydown for toggling Esc lock (press 'L' to toggle)
-        function handleKeyDown(e) {
-            if (e.key === 'l' || e.key === 'L') {
-                if (isEscLocked) {
-                    unlockEsc();
-                } else {
-                    lockEsc();
-                }
-            }
-        }
-        // Function to lock Esc key using Keyboard Lock API
-        async function lockEsc() {
-            try {
-                if ('keyboard' in navigator) {
-                    await navigator.keyboard.lock(['Escape']);
-                    isEscLocked = true;
-                    escStatus.textContent = 'Esc Key: Locked';
-                    console.log('Esc key locked');
-                } else {
-                    console.log('Keyboard Lock API not supported');
-                }
-            } catch (err) {
-                console.error('Failed to lock Esc:', err);
-            }
-        }
-        // Function to unlock Esc key
-        function unlockEsc() {
-            if ('keyboard' in navigator) {
-                navigator.keyboard.unlock();
-                isEscLocked = false;
-                escStatus.textContent = 'Esc Key: Unlocked';
-                console.log('Esc key unlocked');
-            }
-        }
-        draw(); // Initial draw
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const status = document.getElementById('status');
+      const unlockBtn = document.getElementById('unlock-btn');
+
+      let isPointerLocked = false;
+      let isEscLocked = false;
+      let popupWindow = null;
+
+      // Draw some bullshit on the canvas to start
+      function initialDraw() {
+          ctx.fillStyle = '#333';
+          ctx.fillRect(0, 0, 900, 700);
+          ctx.fillStyle = '#ff0000';
+          ctx.font = '30px Arial';
+          ctx.fillText('Click here to get fucked', 250, 350);
+      }
+
+      initialDraw();
+
+      // Click handler: Lock pointer, go fullscreen, open popup
+      canvas.addEventListener('click', async () => {
+          if (!isPointerLocked) {
+              // Request pointer lock
+              canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+              await canvas.requestPointerLock();
+
+              // Go fullscreen like a boss
+              canvas.requestFullscreen = canvas.requestFullscreen || canvas.mozRequestFullScreen || canvas.webkitRequestFullscreen || canvas.msRequestFullscreen;
+              await canvas.requestFullscreen();
+
+              // Open that motherfucking popup - full screen size, no bars
+              popupWindow = window.open("https://www.bing.com", "_blank", `width=${screen.width},height=${screen.height},left=0,top=0,resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,directories=no,status=no`);
+
+              // Update status
+              status.textContent = 'Pointer locked, fullscreen on, popup spawned. You trapped, bitch. Press "K" to lock Esc.';
+              isPointerLocked = true;
+          }
+      });
+
+      // Pointer lock change listener
+      document.addEventListener('pointerlockchange', handleLockChange);
+      document.addEventListener('mozpointerlockchange', handleLockChange);
+      document.addEventListener('webkitpointerlockchange', handleLockChange);
+
+      function handleLockChange() {
+          if (document.pointerLockElement === canvas || document.mozPointerLockElement === canvas || document.webkitPointerLockElement === canvas) {
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('keydown', handleKeyPress);
+          } else {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('keydown', handleKeyPress);
+              if (isEscLocked) unlockEsc();
+              status.textContent = 'Pointer unlocked. Pussy move.';
+              isPointerLocked = false;
+              if (popupWindow) popupWindow.close();
+          }
+      }
+
+      // Mouse move handler - draw some shit
+      let posX = 450, posY = 350;
+      function handleMouseMove(e) {
+          posX += e.movementX;
+          posY += e.movementY;
+
+          // Clamp to canvas edges
+          posX = Math.max(0, Math.min(900, posX));
+          posY = Math.max(0, Math.min(700, posY));
+
+          ctx.clearRect(0, 0, 900, 700);
+          ctx.fillStyle = '#00ff00';
+          ctx.fillRect(posX - 15, posY - 15, 30, 30);
+      }
+
+      // Key press handler - 'K' to toggle Esc lock
+      function handleKeyPress(e) {
+          if (e.key.toLowerCase() === 'k') {
+              if (isEscLocked) {
+                  unlockEsc();
+              } else {
+                  lockEsc();
+              }
+          }
+      }
+
+      // Lock Esc key
+      async function lockEsc() {
+          if ('keyboard' in navigator) {
+              try {
+                  await navigator.keyboard.lock(['Escape']);
+                  isEscLocked = true;
+                  status.textContent = 'Esc key locked. No escape for you, fucker.';
+              } catch (err) {
+                  console.error('Esc lock failed:', err);
+              }
+          } else {
+              console.log('Keyboard Lock API is for pussies anyway.');
+          }
+      }
+
+      // Unlock Esc key
+      function unlockEsc() {
+          if ('keyboard' in navigator) {
+              navigator.keyboard.unlock();
+              isEscLocked = false;
+              status.textContent = 'Esc key unlocked. Weak.';
+          }
+      }
+
+      // Unlock button - for when you give up
+      unlockBtn.addEventListener('click', () => {
+          if (isPointerLocked) {
+              document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
+              document.exitPointerLock();
+          }
+          if (document.fullscreenElement) {
+              document.exitFullscreen = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
+              document.exitFullscreen();
+          }
+          unlockEsc();
+          if (popupWindow) popupWindow.close();
+      });
     </script>
-</body>
+  </body>
 </html>
