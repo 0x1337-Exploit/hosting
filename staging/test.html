@@ -1,80 +1,145 @@
-<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pointer Lock Test with 3s Delay</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pointer Lock with Keyboard Lock API Example</title>
     <style>
-        body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #000; color: #fff; }
-        canvas { border: 1px solid #fff; cursor: none; } /* Hide cursor for immersion */
-        button { margin-top: 20px; padding: 10px 20px; background: #ff0; color: #000; border: none; cursor: pointer; }
-        button:hover { background: #f00; }
-        #status { margin-top: 10px; font-size: 18px; }
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+      canvas {
+        border: 1px solid #000;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #333;
+      }
+      #esc-status {
+        margin-top: 10px;
+        font-size: 16px;
+        color: #666;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <canvas id="canvas" width="800" height="600"></canvas>
-    <button onclick="triggerLockWithDelay()">Test Pointer Lock (3s Delay)</button>
-    <button onclick="redirectWithDelay()">Redirect to Google (1s Delay)</button>
-    <div id="status">Status: Idle</div>
-
+    <div id="status">
+      Click canvas to lock pointer. Press 'L' to toggle Esc lock.
+    </div>
+    <div id="esc-status">Esc Key: Unlocked</div>
     <script>
-        const canvas = document.getElementById('canvas');
-        const status = document.getElementById('status');
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const escStatus = document.getElementById("esc-status");
 
-        // Event listeners for pointer lock changes
-        document.addEventListener('pointerlockchange', () => {
-            if (document.pointerLockElement === canvas) {
-                status.textContent = 'Status: Pointer Locked! Move your mouse freely.';
-                console.log('Pointer locked successfully.');
-            } else {
-                status.textContent = 'Status: Pointer Unlocked.';
-                console.log('Pointer unlocked.');
-            }
-        });
+      let isEscLocked = false;
 
-        document.addEventListener('pointerlockerror', () => {
-            status.textContent = 'Status: Pointer Lock Error!';
-            console.error('Pointer lock error occurred.');
-        });
+      // Function to request pointer lock
+      canvas.addEventListener("click", () => {
+        canvas.requestPointerLock =
+          canvas.requestPointerLock ||
+          canvas.mozRequestPointerLock ||
+          canvas.webkitRequestPointerLock;
+        canvas.requestPointerLock();
+      });
 
-        // Function to request lock with 3-second delay
-        function triggerLockWithDelay() {
-            status.textContent = 'Status: Waiting 3 seconds...';
-            console.log('Delay started...');
+      // Handle pointer lock change
+      document.addEventListener("pointerlockchange", lockChangeAlert, false);
+      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
+      document.addEventListener(
+        "webkitpointerlockchange",
+        lockChangeAlert,
+        false
+      );
 
-            setTimeout(() => {
-                canvas.requestPointerLock();
-                status.textContent = 'Status: Requesting Pointer Lock...';
-                console.log('Requesting pointer lock after delay.');
-            }, 3000); // 3-second delay
+      function lockChangeAlert() {
+        if (
+          document.pointerLockElement === canvas ||
+          document.mozPointerLockElement === canvas ||
+          document.webkitPointerLockElement === canvas
+        ) {
+          console.log("Pointer locked");
+          document.addEventListener("mousemove", updatePosition, false);
+          document.addEventListener("keydown", handleKeyDown, false);
+        } else {
+          console.log("Pointer unlocked");
+          document.removeEventListener("mousemove", updatePosition, false);
+          document.removeEventListener("keydown", handleKeyDown, false);
+          if (isEscLocked) {
+            unlockEsc();
+          }
         }
+      }
 
-        // Function to redirect with 1-second delay
-        function redirectWithDelay() {
-            status.textContent = 'Status: Redirecting in 1 second...';
-            console.log('Redirect delay started...');
+      // Track mouse movement when locked
+      let x = 400,
+        y = 300; // Starting position
+      function updatePosition(e) {
+        x += e.movementX;
+        y += e.movementY;
 
-            setTimeout(() => {
-                window.location.href = 'https://www.google.com';
-                console.log('Redirecting to Google.');
-            }, 1000); // 1-second delay
+        // Clamp to canvas bounds
+        if (x > 800) x = 800;
+        if (x < 0) x = 0;
+        if (y > 600) y = 600;
+        if (y < 0) y = 0;
+
+        draw();
+      }
+
+      // Simple draw function
+      function draw() {
+        ctx.clearRect(0, 0, 800, 600);
+        ctx.fillStyle = "red";
+        ctx.fillRect(x - 10, y - 10, 20, 20); // Draw a square at mouse position
+      }
+
+      // Handle keydown for toggling Esc lock (press 'L' to toggle)
+      function handleKeyDown(e) {
+        if (e.key === "l" || e.key === "L") {
+          if (isEscLocked) {
+            unlockEsc();
+          } else {
+            lockEsc();
+          }
         }
+      }
 
-        // Optional: Exit lock on ESC key (browser default, but logging it)
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.pointerLockElement) {
-                document.exitPointerLock();
-            }
-        });
+      // Function to lock Esc key using Keyboard Lock API
+      async function lockEsc() {
+        try {
+          if ("keyboard" in navigator) {
+            await navigator.keyboard.lock(["Escape"]);
+            isEscLocked = true;
+            escStatus.textContent = "Esc Key: Locked";
+            console.log("Esc key locked");
+          } else {
+            console.log("Keyboard Lock API not supported");
+          }
+        } catch (err) {
+          console.error("Failed to lock Esc:", err);
+        }
+      }
 
-        // Basic canvas setup (draw something simple)
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#333';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#fff';
-        ctx.font = '20px Arial';
-        ctx.fillText('Click button to test Pointer Lock with delay', 100, 300);
+      // Function to unlock Esc key
+      function unlockEsc() {
+        if ("keyboard" in navigator) {
+          navigator.keyboard.unlock();
+          isEscLocked = false;
+          escStatus.textContent = "Esc Key: Unlocked";
+          console.log("Esc key unlocked");
+        }
+      }
+
+      draw(); // Initial draw
     </script>
-</body>
+  </body>
 </html>
