@@ -45,7 +45,7 @@ text-align: center;
 </head>
 <body>
 <canvas id="canvas" width="800" height="600"></canvas>
-<div id="status">Click canvas to lock pointer & enter fullscreen. Press 'L' to toggle Esc lock.</div>
+<div id="status">Click canvas to lock pointer & enter fullscreen. Press 'L' to toggle Esc lock. v2</div>
 <div id="esc-status">Esc Key: Unlocked</div>
 <div id="exit-dialog">Exiting in <span id="countdown">3</span> seconds...</div>
     <script>
@@ -194,7 +194,7 @@ text-align: center;
         async function lockEsc() {
             try {
                 if ('keyboard' in navigator && isFullscreen) { // Only lock in fullscreen
-                    await navigator.keyboard.lock(['Escape']);
+                    //await navigator.keyboard.lock(['Escape']);
                     isEscLocked = true;
                     escStatus.textContent = 'Esc Key: Locked';
                     console.log('Esc key locked');
