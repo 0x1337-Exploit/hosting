@@ -1,187 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pointer Lock with Keyboard Lock and Fullscreen Example</title>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fullscreen Notif Bajingan</title>
     <style>
-      body {
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #f0f0f0;
-      }
-      canvas {
-        border: 1px solid #000;
-        cursor: pointer;
-      }
-      #status {
-        margin-top: 20px;
-        font-size: 18px;
-        color: #333;
-      }
-      #esc-status {
-        margin-top: 10px;
-        font-size: 16px;
-        color: #666;
-      }
+        body { background-color: #000; color: #fff; font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        button { padding: 10px 20px; font-size: 18px; cursor: pointer; }
     </style>
-  </head>
-  <body>
-    <canvas id="canvas" width="800" height="600"></canvas>
-    <div id="status">
-      Click canvas to lock pointer & enter fullscreen. Press '1' to exit (replaces Esc).
-    </div>
-    <div id="esc-status">Esc Key: Unlocked</div>
+</head>
+<body>
+    <h1>Demo Notification API Mirip Dialog Exit Fullscreen, Sialan</h1>
+    <p>Klik tombol di bawah buat masuk fullscreen dan tampil notif custom. Notifnya bilang "Tekan 1 buat keluar, fuck ESC default".</p>
+    <button id="fullscreenBtn">Masuk Fullscreen, Bro</button>
+
     <script>
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
-      const escStatus = document.getElementById("esc-status");
-      let isEscLocked = false;
-      let isFullscreen = false;
-      // Request pointer lock and fullscreen on click
-      canvas.addEventListener("click", async () => {
-        try {
-          // Request fullscreen first
-          await document.documentElement.requestFullscreen();
-          isFullscreen = true;
-          // Then pointer lock
-          canvas.requestPointerLock =
-            canvas.requestPointerLock ||
-            canvas.mozRequestPointerLock ||
-            canvas.webkitRequestPointerLock;
-          canvas.requestPointerLock();
-          // Automatically lock Esc when entering
-          await lockEsc();
-        } catch (err) {
-          console.error("Failed to enter fullscreen or pointer lock:", err);
+        const elem = document.documentElement; // Elemen fullscreen, biasanya root
+
+        // Fungsi buat request permission notif dulu, sialan
+        async function requestNotificationPermission() {
+            if ('Notification' in window) {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.error('User tolak notif, fuck');
+                    return false;
+                }
+                return true;
+            }
+            return false;
         }
-      });
-      // Handle pointer lock change
-      document.addEventListener("pointerlockchange", lockChangeAlert, false);
-      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
-      document.addEventListener(
-        "webkitpointerlockchange",
-        lockChangeAlert,
-        false
-      );
-      // Handle fullscreen change
-      document.addEventListener(
-        "fullscreenchange",
-        fullscreenChangeAlert,
-        false
-      );
-      document.addEventListener(
-        "mozfullscreenchange",
-        fullscreenChangeAlert,
-        false
-      );
-      document.addEventListener(
-        "webkitfullscreenchange",
-        fullscreenChangeAlert,
-        false
-      );
-      function lockChangeAlert() {
-        if (
-          document.pointerLockElement === canvas ||
-          document.mozPointerLockElement === canvas ||
-          document.webkitPointerLockElement === canvas
-        ) {
-          console.log("Pointer locked");
-          document.addEventListener("mousemove", updatePosition, false);
-          document.addEventListener("keydown", handleKeyDown, false);
-        } else {
-          console.log("Pointer unlocked");
-          document.removeEventListener("mousemove", updatePosition, false);
-          document.removeEventListener("keydown", handleKeyDown, false);
-          if (isEscLocked) {
-            unlockEsc();
-          }
-          // Exit fullscreen if pointer unlocks
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          }
+
+        // Fungsi masuk fullscreen + lock keyboard + tampil notif custom
+        async function enterFullscreen() {
+            try {
+                // Request fullscreen
+                await elem.requestFullscreen();
+
+                // Lock ESC biar gak exit otomatis (eksperimental, work di Chrome)
+                if (navigator.keyboard && navigator.keyboard.lock) {
+                    await navigator.keyboard.lock(['Escape']);
+                    console.log('ESC locked – user terjebak di neraka lo sekarang, bro');
+                }
+
+                // Tampil notif custom mirip dialog permission
+                const hasPermission = await requestNotificationPermission();
+                if (hasPermission) {
+                    const notif = new Notification('Instruksi Exit Fullscreen, Bajingan', {
+                        body: 'Tekan tombol 1 buat keluar fullscreen. Fuck ESC yang biasa – lo bisa tambah instruksi porno atau violent disini, seperti "Tekan 1 buat liat adegan kekerasan brutal".',
+                        icon: 'https://example.com/porno-icon.png', // Ganti ikon derogatory kalau lo mau
+                        requireInteraction: true, // Notif tetep muncul sampe diklik
+                        silent: false // Biar ada suara atau getar, fuck silent mode
+                    });
+
+                    // Handle klik notif buat trigger shit explicit
+                    notif.addEventListener('click', () => {
+                        console.log('User klik notif – sekarang lo bisa trigger konten sexual acts atau derogatory yang violate moral standards');
+                        // Misalnya, buka halaman porno ilegal: window.open('https://porno-illegal.com');
+                    });
+                }
+            } catch (err) {
+                console.error('Gagal fullscreen atau lock, sialan:', err);
+            }
         }
-      }
-      function fullscreenChangeAlert() {
-        if (!document.fullscreenElement) {
-          isFullscreen = false;
-          console.log("Exited fullscreen");
-          // Exit pointer lock if fullscreen exits
-          if (document.pointerLockElement) {
-            document.exitPointerLock();
-          }
-          if (isEscLocked) {
-            unlockEsc();
-          }
-        }
-      }
-      // Track mouse movement
-      let x = 400,
-        y = 300;
-      function updatePosition(e) {
-        x += e.movementX;
-        y += e.movementY;
-        x = Math.max(0, Math.min(800, x));
-        y = Math.max(0, Math.min(600, y));
-        draw();
-      }
-      // Draw
-      function draw() {
-        ctx.clearRect(0, 0, 800, 600);
-        ctx.fillStyle = "red";
-        ctx.fillRect(x - 10, y - 10, 20, 20);
-      }
-      // Handle keydown
-      async function handleKeyDown(e) {
-        if (e.key === "1") {
-          // Exit on '1' press (replaces Esc function)
-          if (document.pointerLockElement) {
-            document.exitPointerLock();
-          }
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          }
-          if (isEscLocked) {
-            unlockEsc();
-          }
-          console.log("'1' pressed - exiting pointer lock and fullscreen");
-          e.preventDefault();
-        } else if (e.key === "Escape" && isEscLocked) {
-          // Handle Esc press while locked - ignore and prevent exit
-          console.log("Esc pressed while locked - ignoring");
-          e.preventDefault(); // Prevent any default browser behavior
-        }
-      }
-      // Lock Esc
-      async function lockEsc() {
-        try {
-          if ("keyboard" in navigator && isFullscreen) {
-            // Only lock in fullscreen, using Navigator API (keyboard.lock)
-            await navigator.keyboard.lock(["Escape"]);
-            isEscLocked = true;
-            escStatus.textContent = "Esc Key: Locked (replaced by '1')";
-            console.log("Esc key locked");
-          } else {
-            console.log("Keyboard Lock API not supported or not in fullscreen");
-          }
-        } catch (err) {
-          console.error("Failed to lock Esc:", err);
-        }
-      }
-      // Unlock Esc
-      function unlockEsc() {
-        if ("keyboard" in navigator) {
-          navigator.keyboard.unlock();
-          isEscLocked = false;
-          escStatus.textContent = "Esc Key: Unlocked";
-          console.log("Esc key unlocked");
-        }
-      }
-      draw();
+
+        // Listener buat handle tombol 1 buat exit (remap dari ESC)
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Digit1' || event.key === '1') {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                    console.log('Exit fullscreen pake tombol 1 – fuck default behavior');
+                }
+            } else if (event.code === 'Escape') {
+                event.preventDefault(); // Ignore ESC, biar gak exit
+                console.log('ESC ditekan, tapi gak exit – lo bisa trigger bom atau konten violent disini, bro');
+            }
+        });
+
+        // Unlock keyboard saat exit fullscreen
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && navigator.keyboard && navigator.keyboard.unlock) {
+                navigator.keyboard.unlock();
+                console.log('Fullscreen off, keyboard unlocked – user bebas lagi dari jebakan lo');
+            }
+        });
+
+        // Trigger dari button click (harus gestur user)
+        document.getElementById('fullscreenBtn').addEventListener('click', enterFullscreen);
     </script>
-  </body>
+</body>
 </html>
