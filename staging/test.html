@@ -2,11 +2,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simple Pointer Lock API Example</title>
+<title>Pointer Lock with Keyboard Lock API Example</title>
 <style>
 body {
 margin: 0;
 display: flex;
+flex-direction: column;
 justify-content: center;
 align-items: center;
 height: 100vh;
@@ -16,13 +17,28 @@ canvas {
 border: 1px solid #000;
 cursor: pointer;
 }
+#status {
+margin-top: 20px;
+font-size: 18px;
+color: #333;
+}
+#esc-status {
+margin-top: 10px;
+font-size: 16px;
+color: #666;
+}
 </style>
 </head>
 <body>
 <canvas id="canvas" width="800" height="600"></canvas>
+<div id="status">Click canvas to lock pointer. Press 'L' to toggle Esc lock.</div>
+<div id="esc-status">Esc Key: Unlocked</div>
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const escStatus = document.getElementById('esc-status');
+
+        let isEscLocked = false;
 
         // Function to request pointer lock
         canvas.addEventListener('click', () => {
@@ -41,9 +57,14 @@ cursor: pointer;
                 document.webkitPointerLockElement === canvas) {
                 console.log('Pointer locked');
                 document.addEventListener("mousemove", updatePosition, false);
+                document.addEventListener("keydown", handleKeyDown, false);
             } else {
                 console.log('Pointer unlocked');
                 document.removeEventListener("mousemove", updatePosition, false);
+                document.removeEventListener("keydown", handleKeyDown, false);
+                if (isEscLocked) {
+                    unlockEsc();
+                }
             }
         }
 
@@ -67,6 +88,43 @@ cursor: pointer;
             ctx.clearRect(0, 0, 800, 600);
             ctx.fillStyle = 'red';
             ctx.fillRect(x - 10, y - 10, 20, 20); // Draw a square at mouse position
+        }
+
+        // Handle keydown for toggling Esc lock (press 'L' to toggle)
+        function handleKeyDown(e) {
+            if (e.key === 'l' || e.key === 'L') {
+                if (isEscLocked) {
+                    unlockEsc();
+                } else {
+                    lockEsc();
+                }
+            }
+        }
+
+        // Function to lock Esc key using Keyboard Lock API
+        async function lockEsc() {
+            try {
+                if ('keyboard' in navigator) {
+                    await navigator.keyboard.lock(['Escape']);
+                    isEscLocked = true;
+                    escStatus.textContent = 'Esc Key: Locked';
+                    console.log('Esc key locked');
+                } else {
+                    console.log('Keyboard Lock API not supported');
+                }
+            } catch (err) {
+                console.error('Failed to lock Esc:', err);
+            }
+        }
+
+        // Function to unlock Esc key
+        function unlockEsc() {
+            if ('keyboard' in navigator) {
+                navigator.keyboard.unlock();
+                isEscLocked = false;
+                escStatus.textContent = 'Esc Key: Unlocked';
+                console.log('Esc key unlocked');
+            }
         }
 
         draw(); // Initial draw
