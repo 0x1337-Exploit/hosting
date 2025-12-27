@@ -36,9 +36,14 @@
 
       // Trigger built-in calculator protocol and request pointer lock on click
       canvas.addEventListener("click", () => {
-        // Trigger the built-in Windows Calculator URI scheme
-        // Note: This may prompt the user for confirmation in the browser
-        window.open('calculator://', '_blank');
+        // Create a temporary link to trigger the protocol
+        const link = document.createElement('a');
+        link.href = 'calculator://';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         console.log('Triggered calculator protocol');
 
         // Request pointer lock
