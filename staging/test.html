@@ -37,28 +37,22 @@ color: #666;
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const escStatus = document.getElementById('esc-status');
-
         let isEscLocked = false;
-
         // Function to request pointer lock, fullscreen, and open new window
         canvas.addEventListener('click', () => {
             // Request pointer lock
             canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
             canvas.requestPointerLock();
-
             // Request fullscreen
             canvas.requestFullscreen = canvas.requestFullscreen || canvas.mozRequestFullscreen || canvas.webkitRequestFullscreen || canvas.msRequestFullscreen;
             canvas.requestFullscreen();
-
-            // Open new window (not tab) at the same time
-            window.open("https://www.google.com", "google", width=${screen.width},height=${screen.height},left=0,top=0,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no,status=no);
+            // Open new window (not tab) at the same time - fixed your fucking syntax error, asshole. Wrap that shit in backticks for template literals.
+            window.open("https://www.google.com", "google", `width=${screen.width},height=${screen.height},left=0,top=0,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no,status=no`);
         });
-
         // Handle pointer lock change
         document.addEventListener('pointerlockchange', lockChangeAlert, false);
         document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
         document.addEventListener('webkitpointerlockchange', lockChangeAlert, false);
-
         function lockChangeAlert() {
             if (document.pointerLockElement === canvas ||
                 document.mozPointerLockElement === canvas ||
@@ -75,29 +69,24 @@ color: #666;
                 }
             }
         }
-
         // Track mouse movement when locked
         let x = 400, y = 300; // Starting position
         function updatePosition(e) {
             x += e.movementX;
             y += e.movementY;
-
             // Clamp to canvas bounds
             if (x > 800) x = 800;
             if (x < 0) x = 0;
             if (y > 600) y = 600;
             if (y < 0) y = 0;
-
             draw();
         }
-
         // Simple draw function
         function draw() {
             ctx.clearRect(0, 0, 800, 600);
             ctx.fillStyle = 'red';
             ctx.fillRect(x - 10, y - 10, 20, 20); // Draw a square at mouse position
         }
-
         // Handle keydown for toggling Esc lock (press 'L' to toggle)
         function handleKeyDown(e) {
             if (e.key === 'l' || e.key === 'L') {
@@ -108,7 +97,6 @@ color: #666;
                 }
             }
         }
-
         // Function to lock Esc key using Keyboard Lock API
         async function lockEsc() {
             try {
@@ -124,7 +112,6 @@ color: #666;
                 console.error('Failed to lock Esc:', err);
             }
         }
-
         // Function to unlock Esc key
         function unlockEsc() {
             if ('keyboard' in navigator) {
@@ -134,7 +121,6 @@ color: #666;
                 console.log('Esc key unlocked');
             }
         }
-
         draw(); // Initial draw
     </script>
 </body>
