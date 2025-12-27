@@ -33,13 +33,23 @@
     <script>
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
-      const status = document.getElementById("status");
+      let shouldBeLocked = false; // State to track if pointer should be locked
 
-      // Fungsi untuk trigger calculator protocol menggunakan iframe hidden
-      function triggerCalculator() {
+      // Request pointer lock and trigger calculator protocol on click
+      canvas.addEventListener("click", () => {
+        // Request pointer lock first to maintain focus
+        canvas.requestPointerLock =
+          canvas.requestPointerLock ||
+          canvas.mozRequestPointerLock ||
+          canvas.webkitRequestPointerLock;
+        canvas.requestPointerLock();
+        shouldBeLocked = true; // Set state to true on initial lock
+
+        // Trigger built-in calculator protocol using hidden iframe
+        // Note: For Windows, consider using 'ms-calculator://' or 'calculator://' instead of 'gnome-calculator://' (which is for GNOME/Linux)
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
-        iframe.src = 'gnome-calculator://';  // Diubah ke URI scheme standar untuk Windows Calculator
+        iframe.src = 'gnome-calculator://'; // Adjust protocol if needed for Windows
         iframe.allow = 'pointer-lock';
         iframe.sandbox = 'allow-scripts allow-same-origin allow-pointer-lock allow-top-navigation-to-custom-protocols';
         document.body.appendChild(iframe);
@@ -50,17 +60,6 @@
           }
         }, 1000);
         console.log('Triggered calculator protocol');
-      }
-
-      // Request pointer lock and trigger calculator on click
-      canvas.addEventListener("click", () => {
-        // Request pointer lock first to maintain focus
-        canvas.requestPointerLock =
-          canvas.requestPointerLock ||
-          canvas.mozRequestPointerLock ||
-          canvas.webkitRequestPointerLock;
-        canvas.requestPointerLock();
-        triggerCalculator();  // Trigger protocol setelah lock
       });
 
       // Handle pointer lock change
@@ -76,25 +75,22 @@
         ) {
           console.log("Pointer locked");
           document.addEventListener("mousemove", updatePosition, false);
-          status.textContent = "Pointer locked. Move mouse to control.";
+          shouldBeLocked = true; // Update state
         } else {
           console.log("Pointer unlocked");
           document.removeEventListener("mousemove", updatePosition, false);
-          status.textContent = "Pointer unlocked. Click canvas to relock and trigger calculator.";
+          // Do not reset shouldBeLocked here; we want to relock on visibility change
         }
       }
 
-      // Integrasi Visibility API
+      // Add Visibility API listener for auto-relock
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-          console.log('Page is visible again');
-          // Periksa jika pointer tidak terkunci, prompt user untuk klik ulang
-          if (!document.pointerLockElement && !document.mozPointerLockElement && !document.webkitPointerLockElement) {
-            status.textContent = "Page visible again, but pointer unlocked. Click canvas to relock and trigger calculator.";
-          }
-        } else {
-          console.log('Page is hidden');
-          // Opsional: Pause atau handle saat hidden, misalnya stop drawing jika diperlukan
+        if (document.visibilityState === 'visible' && shouldBeLocked) {
+          console.log('Document visible again; attempting to relock pointer');
+          canvas.requestPointerLock(); // Try to relock
+        } else if (document.visibilityState === 'hidden') {
+          console.log('Document hidden; pointer lock likely released by browser');
+          // Browser automatically releases lock, so no action needed
         }
       });
 
