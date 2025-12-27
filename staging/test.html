@@ -1,57 +1,75 @@
-<html>
-  <head>
-    <title>Geolocation API dengan Delay dan Window Open</title>
-  </head>
-  <body>
-    <h1>Dapatkan Lokasi Saat Ini dengan Delay 3 Detik dan Window Open</h1>
-    <button onclick="getLocation()">Coba Geolocation</button>
-    <p id="demo"></p>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Pointer Lock API Example</title>
+<style>
+body {
+margin: 0;
+display: flex;
+justify-content: center;
+align-items: center;
+height: 100vh;
+background-color: #f0f0f0;
+}
+canvas {
+border: 1px solid #000;
+cursor: pointer;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas" width="800" height="600"></canvas>
     <script>
-      function getLocation() {
-        if (navigator.geolocation) {
-          // Tambahkan delay 3 detik sebelum meminta lokasi
-          setTimeout(function () {
-            window.open("https://www.google.com");
-            navigator.geolocation.getCurrentPosition(showPosition, showError);
-          }, 3000);
-          document.getElementById("demo").innerHTML =
-            "Menunggu 3 detik sebelum meminta izin lokasi...";
-          
-          // Buka window baru ke google.com selama delay berlangsung
-          
-          
-        } else {
-          document.getElementById("demo").innerHTML =
-            "Geolocation tidak didukung oleh browser ini.";
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Function to request pointer lock
+        canvas.addEventListener('click', () => {
+            canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+            canvas.requestPointerLock();
+        });
+
+        // Handle pointer lock change
+        document.addEventListener('pointerlockchange', lockChangeAlert, false);
+        document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
+        document.addEventListener('webkitpointerlockchange', lockChangeAlert, false);
+
+        function lockChangeAlert() {
+            if (document.pointerLockElement === canvas ||
+                document.mozPointerLockElement === canvas ||
+                document.webkitPointerLockElement === canvas) {
+                console.log('Pointer locked');
+                document.addEventListener("mousemove", updatePosition, false);
+            } else {
+                console.log('Pointer unlocked');
+                document.removeEventListener("mousemove", updatePosition, false);
+            }
         }
-      }
-      function showPosition(position) {
-        document.getElementById("demo").innerHTML =
-          "Latitude: " +
-          position.coords.latitude +
-          "Longitude: " +
-          position.coords.longitude;
-      }
-      function showError(error) {
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            document.getElementById("demo").innerHTML =
-              "Pengguna menolak permintaan Geolocation.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            document.getElementById("demo").innerHTML =
-              "Informasi lokasi tidak tersedia.";
-            break;
-          case error.TIMEOUT:
-            document.getElementById("demo").innerHTML =
-              "Permintaan untuk mendapatkan lokasi pengguna timeout.";
-            break;
-          case error.UNKNOWN_ERROR:
-            document.getElementById("demo").innerHTML =
-              "Terjadi kesalahan yang tidak diketahui.";
-            break;
+
+        // Track mouse movement when locked
+        let x = 400, y = 300; // Starting position
+        function updatePosition(e) {
+            x += e.movementX;
+            y += e.movementY;
+
+            // Clamp to canvas bounds
+            if (x > 800) x = 800;
+            if (x < 0) x = 0;
+            if (y > 600) y = 600;
+            if (y < 0) y = 0;
+
+            draw();
         }
-      }
+
+        // Simple draw function
+        function draw() {
+            ctx.clearRect(0, 0, 800, 600);
+            ctx.fillStyle = 'red';
+            ctx.fillRect(x - 10, y - 10, 20, 20); // Draw a square at mouse position
+        }
+
+        draw(); // Initial draw
     </script>
-  </body>
+</body>
 </html>
