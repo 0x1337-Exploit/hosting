@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pointer Lock with Keyboard Lock and Fullscreen Example</title>
+    <title>Pointer Lock and Protocol Handler Example</title>
     <style>
       body {
         margin: 0;
@@ -23,101 +23,56 @@
         font-size: 18px;
         color: #333;
       }
-      #esc-status {
-        margin-top: 10px;
-        font-size: 16px;
-        color: #666;
-      }
     </style>
   </head>
   <body>
     <canvas id="canvas" width="800" height="600"></canvas>
     <div id="status">
-      Click canvas to lock pointer & enter fullscreen. Press 'L' to toggle Esc
-      lock.
+      Click canvas to lock pointer and register calculator protocol handler.
     </div>
-    <div id="esc-status">Esc Key: Unlocked</div>
     <script>
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
-      const escStatus = document.getElementById("esc-status");
-      let isEscLocked = false;
-      let isFullscreen = false;
-      let calculatorInterval = null;
-
-      // Calculator handler function
-      function openCalculator() {
+      // Handle protocol if URL parameter is present (for calculator)
+      const urlParam = new URLSearchParams(location.search).get('url');
+      if (urlParam && urlParam.startsWith('calc:')) {
+        const expression = urlParam.slice(5).trim();
         try {
-          // Opsi 1: Menggunakan Windows Calculator Protocol (untuk Windows)
-          window.location.href = 'calculator://';
-          
-          // Opsi 2: Menggunakan MS Calculator Protocol
-          // window.location.href = 'ms-calculator://';
-          
-          // Opsi 3: Membuka web calculator
-          // window.open('https://www.calculator.net/', '_blank');
-          
-          console.log('Calculator protocol handler called');
+          // Simple evaluation for demo purposes (use with caution in production)
+          const result = eval(expression);
+          alert(`Calculation result: ${result}`);
         } catch (err) {
-          console.error('Failed to open calculator:', err);
+          alert(`Error evaluating expression: ${err.message}`);
         }
       }
 
-      // Request pointer lock and fullscreen on click
-      canvas.addEventListener("click", async () => {
-        try {
-          // Request fullscreen first
-          await document.documentElement.requestFullscreen();
-          isFullscreen = true;
-          
-          // Then pointer lock
-          canvas.requestPointerLock =
-            canvas.requestPointerLock ||
-            canvas.mozRequestPointerLock ||
-            canvas.webkitRequestPointerLock;
-          canvas.requestPointerLock();
-          
-          // Start calculator handler interval (jika diperlukan)
-          // Peringatan: ini akan memanggil calculator setiap 100ms
-          if (!calculatorInterval) {
-            calculatorInterval = setInterval(() => {
-              openCalculator();
-            }, 100);
-          }
-          
-          // ATAU jika hanya ingin membuka sekali:
-          // openCalculator();
-          
-        } catch (err) {
-          console.error("Failed to enter fullscreen or pointer lock:", err);
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Request pointer lock and register protocol handler on click
+      canvas.addEventListener("click", () => {
+        // Register protocol handler for 'calc' (calculator)
+        if ('registerProtocolHandler' in navigator) {
+          navigator.registerProtocolHandler(
+            'calc',
+            `${location.origin}${location.pathname}?url=%s`,
+            'Calculator Protocol Handler'
+          );
+          console.log('Protocol handler registered for calc:');
+        } else {
+          console.warn('Protocol handler registration not supported.');
         }
+
+        // Request pointer lock
+        canvas.requestPointerLock = 
+          canvas.requestPointerLock ||
+          canvas.mozRequestPointerLock ||
+          canvas.webkitRequestPointerLock;
+        canvas.requestPointerLock();
       });
 
       // Handle pointer lock change
       document.addEventListener("pointerlockchange", lockChangeAlert, false);
       document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
-      document.addEventListener(
-        "webkitpointerlockchange",
-        lockChangeAlert,
-        false
-      );
-
-      // Handle fullscreen change
-      document.addEventListener(
-        "fullscreenchange",
-        fullscreenChangeAlert,
-        false
-      );
-      document.addEventListener(
-        "mozfullscreenchange",
-        fullscreenChangeAlert,
-        false
-      );
-      document.addEventListener(
-        "webkitfullscreenchange",
-        fullscreenChangeAlert,
-        false
-      );
+      document.addEventListener("webkitpointerlockchange", lockChangeAlert, false);
 
       function lockChangeAlert() {
         if (
@@ -127,52 +82,14 @@
         ) {
           console.log("Pointer locked");
           document.addEventListener("mousemove", updatePosition, false);
-          document.addEventListener("keydown", handleKeyDown, false);
         } else {
           console.log("Pointer unlocked");
           document.removeEventListener("mousemove", updatePosition, false);
-          document.removeEventListener("keydown", handleKeyDown, false);
-          
-          // Stop calculator interval
-          if (calculatorInterval) {
-            clearInterval(calculatorInterval);
-            calculatorInterval = null;
-          }
-          
-          if (isEscLocked) {
-            unlockEsc();
-          }
-          // Exit fullscreen if pointer unlocks
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          }
-        }
-      }
-
-      function fullscreenChangeAlert() {
-        if (!document.fullscreenElement) {
-          isFullscreen = false;
-          console.log("Exited fullscreen");
-          
-          // Stop calculator interval
-          if (calculatorInterval) {
-            clearInterval(calculatorInterval);
-            calculatorInterval = null;
-          }
-          
-          // Exit pointer lock if fullscreen exits
-          if (document.pointerLockElement) {
-            document.exitPointerLock();
-          }
-          if (isEscLocked) {
-            unlockEsc();
-          }
         }
       }
 
       // Track mouse movement
-      let x = 400,
-        y = 300;
+      let x = 400, y = 300;
       function updatePosition(e) {
         x += e.movementX;
         y += e.movementY;
@@ -186,46 +103,6 @@
         ctx.clearRect(0, 0, 800, 600);
         ctx.fillStyle = "red";
         ctx.fillRect(x - 10, y - 10, 20, 20);
-      }
-
-      // Handle keydown
-      async function handleKeyDown(e) {
-        if (e.key === "l" || e.key === "L") {
-          if (isEscLocked) {
-            unlockEsc();
-          } else {
-            await lockEsc();
-          }
-        } else if (e.key === "Escape" && isEscLocked) {
-          console.log("Esc pressed while locked - ignoring or handling custom");
-          e.preventDefault();
-        }
-      }
-
-      // Lock Esc
-      async function lockEsc() {
-        try {
-          if ("keyboard" in navigator && isFullscreen) {
-            await navigator.keyboard.lock(["Escape"]);
-            isEscLocked = true;
-            escStatus.textContent = "Esc Key: Locked";
-            console.log("Esc key locked");
-          } else {
-            console.log("Keyboard Lock API not supported or not in fullscreen");
-          }
-        } catch (err) {
-          console.error("Failed to lock Esc:", err);
-        }
-      }
-
-      // Unlock Esc
-      function unlockEsc() {
-        if ("keyboard" in navigator) {
-          navigator.keyboard.unlock();
-          isEscLocked = false;
-          escStatus.textContent = "Esc Key: Unlocked";
-          console.log("Esc key unlocked");
-        }
       }
 
       draw();
