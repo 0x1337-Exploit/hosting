@@ -1,95 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trigger Built-in Calculator Protocol Example</title>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uji Visibility API dengan Fullscreen</title>
     <style>
-      body {
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #f0f0f0;
-      }
-      canvas {
-        border: 1px solid #000;
-        cursor: pointer;
-      }
-      #status {
-        margin-top: 20px;
-        font-size: 18px;
-        color: #333;
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="canvas" width="800" height="600"></canvas>
-    <div id="status">
-      Click canvas to lock pointer and trigger Windows Calculator protocol.
-    </div>
-    <script>
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
-      // Request pointer lock and trigger calculator protocol on click
-      canvas.addEventListener("click", () => {
-        // Request pointer lock first to maintain focus
-        canvas.requestPointerLock =
-          canvas.requestPointerLock ||
-          canvas.mozRequestPointerLock ||
-          canvas.webkitRequestPointerLock;
-        canvas.requestPointerLock();
-        // Trigger built-in calculator protocol using hidden iframe
-        // This avoids opening a new tab/window or redirecting the current page
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = 'gnome-calculator://';
-        iframe.allow = 'pointer-lock';
-        iframe.sandbox= 'allow-scripts allow-same-origin allow-pointer-lock allow-top-navigation-to-custom-protocols';
-        document.body.appendChild(iframe);
-        // Remove iframe after a short delay to clean up
-        setTimeout(() => {
-          if (iframe.parentNode) {
-            document.body.removeChild(iframe);
-          }
-        }, 1000);
-        console.log('Triggered calculator protocol');
-      });
-      // Handle pointer lock change
-      document.addEventListener("pointerlockchange", lockChangeAlert, false);
-      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
-      document.addEventListener("webkitpointerlockchange", lockChangeAlert, false);
-      function lockChangeAlert() {
-        if (
-          document.pointerLockElement === canvas ||
-          document.mozPointerLockElement === canvas ||
-          document.webkitPointerLockElement === canvas
-        ) {
-          console.log("Pointer locked");
-          document.addEventListener("mousemove", updatePosition, false);
-        } else {
-          console.log("Pointer unlocked");
-          document.removeEventListener("mousemove", updatePosition, false);
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f0f0f0;
         }
-      }
-      // Track mouse movement
-      let x = 400, y = 300;
-      function updatePosition(e) {
-        x += e.movementX;
-        y += e.movementY;
-        x = Math.max(0, Math.min(800, x));
-        y = Math.max(0, Math.min(600, y));
-        draw();
-      }
-      // Draw
-      function draw() {
-        ctx.clearRect(0, 0, 800, 600);
-        ctx.fillStyle = "red";
-        ctx.fillRect(x - 10, y - 10, 20, 20);
-      }
-      draw();
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Uji Visibility API</h1>
+    <p>Klik tombol di bawah untuk masuk ke mode fullscreen. Kemudian, coba beralih tab browser dan kembali lagi untuk melihat apakah fullscreen dipulihkan otomatis.</p>
+    <button id="fullscreenBtn">Masuk Fullscreen</button>
+    
+    <script>
+        // Variabel untuk mengontrol perilaku fullscreen
+        let shouldStayFullscreen = true;
+
+        // Event listener untuk visibilitychange (dari snippet Anda)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && shouldStayFullscreen && !document.fullscreenElement) {
+                console.log('User kembali - coba masuk fullscreen lagi');
+                setTimeout(() => {
+                    document.documentElement.requestFullscreen();
+                }, 500);
+            }
+        });
+
+        // Fungsi tambahan untuk tombol fullscreen manual
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                console.log('Masuk fullscreen secara manual');
+            } else {
+                document.exitFullscreen();
+                console.log('Keluar fullscreen');
+            }
+        });
+
+        // Event listener untuk mendeteksi perubahan fullscreen (opsional untuk logging)
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                console.log('Sekarang dalam mode fullscreen');
+            } else {
+                console.log('Keluar dari mode fullscreen');
+            }
+        });
     </script>
-  </body>
+</body>
 </html>
