@@ -31,7 +31,7 @@ color: #666;
 </head>
 <body>
 <canvas id="canvas" width="800" height="600"></canvas>
-<div id="status">Click canvas to lock pointer. Press 'L' to toggle Esc lock. v22</div>
+<div id="status">Click canvas to lock pointer. Press 'L' to toggle Esc lock.</div>
 <div id="esc-status">Esc Key: Unlocked</div>
     <script>
         const canvas = document.getElementById('canvas');
@@ -40,15 +40,18 @@ color: #666;
 
         let isEscLocked = false;
 
-        // Polyfill for requestPointerLock
-        canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-
-        // Polyfill for requestFullscreen
-        canvas.requestFullscreen = canvas.requestFullscreen || canvas.mozRequestFullScreen || canvas.webkitRequestFullscreen || canvas.msRequestFullscreen;
-
-        // Function to request pointer lock
+        // Function to request pointer lock, fullscreen, and open new window
         canvas.addEventListener('click', () => {
+            // Request pointer lock
+            canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
             canvas.requestPointerLock();
+
+            // Request fullscreen
+            canvas.requestFullscreen = canvas.requestFullscreen || canvas.mozRequestFullscreen || canvas.webkitRequestFullscreen || canvas.msRequestFullscreen;
+            canvas.requestFullscreen();
+
+            // Open new window (not tab) at the same time
+            window.open("https://www.google.com", "google", "width=800,height=600");
         });
 
         // Handle pointer lock change
@@ -63,8 +66,6 @@ color: #666;
                 console.log('Pointer locked');
                 document.addEventListener("mousemove", updatePosition, false);
                 document.addEventListener("keydown", handleKeyDown, false);
-                // After pointer lock, request fullscreen
-                canvas.requestFullscreen();
             } else {
                 console.log('Pointer unlocked');
                 document.removeEventListener("mousemove", updatePosition, false);
@@ -72,22 +73,6 @@ color: #666;
                 if (isEscLocked) {
                     unlockEsc();
                 }
-            }
-        }
-
-        // Handle fullscreen change
-        document.addEventListener('fullscreenchange', fullscreenChange, false);
-        document.addEventListener('mozfullscreenchange', fullscreenChange, false);
-        document.addEventListener('webkitfullscreenchange', fullscreenChange, false);
-        document.addEventListener('MSFullscreenChange', fullscreenChange, false);
-
-        function fullscreenChange() {
-            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-                console.log('Entered fullscreen');
-                // After entering fullscreen, open new window
-                window.open('https://www.google.com');
-            } else {
-                console.log('Exited fullscreen');
             }
         }
 
