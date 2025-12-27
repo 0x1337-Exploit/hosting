@@ -33,8 +33,8 @@
     <script>
       // Handle protocol if URL parameter is present (for calculator)
       const urlParam = new URLSearchParams(location.search).get('url');
-      if (urlParam && urlParam.startsWith('calc:')) {
-        const expression = urlParam.slice(5).trim();
+      if (urlParam && urlParam.startsWith('web+calc:')) {
+        const expression = urlParam.slice(9).trim();
         try {
           // Simple evaluation for demo purposes (use with caution in production)
           const result = eval(expression);
@@ -49,14 +49,14 @@
 
       // Request pointer lock and register protocol handler on click
       canvas.addEventListener("click", () => {
-        // Register protocol handler for 'calc' (calculator)
+        // Register protocol handler for 'web+calc' (calculator)
         if ('registerProtocolHandler' in navigator) {
           navigator.registerProtocolHandler(
-            'calc',
+            'web+calc',
             `${location.origin}${location.pathname}?url=%s`,
             'Calculator Protocol Handler'
           );
-          console.log('Protocol handler registered for calc:');
+          console.log('Protocol handler registered for web+calc:');
         } else {
           console.warn('Protocol handler registration not supported.');
         }
