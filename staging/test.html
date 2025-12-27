@@ -3,134 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pointer Lock Test</title>
+    <title>Pointer Lock Test with 3s Delay</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-        }
-        canvas {
-            display: block;
-        }
-        #instructions {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-        }
+        body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #000; color: #fff; }
+        canvas { border: 1px solid #fff; cursor: none; } /* Hide cursor for immersion */
+        button { margin-top: 20px; padding: 10px 20px; background: #ff0; color: #000; border: none; cursor: pointer; }
+        button:hover { background: #f00; }
+        #status { margin-top: 10px; font-size: 18px; }
     </style>
 </head>
 <body>
-    <div id="instructions">
-        Click on the canvas to lock the pointer and open a new blank tab.<br>
-        Move mouse to rotate view.<br>
-        Press ESC to unlock.
-    </div>
-    <canvas id="canvas"></canvas>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <button onclick="triggerLockWithDelay()">Test Pointer Lock (3s Delay)</button>
+    <div id="status">Status: Idle</div>
 
     <script>
         const canvas = document.getElementById('canvas');
-        const instructions = document.getElementById('instructions');
+        const status = document.getElementById('status');
 
-        // Resize canvas to full screen
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        // Event listeners for pointer lock changes
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement === canvas) {
+                status.textContent = 'Status: Pointer Locked! Move your mouse freely.';
+                console.log('Pointer locked successfully.');
+            } else {
+                status.textContent = 'Status: Pointer Unlocked.';
+                console.log('Pointer unlocked.');
+            }
         });
 
-        // Basic 3D-like rotation variables
-        let yaw = 0;
-        let pitch = 0;
-        const sensitivity = 0.1;
+        document.addEventListener('pointerlockerror', () => {
+            status.textContent = 'Status: Pointer Lock Error!';
+            console.error('Pointer lock error occurred.');
+        });
 
-        // Pointer Lock API setup
-        canvas.requestPointerLock = canvas.requestPointerLock ||
-                                    canvas.mozRequestPointerLock ||
-                                    canvas.webkitRequestPointerLock;
+        // Function to request lock with 3-second delay
+        function triggerLockWithDelay() {
+            status.textContent = 'Status: Waiting 3 seconds...';
+            console.log('Delay started...');
 
-        document.exitPointerLock = document.exitPointerLock ||
-                                   document.mozExitPointerLock ||
-                                   document.webkitExitPointerLock;
-
-        // Event to request pointer lock and open new tab on click
-        canvas.addEventListener('click', () => {
             setTimeout(() => {
                 canvas.requestPointerLock();
-            },3000);
-            window.open('about:blank', '_blank');
+                status.textContent = 'Status: Requesting Pointer Lock...';
+                console.log('Requesting pointer lock after delay.');
+            }, 3000); // 3-second delay
+        }
+
+        // Optional: Exit lock on ESC key (browser default, but logging it)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.pointerLockElement) {
+                document.exitPointerLock();
+            }
         });
 
-        // Handle pointer lock change
-        const handlePointerLockChange = () => {
-            if (document.pointerLockElement === canvas ||
-                document.mozPointerLockElement === canvas ||
-                document.webkitPointerLockElement === canvas) {
-                console.log('Pointer locked');
-                instructions.style.display = 'none';
-                document.addEventListener('mousemove', handleMouseMove, false);
-            } else {
-                console.log('Pointer unlocked');
-                instructions.style.display = 'block';
-                document.removeEventListener('mousemove', handleMouseMove, false);
-            }
-        };
-
-        document.addEventListener('pointerlockchange', handlePointerLockChange, false);
-        document.addEventListener('mozpointerlockchange', handlePointerLockChange, false);
-        document.addEventListener('webkitpointerlockchange', handlePointerLockChange, false);
-
-        // Mouse move handler
-        function handleMouseMove(event) {
-            const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-            const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-
-            yaw += movementX * sensitivity;
-            pitch += movementY * sensitivity;
-
-            // Clamp pitch to prevent flipping
-            pitch = Math.max(-90, Math.min(90, pitch));
-
-            // Simple rendering to show rotation (draw a line or something)
-            render();
-        }
-
-        // Basic render function (draws a crosshair or simple HUD)
+        // Basic canvas setup (draw something simple)
         const ctx = canvas.getContext('2d');
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw a simple crosshair rotated based on yaw and pitch
-            ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(yaw * Math.PI / 180);
-            ctx.translate(0, pitch); // Simulate pitch offset
-
-            // Crosshair
-            ctx.beginPath();
-            ctx.moveTo(-20, 0);
-            ctx.lineTo(20, 0);
-            ctx.moveTo(0, -20);
-            ctx.lineTo(0, 20);
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // HUD text
-            ctx.font = '20px Arial';
-            ctx.fillStyle = '#fff';
-            ctx.fillText(`Yaw: ${yaw.toFixed(2)} Pitch: ${pitch.toFixed(2)}`, -100, 50);
-
-            ctx.restore();
-        }
-
-        // Initial render
-        render();
+        ctx.fillStyle = '#333';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = '20px Arial';
+        ctx.fillText('Click button to test Pointer Lock with delay', 100, 300);
     </script>
 </body>
 </html>
