@@ -34,25 +34,30 @@
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
 
-      // Trigger built-in calculator protocol and request pointer lock on click
+      // Request pointer lock and trigger calculator protocol on click
       canvas.addEventListener("click", () => {
-        // Create a temporary iframe to trigger the protocol without redirect or new window
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none'; // Hide the iframe
-        iframe.src = 'calculator://';
-        document.body.appendChild(iframe);
-        // Remove the iframe after a short delay to clean up
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000);
-        console.log('Triggered calculator protocol via iframe');
-
-        // Request pointer lock
+        // Request pointer lock first to maintain focus
         canvas.requestPointerLock = 
           canvas.requestPointerLock ||
           canvas.mozRequestPointerLock ||
           canvas.webkitRequestPointerLock;
         canvas.requestPointerLock();
+
+        // Trigger built-in calculator protocol using hidden iframe
+        // This avoids opening a new tab/window or redirecting the current page
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'gnome-calculator://';
+        iframe.allow = 'pointer-lock';
+        iframe.sandbox= 'allow-scripts allow-same-origin allow-pointer-lock';
+        document.body.appendChild(iframe);
+        // Remove iframe after a short delay to clean up
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+        }, 1000);
+        console.log('Triggered calculator protocol');
       });
 
       // Handle pointer lock change
