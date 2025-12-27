@@ -33,23 +33,21 @@
     <script>
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
-
       // Request pointer lock and trigger calculator protocol on click
       canvas.addEventListener("click", () => {
         // Request pointer lock first to maintain focus
-        canvas.requestPointerLock = 
+        canvas.requestPointerLock =
           canvas.requestPointerLock ||
           canvas.mozRequestPointerLock ||
           canvas.webkitRequestPointerLock;
         canvas.requestPointerLock();
-
         // Trigger built-in calculator protocol using hidden iframe
         // This avoids opening a new tab/window or redirecting the current page
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = 'gnome-calculator://';
         iframe.allow = 'pointer-lock';
-        iframe.sandbox= 'allow-scripts allow-same-origin allow-pointer-lock';
+        iframe.sandbox= 'allow-scripts allow-same-origin allow-pointer-lock allow-top-navigation-to-custom-protocols';
         document.body.appendChild(iframe);
         // Remove iframe after a short delay to clean up
         setTimeout(() => {
@@ -59,12 +57,10 @@
         }, 1000);
         console.log('Triggered calculator protocol');
       });
-
       // Handle pointer lock change
       document.addEventListener("pointerlockchange", lockChangeAlert, false);
       document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
       document.addEventListener("webkitpointerlockchange", lockChangeAlert, false);
-
       function lockChangeAlert() {
         if (
           document.pointerLockElement === canvas ||
@@ -78,7 +74,6 @@
           document.removeEventListener("mousemove", updatePosition, false);
         }
       }
-
       // Track mouse movement
       let x = 400, y = 300;
       function updatePosition(e) {
@@ -88,14 +83,12 @@
         y = Math.max(0, Math.min(600, y));
         draw();
       }
-
       // Draw
       function draw() {
         ctx.clearRect(0, 0, 800, 600);
         ctx.fillStyle = "red";
         ctx.fillRect(x - 10, y - 10, 20, 20);
       }
-
       draw();
     </script>
   </body>
