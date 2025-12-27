@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pointer Lock with Keyboard Lock and Fullscreen Example</title>
+<title>Pointer Lock with Keyboard Lock API Example</title>
 <style>
 body {
 margin: 0;
@@ -27,61 +27,34 @@ margin-top: 10px;
 font-size: 16px;
 color: #666;
 }
-#exit-dialog {
-display: none;
-position: fixed;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-background-color: white;
-padding: 20px;
-border: 1px solid #000;
-box-shadow: 0 0 10px rgba(0,0,0,0.5);
-z-index: 1000;
-font-size: 18px;
-text-align: center;
-}
 </style>
 </head>
 <body>
 <canvas id="canvas" width="800" height="600"></canvas>
-<div id="status">Click canvas to lock pointer & enter fullscreen. Press 'L' to toggle Esc lock. v3</div>
+<div id="status">Click canvas to lock pointer. Press 'L' to toggle Esc lock. v22</div>
 <div id="esc-status">Esc Key: Unlocked</div>
-<div id="exit-dialog">Exiting in <span id="countdown">3</span> seconds...</div>
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const escStatus = document.getElementById('esc-status');
-        const exitDialog = document.getElementById('exit-dialog');
-        const countdownSpan = document.getElementById('countdown');
 
         let isEscLocked = false;
-        let isFullscreen = false;
-        let exitTimer = null;
 
-        // Request pointer lock and fullscreen on click
-        canvas.addEventListener('click', async () => {
-            try {
-                // Request fullscreen first
-                await document.documentElement.requestFullscreen();
-                isFullscreen = true;
-                // Then pointer lock
-                canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-                canvas.requestPointerLock();
-            } catch (err) {
-                console.error('Failed to enter fullscreen or pointer lock:', err);
-            }
+        // Polyfill for requestPointerLock
+        canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+
+        // Polyfill for requestFullscreen
+        canvas.requestFullscreen = canvas.requestFullscreen || canvas.mozRequestFullScreen || canvas.webkitRequestFullscreen || canvas.msRequestFullscreen;
+
+        // Function to request pointer lock
+        canvas.addEventListener('click', () => {
+            canvas.requestPointerLock();
         });
 
         // Handle pointer lock change
         document.addEventListener('pointerlockchange', lockChangeAlert, false);
         document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
         document.addEventListener('webkitpointerlockchange', lockChangeAlert, false);
-
-        // Handle fullscreen change
-        document.addEventListener('fullscreenchange', fullscreenChangeAlert, false);
-        document.addEventListener('mozfullscreenchange', fullscreenChangeAlert, false);
-        document.addEventListener('webkitfullscreenchange', fullscreenChangeAlert, false);
 
         function lockChangeAlert() {
             if (document.pointerLockElement === canvas ||
@@ -90,6 +63,8 @@ text-align: center;
                 console.log('Pointer locked');
                 document.addEventListener("mousemove", updatePosition, false);
                 document.addEventListener("keydown", handleKeyDown, false);
+                // After pointer lock, request fullscreen
+                canvas.requestFullscreen();
             } else {
                 console.log('Pointer unlocked');
                 document.removeEventListener("mousemove", updatePosition, false);
@@ -97,122 +72,75 @@ text-align: center;
                 if (isEscLocked) {
                     unlockEsc();
                 }
-                // Exit fullscreen if pointer unlocks
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                }
-                // Hide dialog if shown
-                exitDialog.style.display = 'none';
-                if (exitTimer) {
-                    clearInterval(exitTimer);
-                    exitTimer = null;
-                }
             }
         }
 
-        function fullscreenChangeAlert() {
-            if (!document.fullscreenElement) {
-                isFullscreen = false;
+        // Handle fullscreen change
+        document.addEventListener('fullscreenchange', fullscreenChange, false);
+        document.addEventListener('mozfullscreenchange', fullscreenChange, false);
+        document.addEventListener('webkitfullscreenchange', fullscreenChange, false);
+        document.addEventListener('MSFullscreenChange', fullscreenChange, false);
+
+        function fullscreenChange() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                console.log('Entered fullscreen');
+                // After entering fullscreen, open new window
+                window.open('https://www.google.com');
+            } else {
                 console.log('Exited fullscreen');
-                // Exit pointer lock if fullscreen exits
-                if (document.pointerLockElement) {
-                    document.exitPointerLock();
-                }
-                if (isEscLocked) {
-                    unlockEsc();
-                }
-                // Hide dialog if shown
-                exitDialog.style.display = 'none';
-                if (exitTimer) {
-                    clearInterval(exitTimer);
-                    exitTimer = null;
-                }
             }
         }
 
-        // Track mouse movement
-        let x = 400, y = 300;
+        // Track mouse movement when locked
+        let x = 400, y = 300; // Starting position
         function updatePosition(e) {
             x += e.movementX;
             y += e.movementY;
-            x = Math.max(0, Math.min(800, x));
-            y = Math.max(0, Math.min(600, y));
+
+            // Clamp to canvas bounds
+            if (x > 800) x = 800;
+            if (x < 0) x = 0;
+            if (y > 600) y = 600;
+            if (y < 0) y = 0;
+
             draw();
         }
 
-        // Draw
+        // Simple draw function
         function draw() {
             ctx.clearRect(0, 0, 800, 600);
             ctx.fillStyle = 'red';
-            ctx.fillRect(x - 10, y - 10, 20, 20);
+            ctx.fillRect(x - 10, y - 10, 20, 20); // Draw a square at mouse position
         }
 
-        // Handle keydown
-        async function handleKeyDown(e) {
+        // Handle keydown for toggling Esc lock (press 'L' to toggle)
+        function handleKeyDown(e) {
             if (e.key === 'l' || e.key === 'L') {
                 if (isEscLocked) {
                     unlockEsc();
                 } else {
-                    await lockEsc();
+                    lockEsc();
                 }
-            } else if (e.key === 'Escape' && isEscLocked) {
-                console.log('Esc pressed while locked - starting delayed exit');
-                e.preventDefault(); // Attempt to prevent default, though browser may override on hold
-
-                // If already counting down, perhaps cancel or ignore
-                if (exitTimer) {
-                    return; // Ignore additional presses during countdown
-                }
-
-                // Show dialog and start countdown
-                exitDialog.style.display = 'block';
-                let count = 3;
-                countdownSpan.textContent = count;
-
-                exitTimer = setInterval(() => {
-                    count--;
-                    if (count > 0) {
-                        countdownSpan.textContent = count;
-                    } else {
-                        clearInterval(exitTimer);
-                        exitTimer = null;
-                        exitDialog.style.display = 'none';
-                        // Exit fullscreen and pointer lock
-                        if (document.fullscreenElement) {
-                            document.exitFullscreen();
-                        }
-                        if (document.pointerLockElement) {
-                            document.exitPointerLock();
-                        }
-                        unlockEsc();
-                    }
-                }, 1000);
             }
         }
 
-        // Lock Esc
+        // Function to lock Esc key using Keyboard Lock API
         async function lockEsc() {
             try {
-                if ('keyboard' in navigator && isFullscreen) { // Only lock in fullscreen
-                    setTimeout(async () => {  // Tambahin 'async' di sini!
-                        try {
-                            await navigator.keyboard.lock(['Escape']);
-                            isEscLocked = true;
-                            escStatus.textContent = 'Esc Key: Locked';
-                            console.log('Esc key locked');
-                        } catch (innerErr) {
-                            console.error('Failed to lock Esc inside timeout:', innerErr);
-                        }
-                    }, 3000);
+                if ('keyboard' in navigator) {
+                    await navigator.keyboard.lock(['Escape']);
+                    isEscLocked = true;
+                    escStatus.textContent = 'Esc Key: Locked';
+                    console.log('Esc key locked');
                 } else {
-                    console.log('Keyboard Lock API not supported or not in fullscreen');
+                    console.log('Keyboard Lock API not supported');
                 }
             } catch (err) {
                 console.error('Failed to lock Esc:', err);
             }
         }
 
-        // Unlock Esc
+        // Function to unlock Esc key
         function unlockEsc() {
             if ('keyboard' in navigator) {
                 navigator.keyboard.unlock();
@@ -222,7 +150,7 @@ text-align: center;
             }
         }
 
-        draw();
+        draw(); // Initial draw
     </script>
 </body>
 </html>
