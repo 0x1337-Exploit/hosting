@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pointer Lock Tanpa Canvas</title>
+    <title>Pointer Lock dengan Keyboard Lock (Esc)</title>
     <style>
         body {
             margin: 0;
@@ -25,10 +25,21 @@
             text-align: center;
             cursor: pointer;
             transition: opacity 0.5s;
+            z-index: 10;
+        }
+        #status {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
         }
         #movement {
             position: absolute;
-            top: 20px;
+            top: 60px;
             left: 20px;
             background: rgba(0, 0, 0, 0.6);
             color: white;
@@ -40,31 +51,96 @@
 </head>
 <body>
     <div id="instructions">
-        <h2>Klik di mana saja pada layar untuk mengaktifkan Pointer Lock</h2>
-        <p>Tekan ESC untuk keluar dari mode lock.</p>
+        <h2>Klik di mana saja untuk masuk Fullscreen & mengaktifkan Pointer Lock</h2>
+        <p>Setelah aktif, tombol Esc akan dikunci otomatis.<br>Gunakan tombol lain atau klik kanan untuk keluar.</p>
+    </div>
+    <div id="status">
+        <div>Pointer Lock: Tidak Aktif</div>
+        <div id="escStatus">Tombol Esc: Belum Terkunci</div>
+        <div>Fullscreen: Tidak Aktif</div>
     </div>
     <div id="movement">Pergerakan mouse: X: 0 | Y: 0</div>
 
     <script>
         const instructions = document.getElementById('instructions');
         const movementDisplay = document.getElementById('movement');
+        const escStatus = document.getElementById('escStatus');
+        const statusDiv = document.getElementById('status');
+
         let movementX = 0;
         let movementY = 0;
+        let isEscLocked = false;
+        let isFullscreen = false;
 
-        // Fungsi saat pointer lock berhasil diaktifkan
+        // Masuk fullscreen terlebih dahulu (diperlukan untuk Keyboard Lock API)
+        async function enterFullscreen() {
+            try {
+                await document.body.requestFullscreen({ navigationUI: "hide" });
+                isFullscreen = true;
+                statusDiv.children[2].textContent = "Fullscreen: Aktif";
+            } catch (err) {
+                console.error("Gagal masuk fullscreen:", err);
+            }
+        }
+
+        // Lock Esc - dipanggil setelah fullscreen dan pointer lock aktif
+        async function lockEsc() {
+            try {
+                if ("keyboard" in navigator && navigator.keyboard && isFullscreen) {
+                    await navigator.keyboard.lock(["Escape"]);
+                    isEscLocked = true;
+                    escStatus.textContent = "Tombol Esc: Terkunci ✓";
+                    console.log("Tombol Esc berhasil terkunci");
+                } else {
+                    console.log("Keyboard Lock API tidak didukung atau tidak dalam fullscreen");
+                }
+            } catch (err) {
+                console.error("Gagal mengunci Esc:", err);
+            }
+        }
+
+        // Unlock Esc
+        function unlockEsc() {
+            if ("keyboard" in navigator && navigator.keyboard) {
+                navigator.keyboard.unlock();
+                isEscLocked = false;
+                escStatus.textContent = "Tombol Esc: Belum Terkunci";
+                console.log("Tombol Esc dilepaskan");
+            }
+        }
+
+        // Update status pointer lock dan fullscreen
+        function updatePointerStatus(locked) {
+            statusDiv.children[0].textContent = locked ? "Pointer Lock: Aktif" : "Pointer Lock: Tidak Aktif";
+        }
+
+        // Fungsi saat pointer lock berubah
         function lockChange() {
             if (document.pointerLockElement === document.body) {
                 instructions.style.opacity = '0';
                 setTimeout(() => { instructions.style.display = 'none'; }, 500);
                 movementDisplay.style.display = 'block';
                 document.addEventListener('mousemove', onMouseMove);
+                updatePointerStatus(true);
+
+                // Aktifkan lock Esc setelah pointer lock berhasil
+                lockEsc();
             } else {
                 instructions.style.display = 'block';
                 instructions.style.opacity = '1';
                 movementDisplay.style.display = 'none';
                 document.removeEventListener('mousemove', onMouseMove);
+                updatePointerStatus(false);
                 movementX = movementY = 0;
                 updateMovementDisplay();
+
+                // Lepaskan lock Esc dan fullscreen jika perlu
+                unlockEsc();
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                    isFullscreen = false;
+                    statusDiv.children[2].textContent = "Fullscreen: Tidak Aktif";
+                }
             }
         }
 
@@ -79,8 +155,14 @@
             movementDisplay.textContent = `Pergerakan mouse: X: ${movementX} | Y: ${movementY}`;
         }
 
-        // Request pointer lock saat klik pada body
-        document.body.addEventListener('click', () => {
+        // Request fullscreen + pointer lock saat klik
+        document.body.addEventListener('click', async () => {
+            // Masuk fullscreen dulu (wajib untuk Keyboard Lock API)
+            if (!document.fullscreenElement) {
+                await enterFullscreen();
+            }
+
+            // Kemudian request pointer lock
             document.body.requestPointerLock =
                 document.body.requestPointerLock ||
                 document.body.mozRequestPointerLock ||
@@ -91,16 +173,3 @@
             }
         });
 
-        // Deteksi perubahan status pointer lock
-        document.addEventListener('pointerlockchange', lockChange);
-        document.addEventListener('mozpointerlockchange', lockChange);
-        document.addEventListener('webkitpointerlockchange', lockChange);
-
-        // Deteksi error (misalnya browser tidak mendukung)
-        document.addEventListener('pointerlockerror', () => {
-            console.error('Pointer Lock gagal diaktifkan.');
-            alert('Pointer Lock tidak didukung atau gagal diaktifkan pada browser ini.');
-        });
-    </script>
-</body>
-</html>
