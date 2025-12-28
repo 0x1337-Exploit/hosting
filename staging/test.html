@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fullscreen Pointer Lock with Keyboard Lock</title>
+    <title>Fullscreen Pointer Lock with Auto ESC Lock</title>
     <style>
       * {
         margin: 0;
@@ -102,17 +102,17 @@
     <div id="container">
       <div id="instructions">
         <h2>Instruksi Pointer Lock</h2>
-        <p><strong>Klik dimana saja</strong> untuk masuk fullscreen & pointer lock</p>
-        <p>Tekan <strong>ESC pertama kali</strong> untuk mengunci tombol Esc</p>
-        <p>Tekan <strong>ESC kedua kali</strong> untuk menampilkan gambar</p>
-        <p>Gerakkan mouse untuk menggerakkan kotak merah</p>
+        <p>📌 <strong>Klik dimana saja</strong> untuk masuk fullscreen & pointer lock</p>
+        <p>🔒 Tombol ESC akan <strong>otomatis terkunci</strong> saat fullscreen</p>
+        <p>⌨️ Tekan <strong>ESC</strong> untuk menampilkan gambar</p>
+        <p>🖱️ Gerakkan mouse untuk menggerakkan kotak merah</p>
       </div>
       <canvas id="canvas"></canvas>
       <div id="ui-overlay">
         <div id="status">
           Klik layar untuk lock pointer & masuk fullscreen
         </div>
-        <div id="esc-status">Tombol Esc: Belum Terkunci (Tekan ESC untuk mengunci)</div>
+        <div id="esc-status">Tombol Esc: Belum Terkunci</div>
       </div>
       <div id="image-overlay">
         <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Displayed Image" />
@@ -154,6 +154,9 @@
           // Request fullscreen first
           await document.documentElement.requestFullscreen();
           isFullscreen = true;
+          
+          // Automatically lock ESC key immediately after entering fullscreen
+          await lockEsc();
           
           // Then pointer lock
           canvas.requestPointerLock =
@@ -263,30 +266,24 @@
         ctx.fillRect(x - 10, y - 10, 20, 20);
       }
 
-      // Handle keydown - ESC now controls the lock
+      // Handle keydown - ESC shows image when locked
       async function handleKeyDown(e) {
-        if (e.key === "Escape") {
-          e.preventDefault(); // Always prevent default ESC behavior
-          
-          if (!isEscLocked) {
-            // First ESC press: Lock the ESC key
-            await lockEsc();
-          } else {
-            // Second ESC press: Show image overlay
-            console.log("Esc ditekan saat terkunci - menampilkan gambar");
-            showImageOverlay();
-          }
+        if (e.key === "Escape" && isEscLocked) {
+          // ESC is locked, so show image overlay
+          console.log("Esc ditekan saat terkunci - menampilkan gambar");
+          showImageOverlay();
+          e.preventDefault();
         }
       }
 
-      // Lock Esc
+      // Lock Esc - called automatically on fullscreen
       async function lockEsc() {
         try {
           if ("keyboard" in navigator && isFullscreen) {
             await navigator.keyboard.lock(["Escape"]);
             isEscLocked = true;
-            escStatus.textContent = "Tombol Esc: Terkunci ✓ (Tekan ESC lagi untuk gambar)";
-            console.log("Tombol Esc terkunci");
+            escStatus.textContent = "Tombol Esc: Terkunci ✓ (Tekan ESC untuk gambar)";
+            console.log("Tombol Esc otomatis terkunci");
           } else {
             console.log("Keyboard Lock API tidak didukung atau tidak dalam fullscreen");
           }
@@ -300,7 +297,7 @@
         if ("keyboard" in navigator) {
           navigator.keyboard.unlock();
           isEscLocked = false;
-          escStatus.textContent = "Tombol Esc: Belum Terkunci (Tekan ESC untuk mengunci)";
+          escStatus.textContent = "Tombol Esc: Belum Terkunci";
           console.log("Tombol Esc tidak terkunci");
         }
       }
