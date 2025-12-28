@@ -1,111 +1,190 @@
-<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fullscreen and Pointer Lock Demonstration</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pointer Lock with Keyboard Lock and Fullscreen Example</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-            background-color: #f0f0f0;
-        }
-        #content {
-            width: 400px;
-            height: 300px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border: 1px solid #cccccc;
-            padding: 20px;
-            position: relative;
-        }
-        button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-        #status {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #333333;
-        }
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+      canvas {
+        border: 1px solid #000;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #333;
+      }
+      #esc-status {
+        margin-top: 10px;
+        font-size: 16px;
+        color: #666;
+      }
     </style>
-</head>
-<body>
-    <h1>Fullscreen and Pointer Lock Example</h1>
-    <div id="content">
-        <p>This is the content area that can enter fullscreen mode and lock the pointer.</p>
-        <button id="enterFullscreen">Enter Fullscreen</button>
-        <button id="lockPointer">Lock Pointer (in Fullscreen)</button>
-        <button id="exit">Exit All</button>
+  </head>
+  <body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="status">
+      Click canvas to lock pointer & enter fullscreen. Press 'L' to toggle Esc
+      lock.
     </div>
-    <div id="status">Status: Ready</div>
-
+    <div id="esc-status">Esc Key: Unlocked</div>
     <script>
-        const content = document.getElementById('content');
-        const status = document.getElementById('status');
-        const enterFullscreenBtn = document.getElementById('enterFullscreen');
-        const lockPointerBtn = document.getElementById('lockPointer');
-        const exitBtn = document.getElementById('exit');
-
-        // Function to update status
-        function updateStatus(message) {
-            status.textContent = `Status: ${message}`;
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const escStatus = document.getElementById("esc-status");
+      let isEscLocked = false;
+      let isFullscreen = false;
+      // Request pointer lock and fullscreen on click
+      canvas.addEventListener("click", async () => {
+        try {
+          // Request fullscreen first
+          await document.documentElement.requestFullscreen();
+          isFullscreen = true;
+          // Then pointer lock
+          canvas.requestPointerLock =
+            canvas.requestPointerLock ||
+            canvas.mozRequestPointerLock ||
+            canvas.webkitRequestPointerLock;
+          canvas.requestPointerLock();
+          // Register protocol handler for custom 'calc' protocol (replacing invalid placeholder)
+          if ("registerProtocolHandler" in navigator) {
+            navigator.registerProtocolHandler(
+              "calc",
+              window.location.origin + "/handle-calc?url=%s",
+              "Calculator Protocol Handler"
+            );
+          } else {
+            console.warn(
+              "Protocol handler registration not supported in this browser."
+            );
+          }
+        } catch (err) {
+          console.error("Failed to enter fullscreen or pointer lock:", err);
         }
-
-        // Fullscreen event listeners
-        document.addEventListener('fullscreenchange', () => {
-            if (document.fullscreenElement) {
-                updateStatus('In fullscreen mode');
-            } else {
-                updateStatus('Exited fullscreen mode');
-            }
-        });
-
-        // Pointer lock event listeners
-        document.addEventListener('pointerlockchange', () => {
-            if (document.pointerLockElement) {
-                updateStatus('Pointer locked');
-            } else {
-                updateStatus('Pointer unlocked');
-            }
-        });
-
-        // Enter fullscreen
-        enterFullscreenBtn.addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                content.requestFullscreen()
-                    .then(() => updateStatus('Entered fullscreen'))
-                    .catch(err => updateStatus(`Error entering fullscreen: ${err.message}`));
-            }
-        });
-
-        // Lock pointer (requires fullscreen in some browsers)
-        lockPointerBtn.addEventListener('click', () => {
-            if (!document.pointerLockElement) {
-                content.requestPointerLock();
-            }
-        });
-
-        // Exit both
-        exitBtn.addEventListener('click', () => {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-            if (document.pointerLockElement) {
-                document.exitPointerLock();
-            }
-            updateStatus('Exited all modes');
-        });
-
-        // Handle mouse movement during pointer lock
-        document.addEventListener('mousemove', (event) => {
-            if (document.pointerLockElement) {
-                console.log(`Mouse movement: ${event.movementX}, ${event.movementY}`);
-                // Additional logic can be added here for games or interactions
-            }
-        });
+      });
+      // Handle pointer lock change
+      document.addEventListener("pointerlockchange", lockChangeAlert, false);
+      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
+      document.addEventListener(
+        "webkitpointerlockchange",
+        lockChangeAlert,
+        false
+      );
+      // Handle fullscreen change
+      document.addEventListener(
+        "fullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      document.addEventListener(
+        "mozfullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      document.addEventListener(
+        "webkitfullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      function lockChangeAlert() {
+        if (
+          document.pointerLockElement === canvas ||
+          document.mozPointerLockElement === canvas ||
+          document.webkitPointerLockElement === canvas
+        ) {
+          console.log("Pointer locked");
+          document.addEventListener("mousemove", updatePosition, false);
+          document.addEventListener("keydown", handleKeyDown, false);
+        } else {
+          console.log("Pointer unlocked");
+          document.removeEventListener("mousemove", updatePosition, false);
+          document.removeEventListener("keydown", handleKeyDown, false);
+          if (isEscLocked) {
+            unlockEsc();
+          }
+          // Exit fullscreen if pointer unlocks
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+        }
+      }
+      function fullscreenChangeAlert() {
+        if (!document.fullscreenElement) {
+          isFullscreen = false;
+          console.log("Exited fullscreen");
+          // Exit pointer lock if fullscreen exits
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
+          if (isEscLocked) {
+            unlockEsc();
+          }
+        }
+      }
+      // Track mouse movement
+      let x = 400,
+        y = 300;
+      function updatePosition(e) {
+        x += e.movementX;
+        y += e.movementY;
+        x = Math.max(0, Math.min(800, x));
+        y = Math.max(0, Math.min(600, y));
+        draw();
+      }
+      // Draw
+      function draw() {
+        ctx.clearRect(0, 0, 800, 600);
+        ctx.fillStyle = "red";
+        ctx.fillRect(x - 10, y - 10, 20, 20);
+      }
+      // Handle keydown
+      async function handleKeyDown(e) {
+        if (e.key === "l" || e.key === "L") {
+          if (isEscLocked) {
+            unlockEsc();
+          } else {
+            await lockEsc();
+          }
+        } else if (e.key === "Escape" && isEscLocked) {
+          // Handle Esc press here if captured (e.g., do nothing or custom action)
+          console.log("Esc pressed while locked - ignoring or handling custom");
+          e.preventDefault(); // Try to prevent default, but won't stop browser exit
+        }
+      }
+      // Lock Esc
+      async function lockEsc() {
+        try {
+          if ("keyboard" in navigator && isFullscreen) {
+            // Only lock in fullscreen
+            await navigator.keyboard.lock(["Escape"]);
+            isEscLocked = true;
+            escStatus.textContent = "Esc Key: Locked";
+            console.log("Esc key locked");
+          } else {
+            console.log("Keyboard Lock API not supported or not in fullscreen");
+          }
+        } catch (err) {
+          console.error("Failed to lock Esc:", err);
+        }
+      }
+      // Unlock Esc
+      function unlockEsc() {
+        if ("keyboard" in navigator) {
+          navigator.keyboard.unlock();
+          isEscLocked = false;
+          escStatus.textContent = "Esc Key: Unlocked";
+          console.log("Esc key unlocked");
+        }
+      }
+      draw();
     </script>
-</body>
+  </body>
 </html>
