@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -54,18 +55,6 @@
             canvas.mozRequestPointerLock ||
             canvas.webkitRequestPointerLock;
           canvas.requestPointerLock();
-          // Register protocol handler for custom 'calc' protocol (replacing invalid placeholder)
-          if ("registerProtocolHandler" in navigator) {
-            navigator.registerProtocolHandler(
-              "calc",
-              window.location.origin + "/handle-calc?url=%s",
-              "Calculator Protocol Handler"
-            );
-          } else {
-            console.warn(
-              "Protocol handler registration not supported in this browser."
-            );
-          }
         } catch (err) {
           console.error("Failed to enter fullscreen or pointer lock:", err);
         }
