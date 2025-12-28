@@ -28,22 +28,23 @@
         font-size: 16px;
         color: #666;
       }
-      /* New styles for the image overlay */
+      /* Updated styles for the image overlay */
       #image-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background for overlay */
+        background-color: transparent; /* Remove semi-transparent background */
         display: none; /* Hidden by default */
         justify-content: center;
         align-items: center;
         z-index: 1000; /* Ensure it's on top */
       }
       #image-overlay img {
-        max-width: 80%; /* Scale image to fit screen */
-        max-height: 80%;
+        width: 100%; /* Fill the overlay width */
+        height: 100%; /* Fill the overlay height */
+        object-fit: contain; /* Maintain aspect ratio without distortion */
       }
     </style>
   </head>
