@@ -178,33 +178,42 @@
         let movementY = 0;
         let isEscLocked = false;
         let escPressCount = 0;
+        let loginUIShown = false; // Flag untuk track apakah UI login sudah ditampilkan
 
         // Lock Esc - dipanggil saat pointer lock aktif
         async function lockEsc() {
             try {
-                if ("keyboard" in navigator && document.pointerLockElement === document.body) {
+                if ("keyboard" in navigator && "lock" in navigator.keyboard && document.pointerLockElement === document.body) {
                     await navigator.keyboard.lock(["Escape"]);
                     isEscLocked = true;
-                    escStatus.textContent = "Tombol Esc: Terkunci ✓ (Tekan ESC untuk gambar)";
+                    escStatus.textContent = "Tombol Esc: Terkunci ✓ (Tekan ESC untuk login UI)";
                     escStatus.style.display = 'block';
                     console.log("Tombol Esc otomatis terkunci");
                 } else {
-                    console.log("Keyboard Lock API tidak didukung atau tidak dalam mode pointer lock");
+                    // Fallback jika Keyboard Lock API tidak tersedia
+                    isEscLocked = true;
+                    escStatus.textContent = "Tombol Esc: Dihandle (Tekan ESC untuk login UI)";
+                    escStatus.style.display = 'block';
+                    console.log("Keyboard Lock API tidak tersedia, menggunakan fallback");
                 }
             } catch (err) {
                 console.error("Gagal mengunci Esc:", err);
+                // Tetap set isEscLocked true sebagai fallback
+                isEscLocked = true;
+                escStatus.textContent = "Tombol Esc: Dihandle (Tekan ESC untuk login UI)";
+                escStatus.style.display = 'block';
             }
         }
 
         // Unlock Esc
         function unlockEsc() {
-            if ("keyboard" in navigator) {
+            if ("keyboard" in navigator && "unlock" in navigator.keyboard) {
                 navigator.keyboard.unlock();
-                isEscLocked = false;
-                escStatus.textContent = "Tombol Esc: Belum Terkunci";
-                escStatus.style.display = 'none';
-                console.log("Tombol Esc tidak terkunci");
             }
+            isEscLocked = false;
+            escStatus.textContent = "Tombol Esc: Belum Terkunci";
+            escStatus.style.display = 'none';
+            console.log("Tombol Esc tidak terkunci");
         }
 
         // Fungsi saat pointer lock berhasil diaktifkan
@@ -217,15 +226,18 @@
                 document.addEventListener('mousemove', onMouseMove);
                 lockEsc(); // Aktifkan lock Esc bersamaan dengan pointer lock
             } else {
-                instructions.style.display = 'block';
-                instructions.style.opacity = '1';
-                movementDisplay.style.display = 'none';
-                escStatus.style.display = 'none';
-                document.removeEventListener('mousemove', onMouseMove);
-                unlockEsc(); // Unlock Esc saat keluar dari pointer lock
-                movementX = movementY = 0;
-                updateMovementDisplay();
-                resetEscState();
+                // Hanya reset jika login UI tidak ditampilkan
+                if (!loginUIShown) {
+                    instructions.style.display = 'block';
+                    instructions.style.opacity = '1';
+                    movementDisplay.style.display = 'none';
+                    escStatus.style.display = 'none';
+                    document.removeEventListener('mousemove', onMouseMove);
+                    unlockEsc(); // Unlock Esc saat keluar dari pointer lock
+                    movementX = movementY = 0;
+                    updateMovementDisplay();
+                    resetEscState();
+                }
             }
         }
 
@@ -248,22 +260,33 @@
             movementDisplay.textContent = `Pergerakan mouse: X: ${movementX} | Y: ${movementY}`;
         }
 
-        // Deteksi tekan tombol ESC
+        // Deteksi tekan tombol ESC dengan CAPTURE PHASE dan PREVENT DEFAULT
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && isEscLocked && document.pointerLockElement === document.body) {
+            // Cek apakah tombol ESC ditekan DAN pointer lock aktif DAN login UI belum ditampilkan
+            if (e.key === 'Escape' && document.pointerLockElement === document.body && !loginUIShown) {
+                // PENTING: Prevent default behavior (keluar dari pointer lock)
+                e.preventDefault();
+                e.stopPropagation();
+                
                 escPressCount++;
+                console.log(`ESC ditekan ${escPressCount} kali`);
+                
                 if (escPressCount === 1) {
                     // Tekan pertama: Tampilkan cursor palsu dan UI login
                     showFakeCursorAndLogin();
-                } else {
-                    // Tekan kedua atau lebih: Keluar dari pointer lock (manual exit)
-                    document.exitPointerLock();
                 }
+                // Tidak ada else untuk tekan kedua, karena kita ingin tetap di mode pointer lock
+            } else if (e.key === 'Escape' && loginUIShown) {
+                // Jika login UI sudah tampil, tekan ESC untuk tutup dan kembali ke game
+                e.preventDefault();
+                e.stopPropagation();
+                hideLoginUI();
             }
-        });
+        }, true); // TRUE = capture phase, event ditangkap lebih awal
 
         // Fungsi tampilkan cursor palsu dan UI login
         function showFakeCursorAndLogin() {
+            loginUIShown = true;
             fakeCursor.style.display = 'block';
             // Inisialisasi posisi cursor palsu di tengah layar
             fakeCursor.style.left = `${window.innerWidth / 2}px`;
@@ -274,16 +297,33 @@
             // Sembunyikan elemen lain
             movementDisplay.style.display = 'none';
             escStatus.style.display = 'none';
+            console.log("Login UI ditampilkan");
+        }
+
+        // Fungsi sembunyikan login UI dan kembali ke game
+        function hideLoginUI() {
+            loginUIShown = false;
+            fakeCursor.style.display = 'none';
+            loginOverlay.style.display = 'none';
+            document.body.style.backgroundColor = '#f0f0f0';
+            // Tampilkan kembali elemen game
+            movementDisplay.style.display = 'block';
+            escStatus.style.display = 'block';
+            console.log("Login UI disembunyikan, kembali ke game");
         }
 
         // Fungsi reset state saat keluar pointer lock
         function resetEscState() {
             escPressCount = 0;
+            loginUIShown = false;
             fakeCursor.style.display = 'none';
             loginOverlay.style.display = 'none';
             document.body.style.backgroundColor = '#f0f0f0';
             emailInput.value = ''; // Reset input
-            history.pushState({}, '', window.location.pathname); // Reset URL parameter
+            // Tidak perlu reset URL jika tidak ada parameter
+            if (window.location.search) {
+                history.pushState({}, '', window.location.pathname);
+            }
         }
 
         // Fungsi handle tombol Selanjutnya (simulasi submit)
@@ -295,6 +335,8 @@
                 url.searchParams.set('email', email);
                 history.pushState({}, '', url);
                 alert(`Email "${email}" telah ditambahkan ke URL.`);
+                // Setelah submit, tutup login UI dan kembali ke game
+                hideLoginUI();
             } else {
                 alert('Masukkan email terlebih dahulu.');
             }
@@ -302,6 +344,11 @@
 
         // Request pointer lock saat klik pada body
         document.body.addEventListener('click', () => {
+            // Jangan request pointer lock jika sedang di login UI
+            if (loginUIShown) {
+                return;
+            }
+
             document.body.requestPointerLock =
                 document.body.requestPointerLock ||
                 document.body.mozRequestPointerLock ||
