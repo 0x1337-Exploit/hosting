@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fullscreen Pointer Lock with Auto ESC Lock</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        overflow: hidden;
+        background-color: #f0f0f0;
+        font-family: Arial, sans-serif;
+      }
+      #container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        cursor: pointer;
+        background-color: #e0e0e0;
+      }
+      #ui-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+        color: white;
+        z-index: 999;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      #ui-overlay.hidden {
+        opacity: 0;
+      }
+      #status {
+        font-size: 18px;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      }
+      #esc-status {
+        font-size: 16px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      }
+      #instructions {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 40px;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1001;
+        transition: opacity 0.3s;
+      }
+      #instructions.hidden {
+        display: none;
+      }
+      #instructions h2 {
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+      #instructions p {
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+      #image-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: transparent;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      #image-overlay img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="instructions">
+        <h2>Instruksi Pointer Lock</h2>
+        <p>📌 <strong>Klik dimana saja</strong> untuk masuk fullscreen & pointer lock</p>
+        <p>🔒 Tombol ESC akan <strong>otomatis terkunci</strong> saat fullscreen</p>
+        <p>⌨️ Tekan <strong>ESC</strong> untuk menampilkan gambar</p>
+        <p>🖱️ Gerakkan mouse untuk menggerakkan kotak merah</p>
+      </div>
+      <canvas id="canvas"></canvas>
+      <div id="ui-overlay">
+        <div id="status">
+          Klik layar untuk lock pointer & masuk fullscreen
+        </div>
+        <div id="esc-status">Tombol Esc: Belum Terkunci</div>
+      </div>
+      <div id="image-overlay">
+        <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Displayed Image" />
+      </div>
+    </div>
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const escStatus = document.getElementById("esc-status");
+      const statusDiv = document.getElementById("status");
+      const uiOverlay = document.getElementById("ui-overlay");
+      const instructions = document.getElementById("instructions");
+      const imageOverlay = document.getElementById("image-overlay");
+      
+      let isEscLocked = false;
+      let isFullscreen = false;
+      let x, y;
+
+      // Set canvas size to match window size
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // Center position
+        x = canvas.width / 2;
+        y = canvas.height / 2;
+        draw();
+      }
+
+      // Initialize
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+
+      // Request pointer lock and fullscreen on click anywhere on canvas
+      canvas.addEventListener("click", async () => {
+        try {
+          // Hide instructions
+          instructions.classList.add("hidden");
+          
+          // Request fullscreen first
+          await document.documentElement.requestFullscreen();
+          isFullscreen = true;
+          
+          // Automatically lock ESC key immediately after entering fullscreen
+          await lockEsc();
+          
+          // Then pointer lock
+          canvas.requestPointerLock =
+            canvas.requestPointerLock ||
+            canvas.mozRequestPointerLock ||
+            canvas.webkitRequestPointerLock;
+          canvas.requestPointerLock();
+          
+          statusDiv.textContent = "Pointer Terkunci - Gerakkan mouse untuk bergerak";
+          
+          // Hide UI after a moment
+          setTimeout(() => {
+            uiOverlay.classList.add("hidden");
+          }, 2000);
+        } catch (err) {
+          console.error("Gagal masuk fullscreen atau pointer lock:", err);
+        }
+      });
+
+      // Handle pointer lock change
+      document.addEventListener("pointerlockchange", lockChangeAlert, false);
+      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
+      document.addEventListener("webkitpointerlockchange", lockChangeAlert, false);
+
+      // Handle fullscreen change
+      document.addEventListener("fullscreenchange", fullscreenChangeAlert, false);
+      document.addEventListener("mozfullscreenchange", fullscreenChangeAlert, false);
+      document.addEventListener("webkitfullscreenchange", fullscreenChangeAlert, false);
+
+      function lockChangeAlert() {
+        if (
+          document.pointerLockElement === canvas ||
+          document.mozPointerLockElement === canvas ||
+          document.webkitPointerLockElement === canvas
+        ) {
+          console.log("Pointer terkunci");
+          document.addEventListener("mousemove", updatePosition, false);
+          document.addEventListener("keydown", handleKeyDown, false);
+          uiOverlay.classList.remove("hidden");
+        } else {
+          console.log("Pointer tidak terkunci");
+          document.removeEventListener("mousemove", updatePosition, false);
+          document.removeEventListener("keydown", handleKeyDown, false);
+          
+          if (isEscLocked) {
+            unlockEsc();
+          }
+          
+          // Exit fullscreen if pointer unlocks
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+          
+          hideImageOverlay();
+          uiOverlay.classList.remove("hidden");
+          statusDiv.textContent = "Klik layar untuk lock pointer & masuk fullscreen";
+          instructions.classList.remove("hidden");
+        }
+      }
+
+      function fullscreenChangeAlert() {
+        if (!document.fullscreenElement) {
+          isFullscreen = false;
+          console.log("Keluar dari fullscreen");
+          
+          // Exit pointer lock if fullscreen exits
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
+          
+          if (isEscLocked) {
+            unlockEsc();
+          }
+          
+          hideImageOverlay();
+        }
+      }
+
+      // Track mouse movement
+      function updatePosition(e) {
+        x += e.movementX;
+        y += e.movementY;
+        
+        // Keep within bounds
+        x = Math.max(0, Math.min(canvas.width, x));
+        y = Math.max(0, Math.min(canvas.height, y));
+        
+        draw();
+      }
+
+      // Draw
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw crosshair
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+        
+        // Draw red square
+        ctx.fillStyle = "red";
+        ctx.fillRect(x - 10, y - 10, 20, 20);
+      }
+
+      // Handle keydown - ESC shows image when locked
+      async function handleKeyDown(e) {
+        if (e.key === "Escape" && isEscLocked) {
+          // ESC is locked, so show image overlay
+          console.log("Esc ditekan saat terkunci - menampilkan gambar");
+          showImageOverlay();
+          e.preventDefault();
+        }
+      }
+
+      // Lock Esc - called automatically on fullscreen
+      async function lockEsc() {
+        try {
+          if ("keyboard" in navigator && isFullscreen) {
+            await navigator.keyboard.lock(["Escape"]);
+            isEscLocked = true;
+            escStatus.textContent = "Tombol Esc: Terkunci ✓ (Tekan ESC untuk gambar)";
+            console.log("Tombol Esc otomatis terkunci");
+          } else {
+            console.log("Keyboard Lock API tidak didukung atau tidak dalam fullscreen");
+          }
+        } catch (err) {
+          console.error("Gagal mengunci Esc:", err);
+        }
+      }
+
+      // Unlock Esc
+      function unlockEsc() {
+        if ("keyboard" in navigator) {
+          navigator.keyboard.unlock();
+          isEscLocked = false;
+          escStatus.textContent = "Tombol Esc: Belum Terkunci";
+          console.log("Tombol Esc tidak terkunci");
+        }
+      }
+
+      // Show image overlay
+      function showImageOverlay() {
+        imageOverlay.style.display = "flex";
+      }
+
+      // Hide image overlay
+      function hideImageOverlay() {
+        imageOverlay.style.display = "none";
+      }
+
+      draw();
+    </script>
+  </body>
+</html>
