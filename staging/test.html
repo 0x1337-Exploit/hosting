@@ -1,116 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trigger Built-in Calculator Protocol Example with Visibility API</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fullscreen and Pointer Lock Demonstration</title>
     <style>
-      body {
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #f0f0f0;
-      }
-      canvas {
-        border: 1px solid #000;
-        cursor: pointer;
-      }
-      #status {
-        margin-top: 20px;
-        font-size: 18px;
-        color: #333;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #f0f0f0;
+        }
+        #content {
+            width: 400px;
+            height: 300px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            padding: 20px;
+            position: relative;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333333;
+        }
     </style>
-  </head>
-  <body>
-    <canvas id="canvas" width="800" height="600"></canvas>
-    <div id="status">
-      Click canvas to lock pointer and trigger Windows Calculator protocol.
+</head>
+<body>
+    <h1>Fullscreen and Pointer Lock Example</h1>
+    <div id="content">
+        <p>This is the content area that can enter fullscreen mode and lock the pointer.</p>
+        <button id="enterFullscreen">Enter Fullscreen</button>
+        <button id="lockPointer">Lock Pointer (in Fullscreen)</button>
+        <button id="exit">Exit All</button>
     </div>
+    <div id="status">Status: Ready</div>
+
     <script>
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
-      let shouldBeLocked = false; // State to track if pointer should be locked
+        const content = document.getElementById('content');
+        const status = document.getElementById('status');
+        const enterFullscreenBtn = document.getElementById('enterFullscreen');
+        const lockPointerBtn = document.getElementById('lockPointer');
+        const exitBtn = document.getElementById('exit');
 
-      // Request pointer lock and trigger calculator protocol on click
-      canvas.addEventListener("click", () => {
-        // Request pointer lock first to maintain focus
-        canvas.requestPointerLock =
-          canvas.requestPointerLock ||
-          canvas.mozRequestPointerLock ||
-          canvas.webkitRequestPointerLock;
-        canvas.requestPointerLock();
-        shouldBeLocked = true; // Set state to true on initial lock
-
-        // Trigger built-in calculator protocol using hidden iframe
-        // Note: For Windows, consider using 'ms-calculator://' or 'calculator://' instead of 'gnome-calculator://' (which is for GNOME/Linux)
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = 'gnome-calculator://'; // Adjust protocol if needed for Windows
-        iframe.allow = 'pointer-lock';
-        iframe.sandbox = 'allow-scripts allow-same-origin allow-pointer-lock allow-top-navigation-to-custom-protocols';
-        document.body.appendChild(iframe);
-        // Remove iframe after a short delay to clean up
-        setTimeout(() => {
-          if (iframe.parentNode) {
-            document.body.removeChild(iframe);
-          }
-        }, 1000);
-        console.log('Triggered calculator protocol');
-      });
-
-      // Handle pointer lock change
-      document.addEventListener("pointerlockchange", lockChangeAlert, false);
-      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
-      document.addEventListener("webkitpointerlockchange", lockChangeAlert, false);
-
-      function lockChangeAlert() {
-        if (
-          document.pointerLockElement === canvas ||
-          document.mozPointerLockElement === canvas ||
-          document.webkitPointerLockElement === canvas
-        ) {
-          console.log("Pointer locked");
-          document.addEventListener("mousemove", updatePosition, false);
-          shouldBeLocked = true; // Update state
-        } else {
-          console.log("Pointer unlocked");
-          document.removeEventListener("mousemove", updatePosition, false);
-          // Do not reset shouldBeLocked here; we want to relock on visibility change
+        // Function to update status
+        function updateStatus(message) {
+            status.textContent = `Status: ${message}`;
         }
-      }
 
-      // Add Visibility API listener for auto-relock
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && shouldBeLocked) {
-          console.log('Document visible again; attempting to relock pointer');
-          canvas.requestPointerLock(); // Try to relock
-        } else if (document.visibilityState === 'hidden') {
-          console.log('Document hidden; pointer lock likely released by browser');
-          // Browser automatically releases lock, so no action needed
-        }
-      });
+        // Fullscreen event listeners
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                updateStatus('In fullscreen mode');
+            } else {
+                updateStatus('Exited fullscreen mode');
+            }
+        });
 
-      // Track mouse movement
-      let x = 400, y = 300;
-      function updatePosition(e) {
-        x += e.movementX;
-        y += e.movementY;
-        x = Math.max(0, Math.min(800, x));
-        y = Math.max(0, Math.min(600, y));
-        draw();
-      }
+        // Pointer lock event listeners
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement) {
+                updateStatus('Pointer locked');
+            } else {
+                updateStatus('Pointer unlocked');
+            }
+        });
 
-      // Draw
-      function draw() {
-        ctx.clearRect(0, 0, 800, 600);
-        ctx.fillStyle = "red";
-        ctx.fillRect(x - 10, y - 10, 20, 20);
-      }
-      draw();
+        // Enter fullscreen
+        enterFullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                content.requestFullscreen()
+                    .then(() => updateStatus('Entered fullscreen'))
+                    .catch(err => updateStatus(`Error entering fullscreen: ${err.message}`));
+            }
+        });
+
+        // Lock pointer (requires fullscreen in some browsers)
+        lockPointerBtn.addEventListener('click', () => {
+            if (!document.pointerLockElement) {
+                content.requestPointerLock();
+            }
+        });
+
+        // Exit both
+        exitBtn.addEventListener('click', () => {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            if (document.pointerLockElement) {
+                document.exitPointerLock();
+            }
+            updateStatus('Exited all modes');
+        });
+
+        // Handle mouse movement during pointer lock
+        document.addEventListener('mousemove', (event) => {
+            if (document.pointerLockElement) {
+                console.log(`Mouse movement: ${event.movementX}, ${event.movementY}`);
+                // Additional logic can be added here for games or interactions
+            }
+        });
     </script>
-  </body>
+</body>
 </html>
