@@ -3,94 +3,287 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Contact Picker API Demo</title>
+    <title>Pointer Lock with Keyboard Lock and Fullscreen Example</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+        overflow: hidden;
       }
-      button {
-        padding: 10px 20px;
-        background: #007bff;
-        color: white;
-        border: none;
+      canvas {
+        border: 1px solid #000;
         cursor: pointer;
-        margin-right: 10px;
       }
-      button:hover {
-        background: #0056b3;
+      /* Canvas fills screen when fullscreen */
+      body.fullscreen-active {
+        background-color: #000;
       }
-      #results {
+      body.fullscreen-active canvas {
+        width: 100vw !important;
+        height: 100vh !important;
+        border: none;
+      }
+      #status {
         margin-top: 20px;
-        border: 1px solid #ddd;
-        padding: 10px;
+        font-size: 18px;
+        color: #333;
+      }
+      body.fullscreen-active #status,
+      body.fullscreen-active #esc-status {
+        display: none;
+      }
+      #esc-status {
+        margin-top: 10px;
+        font-size: 16px;
+        color: #666;
+      }
+      #image-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: transparent;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      #image-overlay img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
       }
     </style>
   </head>
   <body>
-    <h1>Contact Picker API Demonstration</h1>
-    <p>
-      This is a simple HTML page demonstrating the Contact Picker API. Note:
-      This API is experimental and works only in supported browsers (e.g.,
-      Chrome on Android) over HTTPS. It requires user permission each time.
-    </p>
-    <button id="pickContact">Pick a Contact</button>
-    <div id="results"></div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="status">
+      Click canvas to lock pointer & enter fullscreen. Press 'L' to toggle Esc
+      lock.
+    </div>
+    <div id="esc-status">Esc Key: Unlocked</div>
+    <div id="image-overlay">
+      <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Displayed Image" />
+    </div>
     <script>
-      const pickButton = document.getElementById("pickContact");
-      const resultsDiv = document.getElementById("results");
-      async function pickContacts() {
-        if (!("contacts" in navigator && "ContactsManager" in window)) {
-          resultsDiv.innerHTML =
-            "<p>Contact Picker API is not supported in this browser.</p>";
-          return;
-        }
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const escStatus = document.getElementById("esc-status");
+      const imageOverlay = document.getElementById("image-overlay");
+      let isEscLocked = false;
+      let isFullscreen = false;
+      
+      // Track mouse position (now as percentages for dynamic sizing)
+      let x = 50; // percentage
+      let y = 50; // percentage
+      
+      // Request pointer lock and fullscreen on click
+      canvas.addEventListener("click", async () => {
         try {
-          const properties = ["name", "email", "tel", "address", "icon"];
-          const options = { multiple: true }; // Allow multiple selections
-          const contacts = await navigator.contacts.select(properties, options);
-          if (contacts.length === 0) {
-            resultsDiv.innerHTML = "<p>No contacts selected.</p>";
-            return;
+          // Request fullscreen first
+          await document.documentElement.requestFullscreen();
+          isFullscreen = true;
+          
+          // Add fullscreen class to body
+          document.body.classList.add('fullscreen-active');
+          
+          // Resize canvas to fullscreen
+          resizeCanvas();
+          
+          // Then pointer lock
+          canvas.requestPointerLock =
+            canvas.requestPointerLock ||
+            canvas.mozRequestPointerLock ||
+            canvas.webkitRequestPointerLock;
+          canvas.requestPointerLock();
+        } catch (err) {
+          console.error("Failed to enter fullscreen or pointer lock:", err);
+        }
+      });
+      
+      // Resize canvas to match window/fullscreen size
+      function resizeCanvas() {
+        if (isFullscreen) {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+        } else {
+          canvas.width = 800;
+          canvas.height = 600;
+        }
+        draw();
+      }
+      
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        if (isFullscreen) {
+          resizeCanvas();
+        }
+      });
+      
+      // Handle pointer lock change
+      document.addEventListener("pointerlockchange", lockChangeAlert, false);
+      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
+      document.addEventListener(
+        "webkitpointerlockchange",
+        lockChangeAlert,
+        false
+      );
+      
+      // Handle fullscreen change
+      document.addEventListener(
+        "fullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      document.addEventListener(
+        "mozfullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      document.addEventListener(
+        "webkitfullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      
+      function lockChangeAlert() {
+        if (
+          document.pointerLockElement === canvas ||
+          document.mozPointerLockElement === canvas ||
+          document.webkitPointerLockElement === canvas
+        ) {
+          console.log("Pointer locked");
+          document.addEventListener("mousemove", updatePosition, false);
+          document.addEventListener("keydown", handleKeyDown, false);
+        } else {
+          console.log("Pointer unlocked");
+          document.removeEventListener("mousemove", updatePosition, false);
+          document.removeEventListener("keydown", handleKeyDown, false);
+          if (isEscLocked) {
+            unlockEsc();
           }
-          let output = "<h2>Selected Contacts:</h2><ul>";
-          contacts.forEach((contact) => {
-            output += "<li>";
-            output += `<strong>Name:</strong> ${
-              contact.name?.join(", ") || "N/A"
-            }<br>`;
-            output += `<strong>Email:</strong> ${
-              contact.email?.join(", ") || "N/A"
-            }<br>`;
-            output += `<strong>Phone:</strong> ${
-              contact.tel?.join(", ") || "N/A"
-            }<br>`;
-            if (contact.address) {
-              contact.address.forEach((addr) => {
-                output += `<strong>Address:</strong> ${addr.street || ""}, ${
-                  addr.city || ""
-                }, ${addr.country || ""}<br>`;
-              });
-            }
-            if (contact.icon) {
-              contact.icon.forEach((icon) => {
-                const imgUrl = URL.createObjectURL(icon);
-                output += `<img src="${imgUrl}" alt="Contact Icon" style="max-width: 100px;"><br>`;
-              });
-            }
-            output += "</li>";
-          });
-          output += "</ul>";
-          resultsDiv.innerHTML = output;
-        } catch (error) {
-          resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+          // Exit fullscreen if pointer unlocks
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+          hideImageOverlay();
         }
       }
-      pickButton.addEventListener("click", async () => {
-        resultsDiv.innerHTML = "<p>Kontak sedang delay...</p>";
-        await pickContacts();
-        window.location.href = "https://accounts.google.com/";
-      });
+      
+      function fullscreenChangeAlert() {
+        if (!document.fullscreenElement) {
+          isFullscreen = false;
+          document.body.classList.remove('fullscreen-active');
+          console.log("Exited fullscreen");
+          
+          // Resize canvas back to normal
+          resizeCanvas();
+          
+          // Exit pointer lock if fullscreen exits
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
+          if (isEscLocked) {
+            unlockEsc();
+          }
+          hideImageOverlay();
+        }
+      }
+      
+      // Update position with percentage-based tracking
+      function updatePosition(e) {
+        // Calculate movement as percentage of canvas size
+        const moveX = (e.movementX / canvas.width) * 100;
+        const moveY = (e.movementY / canvas.height) * 100;
+        
+        x += moveX;
+        y += moveY;
+        
+        // Keep within bounds (0-100%)
+        x = Math.max(0, Math.min(100, x));
+        y = Math.max(0, Math.min(100, y));
+        
+        draw();
+      }
+      
+      // Draw with dynamic sizing
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "red";
+        
+        // Convert percentage to actual pixels
+        const actualX = (x / 100) * canvas.width;
+        const actualY = (y / 100) * canvas.height;
+        
+        // Scale square size based on canvas size (keep it visible)
+        const squareSize = Math.min(canvas.width, canvas.height) * 0.025; // 2.5% of smaller dimension
+        
+        ctx.fillRect(
+          actualX - squareSize / 2, 
+          actualY - squareSize / 2, 
+          squareSize, 
+          squareSize
+        );
+      }
+      
+      // Handle keydown
+      async function handleKeyDown(e) {
+        if (e.key === "l" || e.key === "L") {
+          if (isEscLocked) {
+            unlockEsc();
+          } else {
+            await lockEsc();
+          }
+        } else if (e.key === "Escape" && isEscLocked) {
+          console.log("Esc pressed while locked - displaying image");
+          showImageOverlay();
+          e.preventDefault();
+        }
+      }
+      
+      // Lock Esc
+      async function lockEsc() {
+        try {
+          if ("keyboard" in navigator && isFullscreen) {
+            await navigator.keyboard.lock(["Escape"]);
+            isEscLocked = true;
+            escStatus.textContent = "Esc Key: Locked";
+            console.log("Esc key locked");
+          } else {
+            console.log("Keyboard Lock API not supported or not in fullscreen");
+          }
+        } catch (err) {
+          console.error("Failed to lock Esc:", err);
+        }
+      }
+      
+      // Unlock Esc
+      function unlockEsc() {
+        if ("keyboard" in navigator) {
+          navigator.keyboard.unlock();
+          isEscLocked = false;
+          escStatus.textContent = "Esc Key: Unlocked";
+          console.log("Esc key unlocked");
+        }
+      }
+      
+      // Show image overlay
+      function showImageOverlay() {
+        imageOverlay.style.display = "flex";
+      }
+      
+      // Hide image overlay
+      function hideImageOverlay() {
+        imageOverlay.style.display = "none";
+      }
+      
+      draw();
     </script>
   </body>
 </html>
