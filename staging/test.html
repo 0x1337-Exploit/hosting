@@ -28,6 +28,23 @@
         font-size: 16px;
         color: #666;
       }
+      /* New styles for the image overlay */
+      #image-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background for overlay */
+        display: none; /* Hidden by default */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000; /* Ensure it's on top */
+      }
+      #image-overlay img {
+        max-width: 80%; /* Scale image to fit screen */
+        max-height: 80%;
+      }
     </style>
   </head>
   <body>
@@ -37,10 +54,15 @@
       lock.
     </div>
     <div id="esc-status">Esc Key: Unlocked</div>
+    <!-- New div for the image overlay -->
+    <div id="image-overlay">
+      <img src="foto.png" alt="Displayed Image" />
+    </div>
     <script>
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
       const escStatus = document.getElementById("esc-status");
+      const imageOverlay = document.getElementById("image-overlay"); // Reference to overlay
       let isEscLocked = false;
       let isFullscreen = false;
       // Request pointer lock and fullscreen on click
@@ -103,6 +125,7 @@
           if (document.fullscreenElement) {
             document.exitFullscreen();
           }
+          hideImageOverlay(); // Hide overlay if exiting pointer lock
         }
       }
       function fullscreenChangeAlert() {
@@ -116,6 +139,7 @@
           if (isEscLocked) {
             unlockEsc();
           }
+          hideImageOverlay(); // Hide overlay if exiting fullscreen
         }
       }
       // Track mouse movement
@@ -143,9 +167,10 @@
             await lockEsc();
           }
         } else if (e.key === "Escape" && isEscLocked) {
-          // Handle Esc press here if captured (e.g., do nothing or custom action)
-          console.log("Esc pressed while locked - ignoring or handling custom");
-          e.preventDefault(); // Try to prevent default, but won't stop browser exit
+          // Modified: Instead of just logging, show the image overlay on single Esc press
+          console.log("Esc pressed while locked - displaying image");
+          showImageOverlay();
+          e.preventDefault(); // Prevent default browser behavior if possible
         }
       }
       // Lock Esc
@@ -172,6 +197,14 @@
           escStatus.textContent = "Esc Key: Unlocked";
           console.log("Esc key unlocked");
         }
+      }
+      // New function: Show image overlay
+      function showImageOverlay() {
+        imageOverlay.style.display = "flex"; // Show the overlay
+      }
+      // New function: Hide image overlay (called on exit)
+      function hideImageOverlay() {
+        imageOverlay.style.display = "none"; // Hide the overlay
       }
       draw();
     </script>
