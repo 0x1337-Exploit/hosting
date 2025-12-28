@@ -3,89 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pointer Lock dengan Fullscreen (Tanpa Canvas)</title>
+    <title>Pointer Lock Tanpa Canvas</title>
     <style>
         body {
             margin: 0;
-            padding: 0;
             height: 100vh;
-            background-color: #000;
-            color: #fff;
+            background-color: #f0f0f0;
             font-family: Arial, sans-serif;
             overflow: hidden;
-        }
-        #container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
+            user-select: none;
         }
         #instructions {
-            font-size: 24px;
-            margin-bottom: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
             text-align: center;
+            cursor: pointer;
+            transition: opacity 0.5s;
         }
-        #output {
-            font-size: 48px;
-            margin-top: 50px;
+        #movement {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div id="container">
-        <div id="instructions">
-            Klik di area ini untuk mengaktifkan Pointer Lock dan Fullscreen.<br>
-            Gerakkan mouse untuk melihat nilai delta.<br>
-            Tekan tombol ESC untuk keluar.
-        </div>
-        <div id="output">
-            movementX: 0<br>
-            movementY: 0
-        </div>
+    <div id="instructions">
+        <h2>Klik di mana saja pada layar untuk mengaktifkan Pointer Lock</h2>
+        <p>Tekan ESC untuk keluar dari mode lock.</p>
     </div>
+    <div id="movement">Pergerakan mouse: X: 0 | Y: 0</div>
 
     <script>
-        const container = document.getElementById('container');
-        const output = document.getElementById('output');
-        let x = 0;
-        let y = 0;
+        const instructions = document.getElementById('instructions');
+        const movementDisplay = document.getElementById('movement');
+        let movementX = 0;
+        let movementY = 0;
 
-        // Fungsi untuk menangani pergerakan mouse saat pointer locked
-        function handleMouseMove(event) {
-            x += event.movementX;
-            y += event.movementY;
-            output.innerHTML = `movementX: ${event.movementX}<br>movementY: ${event.movementY}<br>Total X: ${x}<br>Total Y: ${y}`;
+        // Fungsi saat pointer lock berhasil diaktifkan
+        function lockChange() {
+            if (document.pointerLockElement === document.body) {
+                instructions.style.opacity = '0';
+                setTimeout(() => { instructions.style.display = 'none'; }, 500);
+                movementDisplay.style.display = 'block';
+                document.addEventListener('mousemove', onMouseMove);
+            } else {
+                instructions.style.display = 'block';
+                instructions.style.opacity = '1';
+                movementDisplay.style.display = 'none';
+                document.removeEventListener('mousemove', onMouseMove);
+                movementX = movementY = 0;
+                updateMovementDisplay();
+            }
         }
 
-        // Event listener untuk perubahan status pointer lock
-        document.addEventListener('pointerlockchange', () => {
-            if (document.pointerLockElement === container) {
-                document.addEventListener('mousemove', handleMouseMove);
-                output.innerHTML += '<br>Pointer Lock aktif!';
-            } else {
-                document.removeEventListener('mousemove', handleMouseMove);
-                output.innerHTML += '<br>Pointer Lock nonaktif.';
+        // Update nilai pergerakan mouse
+        function onMouseMove(e) {
+            movementX += e.movementX || 0;
+            movementY += e.movementY || 0;
+            updateMovementDisplay();
+        }
+
+        function updateMovementDisplay() {
+            movementDisplay.textContent = `Pergerakan mouse: X: ${movementX} | Y: ${movementY}`;
+        }
+
+        // Request pointer lock saat klik pada body
+        document.body.addEventListener('click', () => {
+            document.body.requestPointerLock =
+                document.body.requestPointerLock ||
+                document.body.mozRequestPointerLock ||
+                document.body.webkitRequestPointerLock;
+
+            if (document.body.requestPointerLock) {
+                document.body.requestPointerLock();
             }
         });
 
-        // Event listener untuk error pointer lock
+        // Deteksi perubahan status pointer lock
+        document.addEventListener('pointerlockchange', lockChange);
+        document.addEventListener('mozpointerlockchange', lockChange);
+        document.addEventListener('webkitpointerlockchange', lockChange);
+
+        // Deteksi error (misalnya browser tidak mendukung)
         document.addEventListener('pointerlockerror', () => {
-            console.error('Gagal mengaktifkan Pointer Lock.');
-            alert('Pointer Lock gagal diaktifkan. Pastikan browser mendukung dan izin diberikan.');
-        });
-
-        // Klik pada container untuk meminta pointer lock dan fullscreen
-        container.addEventListener('click', () => {
-            // Request Pointer Lock terlebih dahulu (sesuai spesifikasi untuk transient activation)
-            container.requestPointerLock();
-
-            // Kemudian request Fullscreen pada document element
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            }
+            console.error('Pointer Lock gagal diaktifkan.');
+            alert('Pointer Lock tidak didukung atau gagal diaktifkan pada browser ini.');
         });
     </script>
 </body>
