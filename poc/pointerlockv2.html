@@ -101,18 +101,18 @@
   <body>
     <div id="container">
       <div id="instructions">
-        <h2>Instruksi Pointer Lock</h2>
-        <p>📌 <strong>Klik dimana saja</strong> untuk masuk fullscreen & pointer lock</p>
-        <p>🔒 Tombol ESC akan <strong>otomatis terkunci</strong> saat fullscreen</p>
-        <p>⌨️ Tekan <strong>ESC</strong> untuk menampilkan gambar</p>
-        <p>🖱️ Gerakkan mouse untuk menggerakkan kotak merah</p>
+        <h2>Pointer Lock Instructions</h2>
+        <p><strong>Click anywhere</strong> to enter full screen & pointer lock</p>
+        <p>The ESC key will be <strong>locked automatically</strong> when full screen</p>
+        <p>Press <strong>ESC</strong> to display the image</p>
+        <p>Move the mouse to move the red box</p>
       </div>
       <canvas id="canvas"></canvas>
       <div id="ui-overlay">
         <div id="status">
-          Klik layar untuk lock pointer & masuk fullscreen
+          Click the screen to lock pointer & enter fullscreen
         </div>
-        <div id="esc-status">Tombol Esc: Belum Terkunci</div>
+        <div id="esc-status">ESC Key: Not Locked</div>
       </div>
       <div id="image-overlay">
         <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Displayed Image" />
@@ -165,14 +165,14 @@
             canvas.webkitRequestPointerLock;
           canvas.requestPointerLock();
           
-          statusDiv.textContent = "Pointer Terkunci - Gerakkan mouse untuk bergerak";
+          statusDiv.textContent = "Pointer Locked - Move mouse to move";
           
           // Hide UI after a moment
           setTimeout(() => {
             uiOverlay.classList.add("hidden");
           }, 2000);
         } catch (err) {
-          console.error("Gagal masuk fullscreen atau pointer lock:", err);
+          console.error("Failed to enter fullscreen or pointer lock:", err);
         }
       });
 
@@ -192,12 +192,12 @@
           document.mozPointerLockElement === canvas ||
           document.webkitPointerLockElement === canvas
         ) {
-          console.log("Pointer terkunci");
+          console.log("Pointer locked");
           document.addEventListener("mousemove", updatePosition, false);
           document.addEventListener("keydown", handleKeyDown, false);
           uiOverlay.classList.remove("hidden");
         } else {
-          console.log("Pointer tidak terkunci");
+          console.log("Pointer not locked");
           document.removeEventListener("mousemove", updatePosition, false);
           document.removeEventListener("keydown", handleKeyDown, false);
           
@@ -212,7 +212,7 @@
           
           hideImageOverlay();
           uiOverlay.classList.remove("hidden");
-          statusDiv.textContent = "Klik layar untuk lock pointer & masuk fullscreen";
+          statusDiv.textContent = "Click the screen to lock pointer & enter fullscreen";
           instructions.classList.remove("hidden");
         }
       }
@@ -220,7 +220,7 @@
       function fullscreenChangeAlert() {
         if (!document.fullscreenElement) {
           isFullscreen = false;
-          console.log("Keluar dari fullscreen");
+          console.log("Exited fullscreen");
           
           // Exit pointer lock if fullscreen exits
           if (document.pointerLockElement) {
@@ -270,7 +270,7 @@
       async function handleKeyDown(e) {
         if (e.key === "Escape" && isEscLocked) {
           // ESC is locked, so show image overlay
-          console.log("Esc ditekan saat terkunci - menampilkan gambar");
+          console.log("ESC pressed while locked - displaying image");
           showImageOverlay();
           e.preventDefault();
         }
@@ -282,13 +282,13 @@
           if ("keyboard" in navigator && isFullscreen) {
             await navigator.keyboard.lock(["Escape"]);
             isEscLocked = true;
-            escStatus.textContent = "Tombol Esc: Terkunci ✓ (Tekan ESC untuk gambar)";
-            console.log("Tombol Esc otomatis terkunci");
+            escStatus.textContent = "ESC Key: Locked ✓ (Press ESC for image)";
+            console.log("ESC key automatically locked");
           } else {
-            console.log("Keyboard Lock API tidak didukung atau tidak dalam fullscreen");
+            console.log("Keyboard Lock API not supported or not in fullscreen");
           }
         } catch (err) {
-          console.error("Gagal mengunci Esc:", err);
+          console.error("Failed to lock ESC:", err);
         }
       }
 
@@ -297,8 +297,8 @@
         if ("keyboard" in navigator) {
           navigator.keyboard.unlock();
           isEscLocked = false;
-          escStatus.textContent = "Tombol Esc: Belum Terkunci";
-          console.log("Tombol Esc tidak terkunci");
+          escStatus.textContent = "ESC Key: Not Locked";
+          console.log("ESC key unlocked");
         }
       }
 
