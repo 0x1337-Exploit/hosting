@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pointer Lock Tanpa Canvas dengan Lock Esc</title>
+    <title>Pointer Lock Tanpa Canvas dengan Lock Esc dan Login UI</title>
     <style>
         body {
             margin: 0;
@@ -12,6 +12,7 @@
             font-family: Arial, sans-serif;
             overflow: hidden;
             user-select: none;
+            cursor: none; /* Sembunyikan cursor asli saat pointer lock */
         }
         #instructions {
             position: absolute;
@@ -46,6 +47,98 @@
             border-radius: 5px;
             display: none;
         }
+        #fakeCursor {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+            z-index: 9999;
+        }
+        #loginOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #loginBox {
+            background-color: #202124;
+            border-radius: 8px;
+            padding: 24px 32px;
+            width: 400px;
+            color: white;
+            text-align: center;
+        }
+        #loginBox .logo {
+            font-size: 48px;
+            color: #4285f4; /* Warna Google */
+            margin-bottom: 16px;
+        }
+        #loginBox h1 {
+            font-size: 24px;
+            margin: 0 0 8px;
+        }
+        #loginBox p {
+            font-size: 16px;
+            margin: 0 0 24px;
+        }
+        #loginBox input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            background-color: #303134;
+            border: 1px solid #5f6368;
+            border-radius: 4px;
+            color: white;
+            font-size: 16px;
+        }
+        #loginBox a {
+            color: #8ab4f8;
+            text-decoration: none;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 24px;
+        }
+        #loginBox .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        #loginBox .buttons button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #loginBox .buttons .create {
+            background: transparent;
+            color: #8ab4f8;
+        }
+        #loginBox .buttons .next {
+            background: #1a73e8;
+            color: white;
+        }
+        #footer {
+            position: absolute;
+            bottom: 16px;
+            width: 100%;
+            text-align: center;
+            color: #9aa0a6;
+            font-size: 12px;
+        }
+        #footer a {
+            color: #9aa0a6;
+            text-decoration: none;
+            margin: 0 8px;
+        }
     </style>
 </head>
 <body>
@@ -55,14 +148,36 @@
     </div>
     <div id="movement">Pergerakan mouse: X: 0 | Y: 0</div>
     <div id="escStatus">Tombol Esc: Belum Terkunci</div>
+    <div id="fakeCursor"></div>
+    <div id="loginOverlay">
+        <div id="loginBox">
+            <div class="logo">G</div>
+            <h1>Login</h1>
+            <p>Gunakan Akun Google Anda</p>
+            <input type="text" id="emailInput" placeholder="Email atau nomor telepon">
+            <a href="#">Lupa email?</a>
+            <p style="font-size: 12px; text-align: left; margin-bottom: 24px;">Bukan komputer Anda? Gunakan mode Tamu untuk login secara pribadi. <a href="#">Pelajari lebih lanjut cara menggunakan Mode Tamu</a></p>
+            <div class="buttons">
+                <button class="create">Buat akun</button>
+                <button class="next" onclick="handleNext()">Selanjutnya</button>
+            </div>
+        </div>
+        <div id="footer">
+            Indonesia <span>▼</span> <a href="#">Bantuan</a> <a href="#">Privasi</a> <a href="#">Persyaratan</a>
+        </div>
+    </div>
 
     <script>
         const instructions = document.getElementById('instructions');
         const movementDisplay = document.getElementById('movement');
         const escStatus = document.getElementById('escStatus');
+        const fakeCursor = document.getElementById('fakeCursor');
+        const loginOverlay = document.getElementById('loginOverlay');
+        const emailInput = document.getElementById('emailInput');
         let movementX = 0;
         let movementY = 0;
         let isEscLocked = false;
+        let escPressCount = 0;
 
         // Lock Esc - dipanggil saat pointer lock aktif
         async function lockEsc() {
@@ -110,18 +225,79 @@
                 unlockEsc(); // Unlock Esc saat keluar dari pointer lock
                 movementX = movementY = 0;
                 updateMovementDisplay();
+                resetEscState();
             }
         }
 
-        // Update nilai pergerakan mouse
+        // Update nilai pergerakan mouse dan posisi cursor palsu
         function onMouseMove(e) {
             movementX += e.movementX || 0;
             movementY += e.movementY || 0;
             updateMovementDisplay();
+
+            // Update posisi cursor palsu jika ditampilkan
+            if (fakeCursor.style.display === 'block') {
+                const cursorX = parseInt(fakeCursor.style.left || 0) + (e.movementX || 0);
+                const cursorY = parseInt(fakeCursor.style.top || 0) + (e.movementY || 0);
+                fakeCursor.style.left = `${cursorX}px`;
+                fakeCursor.style.top = `${cursorY}px`;
+            }
         }
 
         function updateMovementDisplay() {
             movementDisplay.textContent = `Pergerakan mouse: X: ${movementX} | Y: ${movementY}`;
+        }
+
+        // Deteksi tekan tombol ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isEscLocked && document.pointerLockElement === document.body) {
+                escPressCount++;
+                if (escPressCount === 1) {
+                    // Tekan pertama: Tampilkan cursor palsu dan UI login
+                    showFakeCursorAndLogin();
+                } else {
+                    // Tekan kedua atau lebih: Keluar dari pointer lock (manual exit)
+                    document.exitPointerLock();
+                }
+            }
+        });
+
+        // Fungsi tampilkan cursor palsu dan UI login
+        function showFakeCursorAndLogin() {
+            fakeCursor.style.display = 'block';
+            // Inisialisasi posisi cursor palsu di tengah layar
+            fakeCursor.style.left = `${window.innerWidth / 2}px`;
+            fakeCursor.style.top = `${window.innerHeight / 2}px`;
+            loginOverlay.style.display = 'flex';
+            // Ubah background body untuk menyesuaikan dengan overlay
+            document.body.style.backgroundColor = '#202124';
+            // Sembunyikan elemen lain
+            movementDisplay.style.display = 'none';
+            escStatus.style.display = 'none';
+        }
+
+        // Fungsi reset state saat keluar pointer lock
+        function resetEscState() {
+            escPressCount = 0;
+            fakeCursor.style.display = 'none';
+            loginOverlay.style.display = 'none';
+            document.body.style.backgroundColor = '#f0f0f0';
+            emailInput.value = ''; // Reset input
+            history.pushState({}, '', window.location.pathname); // Reset URL parameter
+        }
+
+        // Fungsi handle tombol Selanjutnya (simulasi submit)
+        function handleNext() {
+            const email = emailInput.value.trim();
+            if (email) {
+                // Tambahkan parameter email ke URL tanpa reload
+                const url = new URL(window.location);
+                url.searchParams.set('email', email);
+                history.pushState({}, '', url);
+                alert(`Email "${email}" telah ditambahkan ke URL.`);
+            } else {
+                alert('Masukkan email terlebih dahulu.');
+            }
         }
 
         // Request pointer lock saat klik pada body
