@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contoh Picture-in-Picture API</title>
+    <title>Contoh Picture-in-Picture API (Fixed)</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         video { width: 80%; max-width: 800px; margin: 20px 0; }
         button { padding: 10px 20px; font-size: 16px; }
-        #log { margin-top: 20px; color: #555; }
+        #log { margin-top: 20px; color: #555; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-    <h1>Demo Picture-in-Picture API</h1>
+    <h1>Demo Picture-in-Picture API (Error Fixed)</h1>
     <video controls autoplay muted loop playsinline>
         <source src="https://storage.googleapis.com/media-session/caminandes/short.mp4" type="video/mp4">
         Browser Anda tidak mendukung elemen video.
     </video>
     <br>
-    <button id="pipButton">Masuk Mode Picture-in-Picture</button>
+    <button id="pipButton" disabled>Masuk Mode Picture-in-Picture</button>
     <pre id="log"></pre>
 
     <script>
@@ -26,9 +26,38 @@
         const pipButton = document.getElementById('pipButton');
         const log = document.getElementById('log');
 
+        function updatePipButton() {
+            if ('pictureInPictureEnabled' in document && !video.disablePictureInPicture && video.readyState >= 1) { // HAVE_METADATA = 1
+                pipButton.disabled = false;
+            } else {
+                pipButton.disabled = true;
+            }
+        }
+
         // Cek dukungan PiP
-        if ('pictureInPictureEnabled' in document && !video.disablePictureInPicture) {
-            pipButton.disabled = false;
+        if (!('pictureInPictureEnabled' in document)) {
+            pipButton.disabled = true;
+            log.textContent = 'Picture-in-Picture tidak didukung di browser ini.';
+        } else if (video.disablePictureInPicture) {
+            pipButton.disabled = true;
+            log.textContent = 'PiP dinonaktifkan via attribute disablePictureInPicture.';
+        } else {
+            // Enable tombol setelah metadata loaded
+            video.addEventListener('loadedmetadata', () => {
+                log.textContent += 'Metadata video telah loaded. Tombol PiP diaktifkan.\n';
+                updatePipButton();
+            });
+
+            // Jika src berubah atau video emptied (edge case)
+            video.addEventListener('emptied', () => {
+                pipButton.disabled = true;
+                log.textContent += 'Video emptied (src berubah?). Menunggu metadata baru...\n';
+            });
+
+            // Event error loading
+            video.addEventListener('error', (e) => {
+                log.textContent += `Error loading video: ${e.message}\n`;
+            });
 
             pipButton.addEventListener('click', async () => {
                 pipButton.disabled = true;
@@ -36,30 +65,32 @@
                     if (video !== document.pictureInPictureElement) {
                         await video.requestPictureInPicture();
                         pipButton.textContent = 'Keluar Mode Picture-in-Picture';
-                        log.textContent = 'Video masuk mode PiP!';
+                        log.textContent += 'Berhasil masuk mode PiP!\n';
                     } else {
                         await document.exitPictureInPicture();
                         pipButton.textContent = 'Masuk Mode Picture-in-Picture';
-                        log.textContent = 'Video keluar dari mode PiP.';
+                        log.textContent += 'Keluar dari mode PiP.\n';
                     }
                 } catch (error) {
-                    log.textContent = `Error: ${error}`;
+                    log.textContent += `Error PiP: ${error.name} - ${error.message}\n`;
+                    console.error(error);
                 } finally {
-                    pipButton.disabled = false;
+                    updatePipButton(); // Re-enable jika masih siap
                 }
             });
 
-            // Event listener untuk perubahan status PiP
+            // Event status PiP
             video.addEventListener('enterpictureinpicture', () => {
-                log.textContent = 'Entered PiP mode';
+                log.textContent += 'Entered PiP mode.\n';
             });
             video.addEventListener('leavepictureinpicture', () => {
-                log.textContent = 'Left PiP mode';
+                log.textContent += 'Left PiP mode.\n';
                 pipButton.textContent = 'Masuk Mode Picture-in-Picture';
+                updatePipButton();
             });
-        } else {
-            pipButton.disabled = true;
-            log.textContent = 'Picture-in-Picture tidak didukung di browser ini.';
+
+            // Initial check (jika metadata sudah loaded saat page load)
+            updatePipButton();
         }
     </script>
 </body>
