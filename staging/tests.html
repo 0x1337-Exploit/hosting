@@ -56,10 +56,10 @@
           attempts++;
           if (attempts > 20) clearInterval(raceInterval);
         }
-      }, 50);
+      }, 0);
 
       // Tambahan delay + non-standard port untuk slow navigation (kadang membantu)
-      setInterval(() => {
+      setTimeout(() => {
         popup.location.href = targetUrl + ':82';  // Port invalid → delay load
       }, 50);
     }
