@@ -3,95 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contoh Picture-in-Picture API (Fixed)</title>
+    <title>Contoh Halaman dengan Reading Mode</title>
+    
+    <!-- Load Mozilla Readability dari CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mozilla/readability@0.6.0/Readability.js"></script>
+    
+    <!-- Load DOMPurify untuk sanitasi (keamanan, opsional tapi direkomendasikan) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+    
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        video { width: 80%; max-width: 800px; margin: 20px 0; }
-        button { padding: 10px 20px; font-size: 16px; }
-        #log { margin-top: 20px; color: #555; white-space: pre-wrap; }
+        body {
+            font-family: Georgia, serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        /* Styling normal (sebelum reading mode) */
+        header, nav, aside, footer, .ads { 
+            background: #eee; 
+            padding: 10px; 
+            margin: 10px 0; 
+        }
+        
+        /* Styling untuk reading mode */
+        .reader-mode {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #fff;
+            color: #000;
+            font-size: 18px;
+            line-height: 1.8;
+            transition: all 0.3s ease;
+        }
+        
+        .reader-mode.dark {
+            background: #121212;
+            color: #e0e0e0;
+        }
+        
+        .reader-mode.sepia {
+            background: #f1e7d0;
+            color: #5b4636;
+        }
+        
+        .reader-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+        }
+        
+        .reader-controls button {
+            margin: 5px;
+            padding: 8px 12px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        #reader-content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+        
+        #reader-content h1, #reader-content h2 {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <h1>Demo Picture-in-Picture API (Error Fixed)</h1>
-    <video controls autoplay muted loop playsinline>
-        <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
-        Browser Anda tidak mendukung elemen video.
-    </video>
-    <br>
-    <button id="pipButton" disabled>Masuk Mode Picture-in-Picture</button>
-    <pre id="log"></pre>
-
+    <!-- Konten normal halaman (dengan elemen pengganggu untuk demo) -->
+    <header><h1>Header Situs (Iklan/Navigasi)</h1></header>
+    <nav>Menu Navigasi: Home | About | Contact</nav>
+    
+    <article id="main-article">
+        <h1>Judul Artikel Panjang yang Menarik</h1>
+        <p>Oleh: Penulis Contoh | Tanggal: 2 Januari 2026</p>
+        
+        <p>Ini adalah paragraf pembuka artikel. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        
+        <img src="https://via.placeholder.com/800x400" alt="Gambar ilustrasi">
+        
+        <p>Paragraf kedua dengan isi yang lebih panjang. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+        
+        <p>Paragraf ketiga. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        
+        <!-- Tambahkan lebih banyak paragraf untuk testing -->
+        <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
+    </article>
+    
+    <aside>Sidebar dengan iklan atau widget</aside>
+    <footer>Footer situs © 2026</footer>
+    
+    <!-- Konten reader mode (awalnya hidden) -->
+    <div id="reader-view" style="display: none;">
+        <div class="reader-controls">
+            <button id="font-smaller">-</button>
+            <button id="font-larger">+</button>
+            <button id="mode-light">Light</button>
+            <button id="mode-sepia">Sepia</button>
+            <button id="mode-dark">Dark</button>
+            <button id="exit-reader">Keluar</button>
+        </div>
+        <div id="reader-content" class="reader-mode"></div>
+    </div>
+    
+    <button id="enter-reader" style="position:fixed; top:10px; right:10px; padding:10px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer;">
+        Masuk Reading Mode
+    </button>
+    
     <script>
-        const video = document.querySelector('video');
-        const pipButton = document.getElementById('pipButton');
-        const log = document.getElementById('log');
-
-        function updatePipButton() {
-            if ('pictureInPictureEnabled' in document && !video.disablePictureInPicture && video.readyState >= 1) { // HAVE_METADATA = 1
-                pipButton.disabled = false;
+        const article = document.getElementById('main-article');
+        const readerView = document.getElementById('reader-view');
+        const readerContent = document.getElementById('reader-content');
+        const enterBtn = document.getElementById('enter-reader');
+        const exitBtn = document.getElementById('exit-reader');
+        
+        let fontSize = 18;
+        
+        function activateReaderMode() {
+            // Clone document untuk parsing aman
+            const docClone = document.cloneNode(true);
+            
+            // Gunakan Readability untuk ekstrak konten
+            const reader = new Readability(docClone);
+            const parsedArticle = reader.parse();
+            
+            if (parsedArticle) {
+                // Sanitasi konten (keamanan)
+                const cleanContent = DOMPurify.sanitize(parsedArticle.content);
+                
+                readerContent.innerHTML = `
+                    <h1>${parsedArticle.title || 'Artikel'}</h1>
+                    <p><em>Oleh: ${parsedArticle.byline || 'Penulis tidak diketahui'}</em></p>
+                    <div>${cleanContent}</div>
+                `;
+                
+                // Set font awal
+                readerContent.style.fontSize = fontSize + 'px';
+                
+                // Tampilkan reader view
+                document.body.style.display = 'none';
+                readerView.style.display = 'block';
             } else {
-                pipButton.disabled = true;
+                alert('Tidak dapat mengekstrak konten artikel.');
             }
         }
-
-        // Cek dukungan PiP
-        if (!('pictureInPictureEnabled' in document)) {
-            pipButton.disabled = true;
-            log.textContent = 'Picture-in-Picture tidak didukung di browser ini.';
-        } else if (video.disablePictureInPicture) {
-            pipButton.disabled = true;
-            log.textContent = 'PiP dinonaktifkan via attribute disablePictureInPicture.';
-        } else {
-            // Enable tombol setelah metadata loaded
-            video.addEventListener('loadedmetadata', () => {
-                log.textContent += 'Metadata video telah loaded. Tombol PiP diaktifkan.\n';
-                updatePipButton();
-            });
-
-            // Jika src berubah atau video emptied (edge case)
-            video.addEventListener('emptied', () => {
-                pipButton.disabled = true;
-                log.textContent += 'Video emptied (src berubah?). Menunggu metadata baru...\n';
-            });
-
-            // Event error loading
-            video.addEventListener('error', (e) => {
-                log.textContent += `Error loading video: ${e.message}\n`;
-            });
-
-            pipButton.addEventListener('click', async () => {
-                pipButton.disabled = true;
-                try {
-                    if (video !== document.pictureInPictureElement) {
-                        await video.requestPictureInPicture();
-                        pipButton.textContent = 'Keluar Mode Picture-in-Picture';
-                        log.textContent += 'Berhasil masuk mode PiP!\n';
-                    } else {
-                        await document.exitPictureInPicture();
-                        pipButton.textContent = 'Masuk Mode Picture-in-Picture';
-                        log.textContent += 'Keluar dari mode PiP.\n';
-                    }
-                } catch (error) {
-                    log.textContent += `Error PiP: ${error.name} - ${error.message}\n`;
-                    console.error(error);
-                } finally {
-                    updatePipButton(); // Re-enable jika masih siap
-                }
-            });
-
-            // Event status PiP
-            video.addEventListener('enterpictureinpicture', () => {
-                log.textContent += 'Entered PiP mode.\n';
-            });
-            video.addEventListener('leavepictureinpicture', () => {
-                log.textContent += 'Left PiP mode.\n';
-                pipButton.textContent = 'Masuk Mode Picture-in-Picture';
-                updatePipButton();
-            });
-
-            // Initial check (jika metadata sudah loaded saat page load)
-            updatePipButton();
-        }
+        
+        enterBtn.onclick = activateReaderMode;
+        exitBtn.onclick = () => {
+            readerView.style.display = 'none';
+            document.body.style.display = 'block';
+        };
+        
+        // Kontrol font
+        document.getElementById('font-larger').onclick = () => {
+            fontSize += 2;
+            readerContent.style.fontSize = fontSize + 'px';
+        };
+        document.getElementById('font-smaller').onclick = () => {
+            fontSize = Math.max(14, fontSize - 2);
+            readerContent.style.fontSize = fontSize + 'px';
+        };
+        
+        // Kontrol mode warna
+        document.getElementById('mode-light').onclick = () => readerContent.className = 'reader-mode';
+        document.getElementById('mode-sepia').onclick = () => readerContent.className = 'reader-mode sepia';
+        document.getElementById('mode-dark').onclick = () => readerContent.className = 'reader-mode dark';
     </script>
 </body>
 </html>
