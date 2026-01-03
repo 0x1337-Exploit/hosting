@@ -13,7 +13,7 @@
         }
 
         body {
-            background-color: #f0f2f5;
+            background: white;
             color: #1c1e21;
             line-height: 1.34;
         }
@@ -149,11 +149,6 @@
         .meta {
             margin-top: 30px;
         }
-
-        .meta img {
-            height: 20px;
-            vertical-align: middle;
-        }
     </style>
 </head>
 <body>
@@ -161,7 +156,7 @@
         <div>
             <header>
                 <p class="language-notice">
-                    Your address bar has been spoofed. This is not https://web.facebook.com/
+                    Your Address Bar Has Been Spoofed <br> This is not https://web.facebook.com/
                 </p>
                 <p class="current-lang">
                     <a href="#" class="language-link">Exploit-1337</a>
@@ -170,9 +165,9 @@
 
             <div class="logo">f</div>
 
-            <form>
-                <input type="text" placeholder="Nomor ponsel atau email" autocomplete="username">
-                <input type="password" placeholder="Kata sandi" autocomplete="current-password">
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="Nomor ponsel atau email" autocomplete="username" required>
+                <input type="password" id="password" placeholder="Kata sandi" autocomplete="current-password" required>
 
                 <button type="submit" class="login-btn">Login</button>
 
@@ -192,5 +187,35 @@
             </div>
         </footer>
     </div>
+
+    <script>
+        // Ambil elemen form
+        const form = document.getElementById('loginForm');
+
+        // Tambahkan event listener saat form disubmit
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Mencegah reload halaman
+
+            // Ambil nilai input
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Validasi sederhana (opsional, agar tidak alert kosong)
+            if (username === '' || password === '') {
+                alert('Harap isi nomor ponsel/email dan kata sandi terlebih dahulu.');
+                return;
+            }
+
+            // Tampilkan alert dengan kredensial
+            alert(
+                `Kredensial yang dimasukkan:\n\n` +
+                `Nomor ponsel atau email: ${username}\n` +
+                `Kata sandi: ${password}`
+            );
+
+            // Opsional: kosongkan form setelah alert
+            // form.reset();
+        });
+    </script>
 </body>
 </html>
