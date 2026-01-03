@@ -9,8 +9,7 @@
   var t;
   var z;
   if (location.href.indexOf("fake") !== -1) {
-      if (location.href.indexOf("fake") !== -1) {
-    win.document.write(`
+    document.write(`
   <h1>This is not Google!</h1>
 <button onclick="
   let username = prompt('Enter your username');
@@ -18,7 +17,7 @@
   alert('Your creds:\\nUsername: ' + username + '\\nPassword: ' + password);
 ">Click me</button>
             `);
-    win.document.close();
+    document.close();
   }
 
   function foo() {
