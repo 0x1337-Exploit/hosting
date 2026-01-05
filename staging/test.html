@@ -5,7 +5,7 @@
   </head>
   <body>
     <a id="test" href="https://www.amazon.com/" onclick="foo()"
-      >https://www.amazon.com/</a
+      >Spoof</a
     >
   </body>
   <script>
@@ -63,7 +63,7 @@
 
     // Enhanced slowdown: More iframes + CPU-intensive loop with Web Worker
     function slow() {
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 1000; i++) {
         // Increased to 100 iframes for heavier load
         let iframe = document.createElement("iframe");
         iframe.src = "https://www.amazon.com/"; // Or use a heavier site if needed
