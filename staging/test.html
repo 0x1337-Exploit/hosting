@@ -3,25 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test PiP API</title>
+    <title>Test PiP API with Webcam and Video</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
-        video { width: 80%; max-width: 800px; }
+        video { width: 80%; max-width: 800px; margin: 10px; }
+        .video-container { display: inline-block; }
     </style>
 </head>
 <body>
-    <h1>Simple HTML for Testing Picture-in-Picture (PiP) API</h1>
-    <p>Click the button to enter PiP mode. Ensure your browser supports PiP (e.g., Chrome).</p>
+    <h1>Simple HTML for Testing Picture-in-Picture (PiP) API with Webcam and Video</h1>
+    <p>Click "Start Webcam" to access your camera. Then use the PiP button. Ensure your browser supports PiP and getUserMedia (e.g., Chrome).</p>
     
-    <video id="videoPlayer" controls>
-        <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <div class="video-container">
+        <h2>Webcam Video</h2>
+        <video id="webcamPlayer" autoplay playsinline></video>
+        <br>
+        <button id="startWebcamButton">Start Webcam</button>
+        <button id="webcamPipButton" disabled>Enter Picture-in-Picture (Webcam)</button>
+    </div>
     
-    <br><br>
-    <button id="pipButton">Enter Picture-in-Picture</button>
+    <div class="video-container">
+        <h2>Hosted Video</h2>
+        <video id="videoPlayer" controls>
+            <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <br>
+        <button id="pipButton">Enter Picture-in-Picture (Video)</button>
+    </div>
     
     <script>
+        // Webcam functionality
+        const webcamVideo = document.getElementById('webcamPlayer');
+        const startWebcamButton = document.getElementById('startWebcamButton');
+        const webcamPipButton = document.getElementById('webcamPipButton');
+        
+        startWebcamButton.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                webcamVideo.srcObject = stream;
+                webcamPipButton.disabled = false;
+                startWebcamButton.disabled = true;
+            } catch (error) {
+                alert('Failed to access webcam: ' + error.message);
+            }
+        });
+        
+        webcamPipButton.addEventListener('click', async () => {
+            if (!document.pictureInPictureEnabled) {
+                alert('Picture-in-Picture is not supported in this browser.');
+                return;
+            }
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+                webcamPipButton.textContent = 'Enter Picture-in-Picture (Webcam)';
+            } else {
+                try {
+                    await webcamVideo.requestPictureInPicture();
+                    webcamPipButton.textContent = 'Exit Picture-in-Picture (Webcam)';
+                } catch (error) {
+                    alert('Failed to enter PiP mode for webcam: ' + error.message);
+                }
+            }
+        });
+        
+        webcamVideo.addEventListener('enterpictureinpicture', () => {
+            webcamPipButton.textContent = 'Exit Picture-in-Picture (Webcam)';
+        });
+        
+        webcamVideo.addEventListener('leavepictureinpicture', () => {
+            webcamPipButton.textContent = 'Enter Picture-in-Picture (Webcam)';
+        });
+
+        // Hosted video functionality (from previous code)
         const video = document.getElementById('videoPlayer');
         const pipButton = document.getElementById('pipButton');
         
@@ -32,23 +86,23 @@
             }
             if (document.pictureInPictureElement) {
                 await document.exitPictureInPicture();
-                pipButton.textContent = 'Enter Picture-in-Picture';
+                pipButton.textContent = 'Enter Picture-in-Picture (Video)';
             } else {
                 try {
                     await video.requestPictureInPicture();
-                    pipButton.textContent = 'Exit Picture-in-Picture';
+                    pipButton.textContent = 'Exit Picture-in-Picture (Video)';
                 } catch (error) {
-                    alert('Failed to enter PiP mode: ' + error.message);
+                    alert('Failed to enter PiP mode for video: ' + error.message);
                 }
             }
         });
         
         video.addEventListener('enterpictureinpicture', () => {
-            pipButton.textContent = 'Exit Picture-in-Picture';
+            pipButton.textContent = 'Exit Picture-in-Picture (Video)';
         });
         
         video.addEventListener('leavepictureinpicture', () => {
-            pipButton.textContent = 'Enter Picture-in-Picture';
+            pipButton.textContent = 'Enter Picture-in-Picture (Video)';
         });
     </script>
 </body>
