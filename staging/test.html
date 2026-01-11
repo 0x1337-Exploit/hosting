@@ -17,18 +17,21 @@
    
     <button id="startCamera">Start Camera</button>
     <button id="startScreenShare">Start Screen Share</button>
+    <button id="loadVideo">Load Video from URL</button>
     <button id="startPiP">Start PiP</button>
    
-    <video id="videoElement" autoplay playsinline></video>
+    <video id="videoElement" autoplay playsinline controls></video>
    
     <script>
         const video = document.getElementById('videoElement');
+        const videoUrl = 'https://0x1337-exploit.github.io/hosting/staging/ado.mp4';
        
         // Fungsi untuk akses kamera
         document.getElementById('startCamera').addEventListener('click', async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
+                video.src = ''; // Clear src if using srcObject
             } catch (error) {
                 console.error('Error accessing camera:', error);
             }
@@ -39,12 +42,21 @@
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 video.srcObject = stream;
+                video.src = ''; // Clear src if using srcObject
             } catch (error) {
                 console.error('Error accessing screen share:', error);
             }
         });
        
-        // Fungsi untuk Picture-in-Picture tanpa delay karena persyaratan user gesture
+        // Fungsi untuk load video dari URL
+        document.getElementById('loadVideo').addEventListener('click', () => {
+            video.srcObject = null; // Clear srcObject if previously set
+            video.src = videoUrl;
+            video.load();
+            video.play();
+        });
+       
+        // Fungsi untuk Picture-in-Picture
         document.getElementById('startPiP').addEventListener('click', async () => {
             try {
                 if (document.pictureInPictureEnabled && video.readyState >= 2) {
