@@ -44,19 +44,17 @@
             }
         });
        
-        // Fungsi untuk Picture-in-Picture dengan delay 3 detik
-        document.getElementById('startPiP').addEventListener('click', () => {
-            setTimeout(async () => {
-                try {
-                    if (document.pictureInPictureEnabled && video.readyState >= 2) {
-                        await video.requestPictureInPicture();
-                    } else {
-                        console.error('Picture-in-Picture is not supported or video is not ready.');
-                    }
-                } catch (error) {
-                    console.error('Error entering Picture-in-Picture:', error);
+        // Fungsi untuk Picture-in-Picture tanpa delay karena persyaratan user gesture
+        document.getElementById('startPiP').addEventListener('click', async () => {
+            try {
+                if (document.pictureInPictureEnabled && video.readyState >= 2) {
+                    await video.requestPictureInPicture();
+                } else {
+                    console.error('Picture-in-Picture is not supported or video is not ready.');
                 }
-            }, 3000); // Delay 3 detik (3000 ms)
+            } catch (error) {
+                console.error('Error entering Picture-in-Picture:', error);
+            }
         });
     </script>
 </body>
