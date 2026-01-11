@@ -3,70 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Share and Camera API with PiP</title>
+    <title>Test PiP API</title>
     <style>
-        video {
-            width: 400px;
-            height: 300px;
-            border: 1px solid black;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        video { width: 80%; max-width: 800px; }
     </style>
 </head>
 <body>
-    <h1>Simple Screen Share and Camera with PiP</h1>
-   
-    <button id="startCamera">Start Camera</button>
-    <button id="startScreenShare">Start Screen Share</button>
-    <button id="loadVideo">Load Video from URL</button>
-    <button id="startPiP">Start PiP</button>
-   
-    <video id="videoElement" autoplay playsinline controls></video>
-   
+    <h1>Simple HTML for Testing Picture-in-Picture (PiP) API</h1>
+    <p>Click the button to enter PiP mode. Ensure your browser supports PiP (e.g., Chrome).</p>
+    
+    <video id="videoPlayer" controls>
+        <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    
+    <br><br>
+    <button id="pipButton">Enter Picture-in-Picture</button>
+    
     <script>
-        const video = document.getElementById('videoElement');
-        const videoUrl = 'https://0x1337-exploit.github.io/hosting/staging/ado.mp4';
-       
-        // Fungsi untuk akses kamera
-        document.getElementById('startCamera').addEventListener('click', async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-                video.src = ''; // Clear src if using srcObject
-            } catch (error) {
-                console.error('Error accessing camera:', error);
+        const video = document.getElementById('videoPlayer');
+        const pipButton = document.getElementById('pipButton');
+        
+        pipButton.addEventListener('click', async () => {
+            if (!document.pictureInPictureEnabled) {
+                alert('Picture-in-Picture is not supported in this browser.');
+                return;
             }
-        });
-       
-        // Fungsi untuk screen share
-        document.getElementById('startScreenShare').addEventListener('click', async () => {
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                video.srcObject = stream;
-                video.src = ''; // Clear src if using srcObject
-            } catch (error) {
-                console.error('Error accessing screen share:', error);
-            }
-        });
-       
-        // Fungsi untuk load video dari URL
-        document.getElementById('loadVideo').addEventListener('click', () => {
-            video.srcObject = null; // Clear srcObject if previously set
-            video.src = videoUrl;
-            video.load();
-            video.play();
-        });
-       
-        // Fungsi untuk Picture-in-Picture
-        document.getElementById('startPiP').addEventListener('click', async () => {
-            try {
-                if (document.pictureInPictureEnabled && video.readyState >= 2) {
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+                pipButton.textContent = 'Enter Picture-in-Picture';
+            } else {
+                try {
                     await video.requestPictureInPicture();
-                } else {
-                    console.error('Picture-in-Picture is not supported or video is not ready.');
+                    pipButton.textContent = 'Exit Picture-in-Picture';
+                } catch (error) {
+                    alert('Failed to enter PiP mode: ' + error.message);
                 }
-            } catch (error) {
-                console.error('Error entering Picture-in-Picture:', error);
             }
+        });
+        
+        video.addEventListener('enterpictureinpicture', () => {
+            pipButton.textContent = 'Exit Picture-in-Picture';
+        });
+        
+        video.addEventListener('leavepictureinpicture', () => {
+            pipButton.textContent = 'Enter Picture-in-Picture';
         });
     </script>
 </body>
