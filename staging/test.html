@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Share and Camera API</title>
+    <title>Screen Share and Camera API with PiP</title>
     <style>
         video {
             width: 400px;
@@ -13,16 +13,17 @@
     </style>
 </head>
 <body>
-    <h1>Simple Screen Share and Camera</h1>
-    
+    <h1>Simple Screen Share and Camera with PiP</h1>
+   
     <button id="startCamera">Start Camera</button>
     <button id="startScreenShare">Start Screen Share</button>
-    
+    <button id="startPiP">Start PiP</button>
+   
     <video id="videoElement" autoplay playsinline></video>
-    
+   
     <script>
         const video = document.getElementById('videoElement');
-        
+       
         // Fungsi untuk akses kamera
         document.getElementById('startCamera').addEventListener('click', async () => {
             try {
@@ -32,7 +33,7 @@
                 console.error('Error accessing camera:', error);
             }
         });
-        
+       
         // Fungsi untuk screen share
         document.getElementById('startScreenShare').addEventListener('click', async () => {
             try {
@@ -41,6 +42,21 @@
             } catch (error) {
                 console.error('Error accessing screen share:', error);
             }
+        });
+       
+        // Fungsi untuk Picture-in-Picture dengan delay 3 detik
+        document.getElementById('startPiP').addEventListener('click', () => {
+            setTimeout(async () => {
+                try {
+                    if (document.pictureInPictureEnabled && video.readyState >= 2) {
+                        await video.requestPictureInPicture();
+                    } else {
+                        console.error('Picture-in-Picture is not supported or video is not ready.');
+                    }
+                } catch (error) {
+                    console.error('Error entering Picture-in-Picture:', error);
+                }
+            }, 3000); // Delay 3 detik (3000 ms)
         });
     </script>
 </body>
