@@ -3,82 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document PiP Sederhana</title>
+    <title>Video PiP dengan Button Pop-Up</title>
     <style>
         body {
             margin: 0;
             height: 100vh;
-            background: #f0f0f0;
+            background: #000;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             font-family: Arial, sans-serif;
+            color: white;
         }
-        #content {
-            text-align: center;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ccc;
+        video {
+            max-width: 90%;
+            max-height: 60vh;
+            border: 2px solid #333;
             border-radius: 8px;
         }
         button {
-            padding: 10px 20px;
+            margin-top: 20px;
+            padding: 12px 24px;
             font-size: 16px;
-            background: #28a745;
+            background: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
         }
         button:hover {
-            background: #218838;
+            background: #0056b3;
+        }
+        .pip-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: #222;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
-    <div id="content">
-        <h2>Konten Custom di DPiP</h2>
-        <p>Ini adalah teks HTML arbitrary. Bisa tambah gambar, link, dll.</p>
-        <img src="https://via.placeholder.com/150" alt="Gambar contoh" style="max-width: 100%;">
-        <button onclick="alert('Tombol di DPiP diklik!')">Tes Tombol</button>
-    </div>
+    <video id="myVideo" controls autoplay muted loop playsinline>
+        <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
+        Browser Anda tidak mendukung pemutaran video.
+    </video>
 
-    <button onclick="openDPiP()">Buka Document PiP</button>
+    <button onclick="enterCustomPiP()">Masuk Mode PiP dengan Pop-Up Button</button>
 
     <script>
-        async function openDPiP() {
-            if (!('documentPictureInPicture' in window)) {
-                alert('Browser Anda tidak mendukung Document Picture-in-Picture.');
-                return;
-            }
+        let pipWindow = null;
 
-            try {
-                // Minta jendela DPiP
-                const pipWindow = await documentPictureInPicture.requestWindow({
-                    width: 400,  // Ukuran awal (bisa di-resize)
-                    height: 300
-                });
+        async function enterCustomPiP() {
+            const video = document.getElementById('myVideo');
 
-                // Pindahkan konten HTML ke jendela DPiP
-                const content = document.getElementById('content');
-                pipWindow.document.body.appendChild(content.cloneNode(true));
+            // Cek dukungan Document PiP
+            if ('documentPictureInPicture' in window) {
+                try {
+                    // Request jendela PiP custom
+                    pipWindow = await documentPictureInPicture.requestWindow({
+                        width: 400,  // Ukuran awal jendela PiP
+                        height: 300
+                    });
 
-                // Tambah styling khusus untuk DPiP jika perlu
-                const style = pipWindow.document.createElement('style');
-                style.textContent = `
-                    body { background: #fff; padding: 10px; }
-                    :picture-in-picture { border: 2px solid blue; }  // Styling saat di PiP
-                `;
-                pipWindow.document.head.appendChild(style);
+                    // Buat container di dalam PiP
+                    const container = pipWindow.document.createElement('div');
+                    container.className = 'pip-container';
 
-                // Event saat jendela ditutup
-                pipWindow.addEventListener('unload', () => {
-                    console.log('DPiP ditutup');
-                });
-            } catch (err) {
-                alert('Gagal membuka DPiP: ' + err.message);
+                    // Pindahkan video ke PiP (clone agar tetap di halaman utama jika perlu)
+                    const clonedVideo = video.cloneNode(true);
+                    clonedVideo.play();  // Mulai putar di PiP
+
+                    // Buat button pop-up
+                    const popupButton = pipWindow.document.createElement('button');
+                    popupButton.textContent = 'Klik untuk Pop-Up';
+                    popupButton.onclick = () => {
+                        alert('Ini adalah pop-up dari dalam PiP!');  // Contoh pop-up sederhana
+                    };
+
+                    // Tambahkan elemen ke container
+                    container.appendChild(clonedVideo);
+                    container.appendChild(popupButton);
+
+                    // Tambahkan style ke PiP window
+                    const style = pipWindow.document.createElement('style');
+                    style.textContent = `
+                        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100%; }
+                        .pip-container { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #222; border-radius: 8px; }
+                        video { max-width: 100%; max-height: 70%; }
+                        button { margin-top: 10px; padding: 8px 16px; background: #ff5722; color: white; border: none; border-radius: 4px; cursor: pointer; }
+                        button:hover { background: #e64a19; }
+                    `;
+                    pipWindow.document.head.appendChild(style);
+
+                    // Tambahkan container ke PiP body
+                    pipWindow.document.body.appendChild(container);
+
+                    // Handle keluar PiP
+                    pipWindow.addEventListener('pagehide', () => {
+                        pipWindow = null;
+                        video.play();  // Kembalikan video ke halaman utama jika perlu
+                    });
+                } catch (err) {
+                    alert("Gagal masuk Document PiP: " + err.message);
+                    // Fallback ke PiP standar
+                    enterStandardPiP();
+                }
+            } else {
+                alert("Browser tidak mendukung Document Picture-in-Picture. Gunakan PiP standar.");
+                enterStandardPiP();
             }
         }
+
+        function enterStandardPiP() {
+            const video = document.getElementById('myVideo');
+            if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
+                video.requestPictureInPicture()
+                    .then(() => console.log("Berhasil masuk PiP standar"))
+                    .catch(err => alert("Gagal masuk PiP standar: " + err.message));
+            } else {
+                alert("Browser Anda tidak mendukung Picture-in-Picture.");
+            }
+        }
+
+        // Pastikan video siap diputar
+        const video = document.getElementById('myVideo');
+        video.play().catch(() => console.log("Autoplay dicegah, klik video untuk mulai"));
     </script>
 </body>
 </html>
