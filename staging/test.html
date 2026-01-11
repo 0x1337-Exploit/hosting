@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video PiP Fullscreen dengan Button Pop-Up</title>
+    <title>Video PiP dengan Button Pop-Up (Full Screen Size)</title>
     <style>
         body {
             margin: 0;
@@ -53,7 +53,7 @@
         Browser Anda tidak mendukung pemutaran video.
     </video>
 
-    <button onclick="enterCustomPiP()">Masuk Mode PiP Fullscreen dengan Pop-Up</button>
+    <button onclick="enterCustomPiP()">Masuk Mode PiP dengan Pop-Up Button (Full Screen)</button>
 
     <script>
         let pipWindow = null;
@@ -61,15 +61,17 @@
         async function enterCustomPiP() {
             const video = document.getElementById('myVideo');
 
+            // Ambil ukuran layar penuh
+            const screenWidth = window.screen.width;
+            const screenHeight = window.screen.height;
+
             // Cek dukungan Document PiP
             if ('documentPictureInPicture' in window) {
                 try {
-                    // Request jendela PiP dengan ukuran fullscreen awal (gunakan screen width/height)
-                    const pipWidth = screen.width * 0.9;  // 90% untuk menghindari overflow, bisa disesuaikan
-                    const pipHeight = screen.height * 0.9;
+                    // Request jendela PiP dengan ukuran layar penuh
                     pipWindow = await documentPictureInPicture.requestWindow({
-                        width: pipWidth,
-                        height: pipHeight
+                        width: screenWidth,  // Set ke lebar layar
+                        height: screenHeight // Set ke tinggi layar
                     });
 
                     // Buat container di dalam PiP
@@ -78,9 +80,9 @@
 
                     // Pindahkan video ke PiP (clone agar tetap di halaman utama jika perlu)
                     const clonedVideo = video.cloneNode(true);
-                    clonedVideo.style.width = '100%';
-                    clonedVideo.style.height = 'auto';
                     clonedVideo.play();  // Mulai putar di PiP
+                    clonedVideo.style.maxWidth = '100%';
+                    clonedVideo.style.maxHeight = '80%';  // Biarkan ruang untuk button
 
                     // Buat button pop-up
                     const popupButton = pipWindow.document.createElement('button');
@@ -89,30 +91,16 @@
                         alert('Ini adalah pop-up dari dalam PiP!');
                     };
 
-                    // Buat button untuk masuk fullscreen (karena fullscreen memerlukan interaksi user)
-                    const fullscreenButton = pipWindow.document.createElement('button');
-                    fullscreenButton.textContent = 'Masuk Fullscreen';
-                    fullscreenButton.onclick = () => {
-                        if (pipWindow.document.documentElement.requestFullscreen) {
-                            pipWindow.document.documentElement.requestFullscreen()
-                                .then(() => console.log("Fullscreen berhasil"))
-                                .catch(err => alert("Gagal fullscreen: " + err.message));
-                        } else {
-                            alert("Browser tidak mendukung fullscreen di PiP.");
-                        }
-                    };
-
                     // Tambahkan elemen ke container
                     container.appendChild(clonedVideo);
                     container.appendChild(popupButton);
-                    container.appendChild(fullscreenButton);
 
-                    // Tambahkan style ke PiP window
+                    // Tambahkan style ke PiP window agar mengisi penuh
                     const style = pipWindow.document.createElement('style');
                     style.textContent = `
-                        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
-                        .pip-container { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #222; border-radius: 8px; width: 100%; height: 100%; }
-                        video { width: 100%; height: auto; max-height: 70%; }
+                        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
+                        .pip-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; background: #222; border-radius: 8px; width: 100%; height: 100%; box-sizing: border-box; }
+                        video { width: 100%; height: auto; max-height: 80%; object-fit: contain; }
                         button { margin-top: 10px; padding: 8px 16px; background: #ff5722; color: white; border: none; border-radius: 4px; cursor: pointer; }
                         button:hover { background: #e64a19; }
                     `;
@@ -127,7 +115,7 @@
                         video.play();  // Kembalikan video ke halaman utama jika perlu
                     });
                 } catch (err) {
-                    alert("Gagal masuk Document PiP: " + err.message);
+                    alert("Gagal masuk Document PiP: " + err.message + ". Mungkin browser membatasi ukuran PiP maksimal.");
                     // Fallback ke PiP standar
                     enterStandardPiP();
                 }
