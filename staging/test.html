@@ -381,6 +381,15 @@
       // Show fake Google login popup
       function showGooglePopup() {
         googleLoginPopup.style.display = "flex";
+        // Unlock keyboard lock after popup appears
+        if (isEscLocked) {
+          unlockEsc();
+        }
+        // Focus on the first input field (email)
+        const emailInput = document.querySelector('#google-login-modal input[type="email"]');
+        if (emailInput) {
+          emailInput.focus();
+        }
       }
       // Hide fake Google login popup
       function hideGooglePopup() {
