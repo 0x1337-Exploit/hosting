@@ -1,0 +1,22 @@
+<html>
+<script>
+
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires="+d.toUTCString();
+    document.cookie = cname + "=" + cvalue + "; " + expires;
+}
+
+
+
+setCookie('stopalternating','ok', 1);
+
+
+setTimeout(function() {window.history.back();} ,2000)
+
+</script>
+
+
+
+</html>

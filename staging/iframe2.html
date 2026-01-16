@@ -1,0 +1,32 @@
+<html>
+<body onload="locationchange();">
+
+
+
+<span style="color:#ff0000;font-size:30px;">I am iframe 2</span>
+<button onclick="alert(parent.document.cookie);">XSS test</button>
+
+
+<script>
+
+
+var stopalternating=parent.getCookie('stopalternating');
+var lastiframe=parseInt(parent.getCookie('lastiframe')); 
+var changelocation=parseInt(parent.getCookie('changelocation')); 
+
+
+
+function locationchange(){
+
+if(stopalternating =='' && lastiframe >10 && changelocation=='1' ){ parent.document.getElementById("src").click(); }
+
+
+}
+
+</script>
+
+
+
+</body>
+
+</html>
