@@ -45,6 +45,12 @@ permElem.addEventListener('keydown', async (e) => {
             disallowReturnToOpener: true
         });
         newWin.document.body.innerHTML = '<style>html { font-family: sans-serif; }</style><h1>Press tab three times, then enter (obscuring layer)</h1>'; // Adjusted to match video observation
+        
+        // Tambahkan skrip untuk mengembalikan fokus ke main window
+        const focusScript = newWin.document.createElement('script');
+        focusScript.textContent = 'opener.focus();';
+        newWin.document.body.appendChild(focusScript);
+        
         pipOpened = true;
         console.log('PiP opened; checking for occlusion bypass');
         
