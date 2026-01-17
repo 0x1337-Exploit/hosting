@@ -3,28 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Artikel dengan Custom Reader Mode</title>
+    <title>Cara Mengoptimalkan Website untuk Reading Mode Chrome Android</title>
+    <meta name="description" content="Panduan lengkap tentang bagaimana membuat halaman web yang mudah terdeteksi sebagai artikel oleh Chrome Reading Mode.">
+    <meta name="author" content="Premium Portal">
+    
+    <!-- Structured Data untuk bantu detection AI -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Cara Mengoptimalkan Website untuk Reading Mode Chrome Android",
+      "datePublished": "2026-01-17",
+      "dateModified": "2026-01-17",
+      "author": {
+        "@type": "Person",
+        "name": "Premium Portal"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Premium Portal"
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://example.com/reading-mode-guide"
+      },
+      "articleBody": "Reading Mode di Chrome Android adalah fitur hebat... [full text summary]"
+    }
+    </script>
+    
     <style>
-        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .clutter { background: yellow; padding: 20px; margin: 20px 0; } /* Elemen distracting */
-        .reader-mode { background: #f9f9f9; color: #000; font-size: 1.2em; }
-        .reader-mode .clutter, .reader-mode header, .reader-mode nav, .reader-mode footer { display: none; }
-        #toggle-reader { position: fixed; bottom: 20px; right: 20px; padding: 10px; background: #4285f4; color: white; border: none; border-radius: 50%; cursor: pointer; }
+        body { font-family: system-ui, sans-serif; line-height: 1.8; max-width: 800px; margin: 0 auto; padding: 20px; background: white; color: black; }
+        h1, h2, h3 { line-height: 1.4; }
+        p { margin-bottom: 1.5em; font-size: 1.1em; }
+        article { margin-top: 40px; }
     </style>
 </head>
 <body>
-    <header><h1>Header Situs (Iklan dll.)</h1></header>
-    <nav>Menu Navigasi</nav>
-    
-    <article>
-        <h1>Judul Artikel Panjang</h1>
-        <p>Paragraf panjang isi artikel... (konten utama)</p>
-        <div class="clutter">Iklan atau sidebar distracting</div>
-        <p>Paragraf lain...</p>
-    </article>
-    
-    <footer>Footer situs</footer>
-    
-    <button id="toggle-reader" onclick="document.body.classList.toggle('reader-mode')">📖</button>
+
+<article>
+    <header>
+        <h1>Cara Mengoptimalkan Website untuk Reading Mode Chrome Android</h1>
+        <p><strong>Oleh Premium Portal</strong> | 17 Januari 2026</p>
+    </header>
+
+    <section>
+        <p>Reading Mode (atau Simplified View) di Chrome Android adalah fitur yang secara otomatis mendeteksi halaman berbasis teks panjang dan menawarkan tampilan bersih tanpa gangguan. Fitur ini semakin powerful di 2026 dengan redesign Material 3 dan deteksi AI yang lebih baik.</p>
+
+        <p>Namun, deteksi tetap bergantung pada struktur halaman. Berikut panduan kreatif (dari perspektif security researcher) untuk memaksimalkan kemungkinan trigger otomatis:</p>
+
+        <h2>1. Gunakan Tag Semantik HTML5</h2>
+        <p>Chrome's DOM Distiller sangat menyukai &lt;article&gt;, &lt;main&gt;, &lt;section&gt;, dan headings berurutan. Hindari &lt;div&gt; berlebihan.</p>
+
+        <h2>2. Konten Panjang dan Natural</h2>
+        <p>Minimal 800-1000 kata. Paragraf pendek tapi banyak. Contoh paragraf panjang di sini untuk simulasi density tinggi...</p>
+
+        <p>[Tambahkan 10-15 paragraf panjang di sini tentang topik apapun—misalnya tutorial security, web dev, atau riset. Ini penting untuk score readability tinggi.]</p>
+
+        <p>Paragraf contoh 1: Dalam penelitian keamanan web, kita sering menemukan bahwa heuristik browser seperti DOM Distiller mengandalkan rasio teks utama terhadap elemen lain. Dengan menghilangkan sidebar...</p>
+
+        <p>Paragraf contoh 2: Update Chrome 143 memperbaiki inconsistency detection. Sekarang AI Gemini membantu analisis konten lebih akurat...</p>
+
+        <!-- Ulangi paragraf natural panjang hingga total >1500 kata -->
+        
+        <h2>Kesimpulan</h2>
+        <p>Dengan struktur ini, halaman Anda hampir pasti terdeteksi sebagai "artikel" dan trigger Reading Mode otomatis di Chrome Android terbaru.</p>
+    </section>
+</article>
+
 </body>
 </html>
