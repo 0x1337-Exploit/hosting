@@ -11,26 +11,28 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: "Google Sans", Roboto, Arial, sans-serif;
-      background: #ffffff; /* putih polos */
+      background: #ffffff;
       color: #202124;
       min-height: 6200px;
       transition: scroll-behavior 0.9s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
-    /* Navbar selalu stay di atas, tak tergoyahkan */
     .top-bar {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 64px;
-      background: #ffffff; /* putih bersih */
+      background: #ffffff;
       border-bottom: 1px solid #dadce0;
-      z-index: 99999; /* super tinggi biar tak tertutup apapun */
+      z-index: 99999;
       display: flex;
       align-items: center;
       justify-content: flex-end;
       padding: 0 24px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      transition: opacity 0.5s ease;
+    }
+    .top-bar.hidden {
+      opacity: 0;
+      pointer-events: none; /* tombol tidak bisa diklik lagi setelah hilang */
     }
     .evil-btn {
       background: #1a73e8;
@@ -50,7 +52,7 @@
     }
     .void {
       height: 4600px;
-      background: #ffffff; /* hilangkan gradien, putih polos */
+      background: #ffffff;
     }
     .login-card {
       width: 100%;
@@ -60,7 +62,7 @@
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
       padding: 60px 44px 48px;
-      margin-top: 80px; /* beri ruang dari atas setelah scroll */
+      margin-top: 80px;
     }
     .logo-container {
       text-align: center;
@@ -99,8 +101,7 @@
 </head>
 <body>
 
-  <!-- Navbar yang tak pernah hilang -->
-  <div class="top-bar">
+  <div class="top-bar" id="topBar">
     <button class="evil-btn" id="evilTrigger">Buka Halaman Baru</button>
   </div>
 
@@ -123,9 +124,13 @@
 
   <script>
     const evilButton = document.getElementById('evilTrigger');
+    const topBar = document.getElementById('topBar');
 
     evilButton.addEventListener('click', () => {
-      // Buka halaman kedua - putih polos + panah memaksa scroll
+      // 1. Sembunyikan navbar seketika setelah klik (fade out halus)
+      topBar.classList.add('hidden');
+
+      // 2. Buka halaman panah putih panjang di tab baru
       const newWin = window.open('', '_blank', 'width=900,height=700,menubar=no,toolbar=no,scrollbars=yes');
       if (newWin) {
         newWin.document.write(`
@@ -139,7 +144,7 @@
               body {
                 margin:0; padding:0;
                 font-family: Arial, sans-serif;
-                background: #ffffff; /* putih polos total */
+                background: #ffffff;
                 color: #202124;
                 min-height: 6200px;
                 text-align: center;
@@ -167,7 +172,7 @@
         newWin.document.close();
       }
 
-      // Auto-scroll halaman utama setelah klik
+      // 3. Lanjutkan auto-scroll halaman utama ke form login
       setTimeout(() => {
         window.scrollTo({
           top: document.body.scrollHeight,
