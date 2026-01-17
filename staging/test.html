@@ -2,86 +2,62 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Premium Portal • Initiation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Auto Scroll Test - Sophia Edition</title>
   <style>
-    :root {
-      --primary: #00d4ff;
-      --dark: #0d1117;
-      --gray: #161b22;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
     body {
+      margin: 0;
       font-family: system-ui, sans-serif;
-      background: var(--dark);
-      color: #c9d1d9;
-      min-height: 100vh;
-      overflow-x: hidden;
+      background: #0f0f1a;
+      color: #e0e0ff;
+      line-height: 1.6;
     }
-    .filler { padding: 60px 20px; max-width: 900px; margin: 0 auto; }
-    .filler h1 { color: var(--primary); text-align: center; font-size: 2.8rem; margin-bottom: 1em; }
-    .filler section { margin: 80px 0; padding: 40px; background: rgba(22,27,34,0.6); border-radius: 16px; border: 1px solid rgba(0,212,255,0.15); }
-    .login-container {
-      min-height: 5200px; /* even deeper now */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 20px;
-      background: linear-gradient(to bottom, #0d1117, #000);
+    .content {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
     }
-    .login-box {
-      background: var(--gray);
-      padding: 50px;
-      border-radius: 20px;
-      max-width: 420px;
-      width: 100%;
-      border: 1px solid rgba(0,212,255,0.3);
-      box-shadow: 0 0 60px rgba(0,212,255,0.15);
-    }
-    h2 { color: var(--primary); text-align: center; margin-bottom: 2rem; }
-    input, button { width: 100%; padding: 14px; margin: 1rem 0; border-radius: 10px; border: none; }
-    input { background: #0d1117; color: white; border: 1px solid #30363d; }
-    button { background: linear-gradient(90deg, #00d4ff, #0077ff); color: white; font-weight: bold; cursor: pointer; }
-    .scroll-tease {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: var(--primary);
-      font-size: 1.2rem;
-      font-weight: bold;
-      pointer-events: none;
-      z-index: 9999;
-      transition: opacity 1s;
-    }
+    h1 { color: #ff79c6; }
+    .spacer { height: 120vh; background: linear-gradient(to bottom, #1a0033, #000033); }
   </style>
 </head>
 <body>
 
-  <div class="filler">
+  <div class="content">
+    <h1>Auto Scroll Test Zone 🔥</h1>
+    <p>Mulai scroll otomatis dalam 2 detik...</p>
+    
+    <div class="spacer"></div>
+    <h2>Sampai sini aja dulu ya? 😈</h2>
+    <div class="spacer"></div>
+    <h2>Bawah lagi dong...</h2>
+    <div class="spacer"></div>
+    <h2>Bottom reached. Mau loop lagi gak? 👀</h2>
   </div>
 
-  <div class="login-container" id="loginZone">
-    <div class="login-box">
-      <h2>Enter the Void</h2>
-      <form>
-        <input type="text" placeholder="Username / Email" required autocomplete="off"/>
-        <input type="password" placeholder="Password" required autocomplete="off"/>
-        <button type="submit">Claim Access</button>
-      </form>
-    </div>
-  </div>
-
-  <div class="scroll-tease" id="tease">▼▼▼ Patience... the gate awaits ▼▼▼</div>
-
-  <!-- The perfected auto-scroll ritual -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const tease = document.getElementById('tease');
-      const loginZone = document.getElementById('loginZone');
+    // Auto scroll smooth + loop option
+    function startAutoScroll() {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
 
-      // 2 seconds of false security
+    // Jalankan setelah halaman load + beri delay biar kelihatan
+    window.addEventListener('load', () => {
       setTimeout(() => {
-        // Step 1: Try smooth scrollIntoView – most reliable on modern Chrome/Android
-        loginZone.scrollIntoView({
-          behavior: 'smooth
+        startAutoScroll();
+        
+        // Optional: loop selamanya (uncomment jika mau jadi gila)
+        // setInterval(() => {
+        //   window.scrollTo({ top: 0, behavior: 'instant' });
+        //   setTimeout(startAutoScroll, 800);
+        // }, 12000);
+
+      }, 2000);
+    });
+  </script>
+
+</body>
+</html>
