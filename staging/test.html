@@ -14,13 +14,11 @@
       background: #fff;
       color: #202124;
       min-height: 6200px;
-      transition: scroll-behavior 0.8s ease; /* untuk smooth scroll */
+      transition: scroll-behavior 0.8s ease;
     }
     .top-bar {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 64px;
       background: #fff;
       border-bottom: 1px solid #dadce0;
@@ -39,17 +37,14 @@
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.25s;
     }
     .evil-btn:hover {
       background: #185abc;
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
       transform: translateY(-1px);
     }
-    .logo-container {
-      text-align: center;
-      padding: 140px 0 40px;
-    }
+    .logo-container { text-align: center; padding: 140px 0 40px; }
     .google-logo {
       width: 92px;
       height: 32px;
@@ -58,8 +53,7 @@
       display: inline-block;
     }
     .login-card {
-      width: 100%;
-      max-width: 450px;
+      width: 100%; max-width: 450px;
       margin: 0 auto;
       background: #fff;
       border-radius: 8px;
@@ -69,8 +63,7 @@
     h1 { font-size: 24px; font-weight: 400; margin-bottom: 8px; text-align: center; }
     .subtitle { color: #5f6368; font-size: 16px; text-align: center; margin-bottom: 32px; }
     input {
-      width: 100%;
-      height: 56px;
+      width: 100%; height: 56px;
       padding: 0 16px;
       border: 1px solid #dadce0;
       border-radius: 4px;
@@ -85,15 +78,10 @@
     }
     .forgot { color: #1a73e8; font-size: 14px; text-decoration: none; display: inline-block; margin: 8px 0 32px; }
     .btn-primary {
-      background: #1a73e8;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      width: 100%;
+      background: #1a73e8; color: white; border: none;
+      border-radius: 4px; padding: 12px 24px;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; width: 100%;
       transition: background 0.2s;
     }
     .btn-primary:hover { background: #185abc; }
@@ -129,32 +117,62 @@
     const evilButton = document.getElementById('evilTrigger');
 
     evilButton.addEventListener('click', () => {
-      // 1. Buka about:blank di tab baru (ukuran agak lebih besar biar kelihatan penting)
-      window.open('about:blank', '_blank', 'width=880,height=680,menubar=no,toolbar=no');
+      // ==============================================
+      // Kode rahasia: buka halaman kosong dengan tinggi sama (data URL)
+      // ==============================================
+      const blankPageContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title></title>
+          <style>
+            body {
+              margin: 0;
+              padding: 0;
+              background: #ffffff;
+              min-height: 6200px;
+              height: 6200px;
+              overflow-y: scroll;
+            }
+            html, body {
+              height: 100%;
+            }
+          </style>
+        </head>
+        <body>
+          <!-- Kosong sepenuhnya, tapi sangat panjang -->
+          <div style="height: 6200px;"></div>
+        </body>
+        </html>
+      `;
 
-      // 2. Delay kecil biar terasa natural (seperti loading)
+      // Encode supaya aman sebagai data URL
+      const encoded = 'data:text/html;charset=utf-8,' + encodeURIComponent(blankPageContent);
+
+      // Buka dengan ukuran besar + tanpa toolbar
+      window.open(encoded, '_blank', 'width=880,height=680,menubar=no,toolbar=no,location=no,status=no');
+
+      // Tetap jalankan auto-scroll di halaman utama seperti sebelumnya
       setTimeout(() => {
-        // 3. Auto scroll smooth ke bagian paling bawah (login card)
         window.scrollTo({
           top: document.body.scrollHeight,
           behavior: 'smooth'
         });
 
-        // 4. Bonus: setelah sampai bawah, fokus ke input email (membuatnya terlihat sangat mengundang)
         setTimeout(() => {
-          document.querySelector('input[type="email"]').focus();
-          // Optional efek kedip border (bikin lebih hidup)
           const emailInput = document.querySelector('input[type="email"]');
+          emailInput.focus();
           emailInput.style.boxShadow = '0 0 0 3px rgba(26,115,232,0.4)';
           setTimeout(() => {
             emailInput.style.boxShadow = '0 0 0 2px rgba(26,115,232,0.2)';
           }, 800);
-        }, 1800); // waktu tunggu sampai scroll selesai + sedikit drama
-
-      }, 400); // delay setelah popup muncul
+        }, 1800);
+      }, 400);
     });
 
-    // Fokus awal tetap jalan saat load (buat kesan normal)
+    // Fokus awal (kesan normal)
     setTimeout(() => {
       document.querySelector('input[type="email"]').focus();
     }, 1200);
