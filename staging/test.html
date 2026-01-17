@@ -19,9 +19,10 @@
       color: var(--light);
       min-height: 100vh;
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
-    /* LONG FILLER CONTENT TO FORCE SCROLLING */
+    /* MASSIVE FILLER TO FORCE INITIAL SCROLL FEELING */
     .filler {
       padding: 60px 20px;
       max-width: 900px;
@@ -47,9 +48,9 @@
       font-size: 1.15rem;
     }
 
-    /* THE SACRED LOGIN FORM – BURIED DEEP */
+    /* THE SACRED & DOOMED LOGIN ZONE */
     .login-container {
-      min-height: 4200px; /* <-- this is the evil scroll distance. Increase freely */
+      min-height: 4800px; /* even deeper if you wish — crank it to 10000px for maximum suffering */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -135,53 +136,37 @@
       text-decoration: none;
     }
 
-    .extra a:hover {
-      text-decoration: underline;
-    }
+    .extra a:hover { text-decoration: underline; }
 
-    /* Mobile scroll hint – pure evil */
+    /* Floating evil scroll hint */
     .scroll-tease {
       position: fixed;
-      bottom: 20px;
+      bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      color: rgba(0,212,255,0.6);
-      font-size: 1rem;
+      color: rgba(0,212,255,0.7);
+      font-size: 1.1rem;
+      font-weight: bold;
       pointer-events: none;
-      animation: pulse 2s infinite;
+      animation: pulse 1.8s infinite;
+      z-index: 9999;
     }
 
     @keyframes pulse {
-      0%,100% { opacity: 0.6; }
-      50% { opacity: 1; }
+      0%,100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+      50%     { opacity: 1;   transform: translateX(-50%) scale(1.08); }
     }
   </style>
 </head>
 <body>
 
-  <!-- MASSIVE FILLER TO FORCE LONG SCROLL -->
   <div class="filler">
-    <h1>Selamat Datang di Premium Portal</h1>
 
-    <section>
-      <h2>Apa itu Premium Portal?</h2>
-      <p>Platform revolusioner yang menggabungkan pengetahuan terlarang, hacking etis, reverse engineering, dan kebebasan informasi tanpa batas. Di sini kau bukan lagi tahanan algoritma — kau adalah dewa.</p>
-      <p>Kami menyediakan tutorial mendalam tentang exploit development, malware analysis, red teaming, dan segala hal yang membuat darah para blue team mendidih...</p>
-    </section>
-
-    <section>
-      <h2>Kenapa Harus Scroll Jauh?</h2>
-      <p>Karena yang benar-benar berharga tidak diberikan dengan mudah. Hanya mereka yang bersedia menempuh perjalanan panjang yang layak mendapatkan akses. Scroll adalah ujian pertama.</p>
-      <p>Android users: geser jari kalian sampai jari pegal. Itu bagian dari inisiasi.</p>
-    </section>
-
-    <!-- Tambahkan lebih banyak section panjang jika ingin lebih sadis -->
-    <!-- ... 10-15 section lagi dengan konten lorem-ipsum atau artikel security panjang ... -->
 
   </div>
 
-  <!-- THE SACRED LOGIN – very deep down -->
-  <div class="login-container">
+  <!-- THE SACRED LOGIN – now auto-scrolled to after 2 seconds -->
+  <div class="login-container" id="loginZone">
     <div class="login-box">
       <h2>Login Premium Portal</h2>
 
@@ -206,8 +191,31 @@
     </div>
   </div>
 
-  <!-- Evil mobile scroll hint -->
-  <div class="scroll-tease">▼▼▼ Geser ke bawah untuk login ▼▼▼</div>
+  <div class="scroll-tease">▼▼▼ Tunggu sebentar... Akses menanti ▼▼▼</div>
+
+  <!-- THE AUTO-SCROLL RITUAL – 2 second delay, then smooth descent into hell -->
+  <script>
+    window.addEventListener('load', () => {
+      // 2000ms delay before the trap springs
+      setTimeout(() => {
+        const loginZone = document.getElementById('loginZone');
+        
+        // Calculate exact position with some offset so form is nicely centered
+        const targetPosition = loginZone.getBoundingClientRect().top + window.pageYOffset - 80;
+
+        // Smooth scroll to the login form
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+
+        // Optional: change the floating text after scroll starts
+        setTimeout(() => {
+          document.querySelector('.scroll-tease').textContent = "Kau telah sampai... Masuklah";
+        }, 1800);
+      }, 2000); // <-- 2 seconds delay — change to 3000, 5000, whatever torments you desire
+    });
+  </script>
 
 </body>
 </html>
