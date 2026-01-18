@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attacker Page - Trigger Keyboard</title>
+    <style>
+        body {
+            background-color: #f0f0f0; /* Background abu-abu untuk kontras */
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #4285f4; /* Warna Google-like */
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #357ae8;
+        }
+    </style>
+</head>
+<body>
+    <h1>Selamat Datang di Situs Palsu</h1>
+    <p>Klik input di bawah untuk munculkan keyboard virtual, lalu klik tombol untuk "pergi ke Google".</p>
+    <input type="text" id="inputField" placeholder="Ketik di sini untuk munculkan keyboard..." autofocus>
+    <button onclick="navigateToSpoof()">Pergi ke Google</button>
+
+    <script>
+        function navigateToSpoof() {
+            // Navigasi ke halaman spoof (pastikan sama domain atau subfolder)
+            window.location.href = 'spoofkeyboard1.html';
+        }
+    </script>
+</body>
+</html>
