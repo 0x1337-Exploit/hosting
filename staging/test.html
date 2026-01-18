@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Virtual Keyboard Simpel</title>
+<title>Virtual Keyboard Simpel - Dragable & Resizable</title>
 <style>
   body {
     font-family: Arial, Helvetica, sans-serif;
@@ -33,12 +33,25 @@
     resize: vertical;
   }
 
+  .keyboard-container {
+    position: relative;
+    width: fit-content;
+    margin: 0 auto;
+    cursor: move; /* Default cursor for dragging */
+    user-select: none;
+    touch-action: none; /* Prevent touch issues */
+  }
+
   .keyboard {
     display: grid;
     grid-template-columns: repeat(14, 50px);
     gap: 6px;
-    max-width: 780px;
     justify-content: center;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s;
   }
 
   .key {
@@ -65,16 +78,35 @@
   .key.backspace { background: #c53030; }
   .key.enter { background: #2f855a; grid-column: span 2; }
 
-  .row { display: contents; }
+  .resize-handle {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: nwse-resize;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .keyboard { grid-template-columns: repeat(14, 40px); }
+    .key { height: 42px; font-size: 1rem; }
+  }
 </style>
 </head>
 <body>
 
-<h2>Virtual Keyboard Simpel</h2>
+<h2>Virtual Keyboard Simpel - Dragable & Resizable</h2>
 
 <textarea class="output" id="output" placeholder="Klik tombol di bawah atau ketik di sini..."></textarea>
 
-<div class="keyboard" id="keyboard"></div>
+<div class="keyboard-container" id="keyboard-container">
+  <div class="keyboard" id="keyboard"></div>
+  <div class="resize-handle" id="resize-handle"></div>
+</div>
 
 <script>
 // Layout QWERTY Indonesia (mirip US + beberapa karakter khusus)
@@ -86,10 +118,16 @@ const layout = [
   "shift space backspace enter"
 ];
 
+const keyboardContainer = document.getElementById('keyboard-container');
 const keyboard = document.getElementById('keyboard');
+const resizeHandle = document.getElementById('resize-handle');
 const output = document.getElementById('output');
 
 let caps = false;
+let isDragging = false;
+let isResizing = false;
+let startX, startY, startWidth, startHeight, startLeft, startTop;
+let scale = 1; // Initial scale for resizing
 
 function createKey(text, className = '') {
   const key = document.createElement('button');
@@ -102,7 +140,7 @@ function createKey(text, className = '') {
 function buildKeyboard() {
   keyboard.innerHTML = '';
 
-  layout.forEach((row, rowIndex) => {
+  layout.forEach((row) => {
     const chars = row.split(' ');
 
     chars.forEach(char => {
@@ -165,21 +203,97 @@ function updateCaps() {
     });
 }
 
-buildKeyboard();
+function updateScale() {
+  keyboard.style.transform = `scale(${scale})`;
+  // Adjust gap and sizes dynamically if needed, but for simplicity, we scale the whole keyboard
+}
 
+buildKeyboard();
+updateCaps();
+
+// Keyboard click handler
 keyboard.addEventListener('click', e => {
   if (!e.target.classList.contains('key')) return;
   const value = e.target.dataset.value;
   insertText(value);
 });
 
+// Dragging functionality
+keyboardContainer.addEventListener('mousedown', (e) => {
+  if (e.target === resizeHandle || e.target.classList.contains('key')) return; // Don't drag if resizing or clicking keys
+  isDragging = true;
+  startX = e.clientX - keyboardContainer.offsetLeft;
+  startY = e.clientY - keyboardContainer.offsetTop;
+  document.body.style.cursor = 'grabbing';
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (isDragging) {
+    keyboardContainer.style.position = 'absolute';
+    keyboardContainer.style.left = `${e.clientX - startX}px`;
+    keyboardContainer.style.top = `${e.clientY - startY}px`;
+  } else if (isResizing) {
+    const newWidth = startWidth + (e.clientX - startX);
+    const newHeight = startHeight + (e.clientY - startY);
+    scale = Math.min(newWidth / startWidth, newHeight / startHeight); // Uniform scaling
+    scale = Math.max(0.5, Math.min(2, scale)); // Limit scale between 0.5x and 2x
+    updateScale();
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+  isResizing = false;
+  document.body.style.cursor = 'default';
+});
+
+// Resizing functionality
+resizeHandle.addEventListener('mousedown', (e) => {
+  isResizing = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  startWidth = keyboard.offsetWidth;
+  startHeight = keyboard.offsetHeight;
+});
+
+// Touch support for mobile
+keyboardContainer.addEventListener('touchstart', (e) => {
+  if (e.target === resizeHandle) {
+    isResizing = true;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    startWidth = keyboard.offsetWidth;
+    startHeight = keyboard.offsetHeight;
+  } else if (!e.target.classList.contains('key')) {
+    isDragging = true;
+    startX = e.touches[0].clientX - keyboardContainer.offsetLeft;
+    startY = e.touches[0].clientY - keyboardContainer.offsetTop;
+  }
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (isDragging && e.touches.length === 1) {
+    keyboardContainer.style.position = 'absolute';
+    keyboardContainer.style.left = `${e.touches[0].clientX - startX}px`;
+    keyboardContainer.style.top = `${e.touches[0].clientY - startY}px`;
+  } else if (isResizing && e.touches.length === 1) {
+    const newWidth = startWidth + (e.touches[0].clientX - startX);
+    const newHeight = startHeight + (e.touches[0].clientY - startY);
+    scale = Math.min(newWidth / startWidth, newHeight / startHeight);
+    scale = Math.max(0.5, Math.min(2, scale));
+    updateScale();
+  }
+});
+
+document.addEventListener('touchend', () => {
+  isDragging = false;
+  isResizing = false;
+});
+
 // Biar tetap bisa ketik manual juga
 output.addEventListener('keydown', e => {
-  // Biarkan browser handle shortcut biasa (Ctrl+A, Ctrl+C, dll)
   if (e.ctrlKey || e.metaKey) return;
-  
-  // Blok karakter normal supaya hanya lewat virtual keyboard (optional)
-  // e.preventDefault(); // <-- uncomment kalau mau full virtual only
+  // e.preventDefault(); // Uncomment jika ingin full virtual only
 });
 </script>
 
